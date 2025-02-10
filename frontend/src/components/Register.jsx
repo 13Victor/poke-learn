@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Register() {
     const [userName, setUserName] = useState('');
@@ -38,6 +39,7 @@ function Register() {
     };
 
     return (
+        <>
         <div>
             <h3>Register</h3>
             <form onSubmit={handleSubmit} className="register-form">
@@ -64,6 +66,8 @@ function Register() {
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {success && <p style={{ color: 'green' }}>{success}</p>}
         </div>
+        <Link to="/login">Ir a Login</Link>
+        </>
     );
 }
 

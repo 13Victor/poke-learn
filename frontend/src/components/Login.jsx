@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -35,6 +36,7 @@ function Login() {
     };
 
     return (
+        <>
         <div>
             <h3>Login</h3>
             <form onSubmit={handleSubmit} className="login-form">            
@@ -55,6 +57,8 @@ function Login() {
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {success && <p style={{ color: 'green' }}>{success}</p>}
         </div>
+        <Link to="/register">Ir a Register</Link>
+        </>
     );
 }
 
