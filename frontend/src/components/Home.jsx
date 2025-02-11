@@ -4,7 +4,7 @@ function Home() {
     return <>
         <h1>Bienvenido a la App</h1>
         <nav>
-            <Link to="/login">Login</Link> | <Link to="/register">Register</Link>
+            <Link to="/auth/login">Login</Link> | <Link to="/auth/register">Register</Link>
         </nav>
     </>
 }

@@ -1,6 +1,13 @@
 const express = require('express');
-const router = express.Router();
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 const { authenticateUser, registerUser, isUserRegistered } = require('../database/db');
+
+const router = express.Router();
+
+dotenv.config();
+
+const SECRET_KEY = process.env.JWT_SECRET || 'secreto_super_seguro';
 
 /* Ruta para iniciar sesión */
 router.post('/login', async (req, res) => {
@@ -15,7 +22,10 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: result.error });
     }
 
-    res.json({ message: "Login exitoso", user: result.user });
+    const payload = { email };
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
+
+    res.json({ message: "Login exitoso", user: result.user, token: token});
 });
 
 /* Ruta para registrar un nuevo usuario */
@@ -38,5 +48,8 @@ router.post('/register', async (req, res) => {
 
     res.json({ message: "Registro exitoso" });
 });
+
+// Montamos el sub-router bajo '/auth'
+// router.use('/auth', router);
 
 module.exports = router;

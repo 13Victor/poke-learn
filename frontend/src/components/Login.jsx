@@ -13,7 +13,7 @@ function Login() {
         setSuccess('');
 
         try {
-            const response = await fetch('http://localhost:5000/login', { 
+            const response = await fetch('http://localhost:5000/auth/login', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -25,8 +25,10 @@ function Login() {
                 throw new Error(data.message || "Error desconocido");
             }
 
+            localStorage.setItem('token', data.token);
+
             setSuccess("Login exitoso. Redirigiendo...");
-            console.log("Usuario autenticado:", data.user, data.message);
+            console.log("Usuario autenticado:", data.user, data.message, data.token);
 
         } catch (error) {
             setError(error.message);
@@ -57,7 +59,7 @@ function Login() {
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {success && <p style={{ color: 'green' }}>{success}</p>}
         </div>
-        <Link to="/register">Ir a Register</Link>
+        <Link to="/auth/register">Ir a Register</Link>
         </>
     );
 }

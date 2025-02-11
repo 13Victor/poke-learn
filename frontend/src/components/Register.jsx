@@ -14,7 +14,7 @@ function Register() {
         setSuccess('');
 
         try {
-            const response = await fetch('http://localhost:5000/register', { 
+            const response = await fetch('http://localhost:5000/auth/register', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_name: userName, email, password })
@@ -66,7 +66,7 @@ function Register() {
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {success && <p style={{ color: 'green' }}>{success}</p>}
         </div>
-        <Link to="/login">Ir a Login</Link>
+        <Link to="/auth/login">Ir a Login</Link>
         </>
     );
 }
