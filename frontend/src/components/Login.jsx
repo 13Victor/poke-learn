@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+        
+    const navigate = useNavigate();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -24,11 +27,11 @@ function Login() {
             if (!response.ok) {
                 throw new Error(data.message || "Error desconocido");
             }
-
             localStorage.setItem('token', data.token);
 
             setSuccess("Login exitoso. Redirigiendo...");
             console.log("Usuario autenticado:", data.user, data.message, data.token);
+            setTimeout(() =>  navigate('/user'), 2000);
 
         } catch (error) {
             setError(error.message);

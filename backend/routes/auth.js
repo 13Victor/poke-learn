@@ -22,7 +22,12 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: result.error });
     }
 
-    const payload = { email };
+    const payload = { 
+        id: result.user.id, 
+        email: result.user.email,
+        user_name: result.user.user_name 
+    };
+    
     const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
 
     res.json({ message: "Login exitoso", user: result.user, token: token});
