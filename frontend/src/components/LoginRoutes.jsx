@@ -25,7 +25,7 @@ function LoginRoutes() {
     return (
         <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/auth" element={<AuthRoute><Home /></AuthRoute>} />
+            <Route path="/auth" element={<AuthRoute></AuthRoute>} />
             <Route path="/auth/login" element={<AuthRoute><Login /></AuthRoute>} />
             <Route path="/auth/register" element={<AuthRoute><Register /></AuthRoute>} />
             <Route path="/user" element={<PrivateRoute><User /></PrivateRoute>} />
