@@ -1,11 +1,11 @@
 import { BrowserRouter as AppRoutes } from "react-router-dom";
-import LoginRoutes from './components/LoginRoutes';
+import AuthRoutes from './components/AuthRoutes';
 import './App.css';
 
 function App() {
     return (
       <AppRoutes>
-        <LoginRoutes />
+        <AuthRoutes />
       </AppRoutes>
     );
 }

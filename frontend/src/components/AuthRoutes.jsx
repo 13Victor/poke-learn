@@ -3,7 +3,7 @@ import Login from './Login';
 import Register from './Register';
 import User from './User'
 
-function LoginRoutes() {
+function AuthRoutes() {
     
     const RootRedirect = () => {
         const token = localStorage.getItem('token');
@@ -33,4 +33,4 @@ function LoginRoutes() {
     );
 };
 
-export default LoginRoutes;
+export default AuthRoutes;

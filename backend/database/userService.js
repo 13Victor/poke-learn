@@ -17,11 +17,12 @@ const pool = mysql.createPool({
 
 // 📌 Obtiene una imagen aleatoria de la carpeta "/uploads"
 function getRandomProfilePicture() {
-    const folderPath = path.join(__dirname, '../public/profile_pictures'); // Ruta de imágenes
+    const folderPath = path.join(__dirname, '../uploads'); // Ruta de imágenes
 
     try {
         const files = fs.readdirSync(folderPath).filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file));
-        return files[Math.floor(Math.random() * files.length)];
+        if (files.length === 0) return 'default.png'; // Si no hay imágenes, usa una por defecto
+        return files[Math.floor(Math.random() * files.length)]; // Devuelve una aleatoria
     } catch (error) {
         console.error("Error leyendo la carpeta de imágenes:", error);
         return 'default.png';

@@ -56,6 +56,7 @@ function User() {
                     <p>Id: {user.id}</p>
                     <p>Email: {user.email}</p>
                     <p>Nombre de Usuario: {user.user_name}</p>
+                    <img src={`http://localhost:5000/uploads/profile_pictures/${user.profile_picture}`} alt="Imagen de perfil" />
                     <p>Bienvenido a tu perfil</p>
                 </div>
             ) : (

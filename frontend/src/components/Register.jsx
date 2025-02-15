@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 function Register() {
     const [userName, setUserName] = useState('');
@@ -7,6 +8,8 @@ function Register() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    const navigate = useNavigate();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -28,6 +31,7 @@ function Register() {
 
             setSuccess("Registro exitoso. Redirigiendo...");
             console.log("Usuario registrado:", data.user, data.message);
+            setTimeout(() =>  navigate('/auth/login'), 2000);
 
         } catch (error) {
             setError(error.message);

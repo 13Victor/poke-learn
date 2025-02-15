@@ -1,0 +1,11 @@
+DROP DATABASE IF EXISTS pokelearn;
+CREATE DATABASE pokelearn;
+USE pokelearn;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_name VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    profile_picture VARCHAR(255) NOT NULL
+) AUTO_INCREMENT = 1;
