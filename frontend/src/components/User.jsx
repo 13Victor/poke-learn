@@ -49,15 +49,13 @@ function User() {
 
     return (
         <div>
-            <h2>Perfil de Usuario</h2>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {user ? (
                 <div>
                     <p>Id: {user.id}</p>
                     <p>Email: {user.email}</p>
                     <p>Nombre de Usuario: {user.user_name}</p>
-                    <img src={`http://localhost:5000/uploads/profile_pictures/${user.profile_picture}`} alt="Imagen de perfil" />
-                    <p>Bienvenido a tu perfil</p>
+                    <img src={`http://localhost:5000/uploads/profile_pictures/${user.profile_picture}`} width={35} alt="Imagen de perfil" />
                 </div>
             ) : (
                 <p>Cargando...</p>

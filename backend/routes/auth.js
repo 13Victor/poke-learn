@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
         profile_picture: result.user.profile_picture
     };
     
-    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '24h' });
 
     res.json({ message: "Login exitoso", user: result.user, token: token});
 });
