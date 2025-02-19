@@ -31,7 +31,7 @@ function getRandomProfilePicture() {
 
 // 📌 Autentica un usuario comparando email/user_name y contraseña
 async function authenticateUser(emailOrUserName, password) {
-    const query = `SELECT id, email, user_name, password, profile_picture FROM users WHERE email = ? OR user_name = ?`;
+    const query = `SELECT id, email, user_name, password, profile_picture FROM user WHERE email = ? OR user_name = ?`;
     const db = pool.promise();
     const [rows] = await db.execute(query, [emailOrUserName, emailOrUserName]);
 
@@ -52,7 +52,7 @@ async function authenticateUser(emailOrUserName, password) {
 
 // 📌 Verifica si el email o el nombre de usuario ya existen
 async function isUserRegistered(email, user_name) {
-    const query = `SELECT email, user_name FROM users WHERE email = ? OR user_name = ?`;
+    const query = `SELECT email, user_name FROM user WHERE email = ? OR user_name = ?`;
     const db = pool.promise();
     const [rows] = await db.execute(query, [email, user_name]);
 
@@ -74,7 +74,7 @@ async function registerUser(email, password, user_name) {
     try {
         const profile_picture = getRandomProfilePicture(); // Imagen aleatoria o default
         const hashedPassword = await bcrypt.hash(password, 10);
-        const query = `INSERT INTO users (email, password, user_name, profile_picture) VALUES (?, ?, ?, ?)`;
+        const query = `INSERT INTO user (email, password, user_name, profile_picture) VALUES (?, ?, ?, ?)`;
         const db = pool.promise();
         await db.execute(query, [email, hashedPassword, user_name, profile_picture]);
         return { success: true, profile_picture };
