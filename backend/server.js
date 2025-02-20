@@ -6,6 +6,7 @@ const path = require('path');
 // Importar rutas
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const adminRoutes = require('./routes/admin');
 
 dotenv.config(); // Cargar variables de entorno
 
@@ -16,6 +17,7 @@ app.use(cors());
 // Rutas 
 app.use('/auth', authRoutes); 
 app.use('/user', userRoutes);
+app.use('/admin', adminRoutes);
 
 // Servir archivos estáticos desde la carpeta de imágenes
 app.use('/uploads/profile_pictures', express.static(path.join(__dirname, 'public/profile_pictures')));

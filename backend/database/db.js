@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2');
+const mysql2 = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
@@ -13,6 +14,13 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
+});
+
+const pool2 = mysql2.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    multipleStatements: true
 });
 
 // 📌 Obtiene una imagen aleatoria de la carpeta "/uploads"
@@ -83,4 +91,27 @@ async function registerUser(email, password, user_name) {
     }
 }
 
-module.exports = { authenticateUser, isUserRegistered, registerUser };
+// 📌 Crea la base de datos y sus tablas
+async function createDatabase() {
+    try {
+        const sqlPath = path.join(__dirname, '../pokelearn.sql'); // Archivo con las sentencias SQL
+        const sql = fs.readFileSync(sqlPath, 'utf8'); // Leer el archivo SQL
+
+        const connection = await pool2.getConnection();
+        await connection.query(sql);
+        connection.release();
+
+        return { message: "Base de datos creada correctamente." };
+    } catch (error) {
+        return { error: `Error al crear la base de datos: ${error.message}` };
+    }
+}
+
+
+
+module.exports = { 
+    authenticateUser, 
+    isUserRegistered, 
+    registerUser, 
+    createDatabase
+};
