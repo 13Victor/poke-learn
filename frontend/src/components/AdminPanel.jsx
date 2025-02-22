@@ -28,6 +28,31 @@ function AdminPanel() {
             setError(error.message);
         }
     };
+
+    const fillItemTable = async (event) => {
+        event.preventDefault();
+        setError('');
+        setSuccess('');
+
+        try {
+            const response = await fetch('http://localhost:5000/admin/fill-db/item', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Error desconocido");
+            }
+
+            setSuccess("Tabla item creada.");
+
+        } catch (error) {
+            setError(error.message);
+        }
+    };
+
     return (
         <div>
             <h2>Admin Panel</h2>
@@ -35,7 +60,7 @@ function AdminPanel() {
             <div>
                 <h4>Acciones base de datos</h4>
                 <button onClick={createDatabase}>Crear base de datos</button>
-                <button>Rellenar base de datos</button>
+                <button onClick={fillItemTable}>Rellenar tabla item</button>
             </div>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             {success && <p style={{ color: 'green' }}>{success}</p>}

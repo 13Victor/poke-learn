@@ -94,7 +94,8 @@ CREATE TABLE `pokemonMove` (
 CREATE TABLE `item` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL UNIQUE,
-    `description` TEXT NOT NULL
+    `description` TEXT NOT NULL,
+    `sprite_num` INT UNSIGNED NOT NULL
 );
 
 CREATE TABLE `teamPokemon` (
