@@ -131,7 +131,9 @@ async function fillItemTable() {
     const connection = await pool2.getConnection();
 
     // 🔹 Limpiar la tabla antes de insertar nuevos datos
-    await connection.query("DELETE FROM item");
+    await connection.query(
+      "DELETE FROM item; ALTER TABLE item AUTO_INCREMENT =1;"
+    );
 
     // 🔹 Preparar los valores para la inserción
     const values = validItems.map((item) => [
@@ -151,9 +153,137 @@ async function fillItemTable() {
     // 🔹 Liberar la conexión
     connection.release();
 
-    return { message: "Tabla item rellenada correctamente." };
+    return { message: "✅ Tabla item rellenada correctamente." };
   } catch (error) {
-    return { error: `Error al llenar la tabla item: ${error.message}` };
+    return { error: `❌ Error al llenar la tabla item: ${error.message}` };
+  }
+}
+
+async function fillAbilityTable() {
+  try {
+    // 🔹 Obtener todos los ítems disponibles y filtrar los válidos
+    const allAbilities = Dex.abilities.all();
+
+    const validAbilities = allAbilities.filter(
+      (ability) => !ability.isNonstandard
+    );
+
+    // 🔹 Obtener conexión a la base de datos
+    const connection = await pool2.getConnection();
+
+    // 🔹 Limpiar la tabla antes de insertar nuevos datos
+    await connection.query(
+      "DELETE FROM ability; ALTER TABLE ability AUTO_INCREMENT =1;"
+    );
+
+    // 🔹 Preparar los valores para la inserción
+    const values = validAbilities.map((ability) => [
+      ability.name,
+      ability.shortDesc ? ability.shortDesc : ability.desc,
+    ]);
+
+    // 🔹 Insertar las habilidades en la base de datos si hay datos válidos
+    if (values.length > 0) {
+      await connection.query(
+        "INSERT INTO ability (name, description) VALUES ?",
+        [values]
+      );
+    }
+
+    // 🔹 Liberar la conexión
+    connection.release();
+
+    return { message: "✅ Tabla ability rellenada correctamente." };
+  } catch (error) {
+    return { error: `❌ Error al llenar la tabla ability: ${error.message}` };
+  }
+}
+
+async function fillTypeTable() {
+  try {
+    // 🔹 Obtener todos los ítems disponibles y filtrar los válidos
+    const allTypes = Dex.types.all();
+
+    const validTypes = allTypes.filter((type) => !type.isNonstandard);
+
+    // 🔹 Obtener conexión a la base de datos
+    const connection = await pool2.getConnection();
+
+    // 🔹 Limpiar la tabla antes de insertar nuevos datos
+    await connection.query(
+      "DELETE FROM type; ALTER TABLE type AUTO_INCREMENT =1;"
+    );
+
+    console.log(allTypes);
+
+    // 🔹 Preparar los valores para la inserción
+    const values = validTypes.map((type) => [type.name]);
+
+    // 🔹 Insertar las habilidades en la base de datos si hay datos válidos
+    if (values.length > 0) {
+      await connection.query("INSERT INTO type (name) VALUES ?", [values]);
+    }
+
+    // 🔹 Liberar la conexión
+    connection.release();
+
+    return { message: "✅ Tabla type rellenada correctamente." };
+  } catch (error) {
+    return { error: `❌ Error al llenar la tabla type: ${error.message}` };
+  }
+}
+
+async function fillTypeEffectivenessTable() {
+  try {
+    const allTypes = Dex.types.all();
+    const validTypes = allTypes.filter((type) => !type.isNonstandard);
+
+    const connection = await pool2.getConnection();
+    await connection.query("DELETE FROM type_effectiveness");
+
+    const [typeRows] = await connection.query("SELECT id, name FROM type");
+    const typeMap = typeRows.reduce((acc, row) => {
+      acc[row.name.toLowerCase()] = row.id;
+      return acc;
+    }, {});
+
+    const damageMultiplierMap = {
+      0: 1,
+      1: 2,
+      2: 0.5,
+      3: 0,
+    };
+
+    let values = [];
+
+    validTypes.forEach((attackerType) => {
+      const attackerId = typeMap[attackerType.name.toLowerCase()];
+      if (!attackerId) return;
+
+      validTypes.forEach((defenderType) => {
+        const defenderId = typeMap[defenderType.name.toLowerCase()];
+        if (!defenderId) return;
+
+        const damageCode = defenderType.damageTaken[attackerType.name] ?? 0;
+        const multiplier = damageMultiplierMap[damageCode] ?? 1;
+
+        values.push([attackerId, defenderId, multiplier]);
+      });
+    });
+
+    if (values.length > 0) {
+      await connection.query(
+        "INSERT INTO type_effectiveness (attacker_type_id, defender_type_id, multiplier) VALUES ?",
+        [values]
+      );
+    }
+
+    connection.release();
+    return { message: "✅ Tabla type_effectiveness rellenada correctamente." };
+  } catch (error) {
+    return {
+      error: `❌ Error al llenar la tabla type_effectiveness: ${error.message}`,
+    };
   }
 }
 
@@ -163,4 +293,7 @@ module.exports = {
   registerUser,
   createDatabase,
   fillItemTable,
+  fillAbilityTable,
+  fillTypeTable,
+  fillTypeEffectivenessTable,
 };
