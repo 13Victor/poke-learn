@@ -9,46 +9,42 @@ const {
 
 const router = express.Router();
 
-/* Ruta para crear la base de datos y sus tablas */
+// Función genérica para manejar acciones de la base de datos
+const handleDatabaseAction = async (action, res) => {
+  try {
+    const result = await action();
+    if (result.error) {
+      return res.status(500).json({ message: result.error });
+    }
+    res.json({ message: result.message });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Ruta para crear la base de datos y sus tablas
 router.post("/create-db", async (req, res) => {
-  const result = await createDatabase();
-  if (result.error) {
-    return res.status(500).json({ message: result.error });
-  }
-  res.json({ message: result.message });
+  await handleDatabaseAction(createDatabase, res);
 });
 
-/* Ruta para llenar la tabla item */
+// Ruta para llenar la tabla item
 router.post("/fill-db/item", async (req, res) => {
-  const result = await fillItemTable();
-  if (result.error) {
-    return res.status(500).json({ message: result.error });
-  }
-  res.json({ message: result.message });
+  await handleDatabaseAction(fillItemTable, res);
 });
 
+// Ruta para llenar la tabla ability
 router.post("/fill-db/ability", async (req, res) => {
-  const result = await fillAbilityTable();
-  if (result.error) {
-    return res.status(500).json({ message: result.error });
-  }
-  res.json({ message: result.message });
+  await handleDatabaseAction(fillAbilityTable, res);
 });
 
+// Ruta para llenar la tabla type
 router.post("/fill-db/type", async (req, res) => {
-  const result = await fillTypeTable();
-  if (result.error) {
-    return res.status(500).json({ message: result.error });
-  }
-  res.json({ message: result.message });
+  await handleDatabaseAction(fillTypeTable, res);
 });
 
+// Ruta para llenar la tabla typeEffectiveness
 router.post("/fill-db/typeEffectiveness", async (req, res) => {
-  const result = await fillTypeEffectivenessTable();
-  if (result.error) {
-    return res.status(500).json({ message: result.error });
-  }
-  res.json({ message: result.message });
+  await handleDatabaseAction(fillTypeEffectivenessTable, res);
 });
 
 module.exports = router;

@@ -41,6 +41,17 @@ function getRandomProfilePicture() {
   }
 }
 
+// 📌 Función genérica para manejar operaciones con la base de datos
+async function withConnection(callback) {
+  const connection = await pool2.getConnection();
+  try {
+    const result = await callback(connection);
+    return result;
+  } finally {
+    connection.release();
+  }
+}
+
 // 📌 Autentica un usuario comparando email/user_name y contraseña
 async function authenticateUser(emailOrUserName, password) {
   const query = `SELECT id, email, user_name, password, profile_picture FROM user WHERE email = ? OR user_name = ?`;
@@ -102,189 +113,132 @@ async function registerUser(email, password, user_name) {
 
 // 📌 Crea la base de datos y sus tablas
 async function createDatabase() {
-  try {
+  return withConnection(async (connection) => {
     const sqlPath = path.join(__dirname, "../pokelearn.sql"); // Archivo con las sentencias SQL
     const sql = fs.readFileSync(sqlPath, "utf8"); // Leer el archivo SQL
-
-    const connection = await pool2.getConnection();
     await connection.query(sql);
-    connection.release();
-
     return { message: "Base de datos creada correctamente." };
-  } catch (error) {
+  }).catch((error) => {
     return { error: `Error al crear la base de datos: ${error.message}` };
-  }
+  });
 }
 
-// 📌 Rellenar la base de datos
-async function fillItemTable() {
-  try {
-    // 🔹 Obtener todos los ítems disponibles y filtrar los válidos
-    const allItems = Dex.items.all();
-
-    const validItems = allItems.filter(
-      (item) =>
-        !item.isNonstandard && item.gen < 9 && !item.isPokeball && !item.isGem
-    );
-
-    // 🔹 Obtener conexión a la base de datos
-    const connection = await pool2.getConnection();
-
-    // 🔹 Limpiar la tabla antes de insertar nuevos datos
+// 📌 Función genérica para llenar tablas
+async function fillTable(tableName, data, mapData, insertQuery) {
+  return withConnection(async (connection) => {
+    // Limpiar la tabla antes de insertar nuevos datos
     await connection.query(
-      "DELETE FROM item; ALTER TABLE item AUTO_INCREMENT =1;"
+      `DELETE FROM ${tableName}; ALTER TABLE ${tableName} AUTO_INCREMENT =1;`
     );
 
-    // 🔹 Preparar los valores para la inserción
-    const values = validItems.map((item) => [
-      item.name,
-      item.shortDesc ? item.shortDesc : item.desc,
-      item.spritenum,
-    ]);
+    // Preparar los valores para la inserción
+    const values = data.map(mapData);
 
-    // 🔹 Insertar los ítems en la base de datos si hay datos válidos
+    // Insertar los datos en la base de datos si hay datos válidos
     if (values.length > 0) {
-      await connection.query(
-        "INSERT INTO item (name, description, sprite_num) VALUES ?",
-        [values]
-      );
+      await connection.query(insertQuery, [values]);
     }
 
-    // 🔹 Liberar la conexión
-    connection.release();
-
-    return { message: "✅ Tabla item rellenada correctamente." };
-  } catch (error) {
-    return { error: `❌ Error al llenar la tabla item: ${error.message}` };
-  }
-}
-
-async function fillAbilityTable() {
-  try {
-    // 🔹 Obtener todos los ítems disponibles y filtrar los válidos
-    const allAbilities = Dex.abilities.all();
-
-    const validAbilities = allAbilities.filter(
-      (ability) => !ability.isNonstandard
-    );
-
-    // 🔹 Obtener conexión a la base de datos
-    const connection = await pool2.getConnection();
-
-    // 🔹 Limpiar la tabla antes de insertar nuevos datos
-    await connection.query(
-      "DELETE FROM ability; ALTER TABLE ability AUTO_INCREMENT =1;"
-    );
-
-    // 🔹 Preparar los valores para la inserción
-    const values = validAbilities.map((ability) => [
-      ability.name,
-      ability.shortDesc ? ability.shortDesc : ability.desc,
-    ]);
-
-    // 🔹 Insertar las habilidades en la base de datos si hay datos válidos
-    if (values.length > 0) {
-      await connection.query(
-        "INSERT INTO ability (name, description) VALUES ?",
-        [values]
-      );
-    }
-
-    // 🔹 Liberar la conexión
-    connection.release();
-
-    return { message: "✅ Tabla ability rellenada correctamente." };
-  } catch (error) {
-    return { error: `❌ Error al llenar la tabla ability: ${error.message}` };
-  }
-}
-
-async function fillTypeTable() {
-  try {
-    // 🔹 Obtener todos los ítems disponibles y filtrar los válidos
-    const allTypes = Dex.types.all();
-
-    const validTypes = allTypes.filter((type) => !type.isNonstandard);
-
-    // 🔹 Obtener conexión a la base de datos
-    const connection = await pool2.getConnection();
-
-    // 🔹 Limpiar la tabla antes de insertar nuevos datos
-    await connection.query(
-      "DELETE FROM type; ALTER TABLE type AUTO_INCREMENT =1;"
-    );
-
-    console.log(allTypes);
-
-    // 🔹 Preparar los valores para la inserción
-    const values = validTypes.map((type) => [type.name]);
-
-    // 🔹 Insertar las habilidades en la base de datos si hay datos válidos
-    if (values.length > 0) {
-      await connection.query("INSERT INTO type (name) VALUES ?", [values]);
-    }
-
-    // 🔹 Liberar la conexión
-    connection.release();
-
-    return { message: "✅ Tabla type rellenada correctamente." };
-  } catch (error) {
-    return { error: `❌ Error al llenar la tabla type: ${error.message}` };
-  }
-}
-
-async function fillTypeEffectivenessTable() {
-  try {
-    const allTypes = Dex.types.all();
-    const validTypes = allTypes.filter((type) => !type.isNonstandard);
-
-    const connection = await pool2.getConnection();
-    await connection.query("DELETE FROM type_effectiveness");
-
-    const [typeRows] = await connection.query("SELECT id, name FROM type");
-    const typeMap = typeRows.reduce((acc, row) => {
-      acc[row.name.toLowerCase()] = row.id;
-      return acc;
-    }, {});
-
-    const damageMultiplierMap = {
-      0: 1,
-      1: 2,
-      2: 0.5,
-      3: 0,
-    };
-
-    let values = [];
-
-    validTypes.forEach((attackerType) => {
-      const attackerId = typeMap[attackerType.name.toLowerCase()];
-      if (!attackerId) return;
-
-      validTypes.forEach((defenderType) => {
-        const defenderId = typeMap[defenderType.name.toLowerCase()];
-        if (!defenderId) return;
-
-        const damageCode = defenderType.damageTaken[attackerType.name] ?? 0;
-        const multiplier = damageMultiplierMap[damageCode] ?? 1;
-
-        values.push([attackerId, defenderId, multiplier]);
-      });
-    });
-
-    if (values.length > 0) {
-      await connection.query(
-        "INSERT INTO type_effectiveness (attacker_type_id, defender_type_id, multiplier) VALUES ?",
-        [values]
-      );
-    }
-
-    connection.release();
-    return { message: "✅ Tabla type_effectiveness rellenada correctamente." };
-  } catch (error) {
+    return { message: `✅ Tabla ${tableName} rellenada correctamente.` };
+  }).catch((error) => {
     return {
-      error: `❌ Error al llenar la tabla type_effectiveness: ${error.message}`,
+      error: `❌ Error al llenar la tabla ${tableName}: ${error.message}`,
     };
-  }
+  });
+}
+
+// 📌 Rellenar la tabla item
+async function fillItemTable() {
+  const allItems = Dex.items.all();
+  const validItems = allItems.filter(
+    (item) =>
+      !item.isNonstandard && item.gen < 9 && !item.isPokeball && !item.isGem
+  );
+
+  return fillTable(
+    "item",
+    validItems,
+    (item) => [item.name, item.shortDesc || item.desc, item.spritenum],
+    "INSERT INTO item (name, description, sprite_num) VALUES ?"
+  );
+}
+
+// 📌 Rellenar la tabla ability
+async function fillAbilityTable() {
+  const allAbilities = Dex.abilities.all();
+  const validAbilities = allAbilities.filter(
+    (ability) => !ability.isNonstandard
+  );
+
+  return fillTable(
+    "ability",
+    validAbilities,
+    (ability) => [ability.name, ability.shortDesc || ability.desc],
+    "INSERT INTO ability (name, description) VALUES ?"
+  );
+}
+
+// 📌 Rellenar la tabla type
+async function fillTypeTable() {
+  const allTypes = Dex.types.all();
+  const validTypes = allTypes.filter((type) => !type.isNonstandard);
+
+  return fillTable(
+    "type",
+    validTypes,
+    (type) => [type.name],
+    "INSERT INTO type (name) VALUES ?"
+  );
+}
+
+// 📌 Rellenar la tabla type_effectiveness
+async function fillTypeEffectivenessTable() {
+  const allTypes = Dex.types.all();
+  const validTypes = allTypes.filter((type) => !type.isNonstandard);
+
+  // Obtener los IDs de los tipos desde la base de datos
+  const typeRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, name FROM type");
+    return rows;
+  });
+
+  // Crear un mapa de nombres de tipos a IDs
+  const typeMap = typeRows.reduce((acc, row) => {
+    acc[row.name.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  // Mapa de multiplicadores de daño
+  const damageMultiplierMap = {
+    0: 1,
+    1: 2,
+    2: 0.5,
+    3: 0,
+  };
+
+  // Generar los valores para la inserción
+  const values = [];
+  validTypes.forEach((attackerType) => {
+    const attackerId = typeMap[attackerType.name.toLowerCase()];
+    if (!attackerId) return;
+
+    validTypes.forEach((defenderType) => {
+      const defenderId = typeMap[defenderType.name.toLowerCase()];
+      if (!defenderId) return;
+
+      const damageCode = defenderType.damageTaken[attackerType.name] ?? 0;
+      const multiplier = damageMultiplierMap[damageCode] ?? 1;
+      values.push([attackerId, defenderId, multiplier]);
+    });
+  });
+
+  // Usar la función fillTable para insertar los valores
+  return fillTable(
+    "type_effectiveness",
+    values,
+    (value) => value, // Los valores ya están en el formato correcto
+    "INSERT INTO type_effectiveness (attacker_type_id, defender_type_id, multiplier) VALUES ?"
+  );
 }
 
 module.exports = {
