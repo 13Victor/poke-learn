@@ -241,6 +241,42 @@ async function fillTypeEffectivenessTable() {
   );
 }
 
+async function fillPokemonTable() {
+  try {
+    const allPokemons = Dex.species.all();
+
+    // 🔹 Filtrar solo los Pokémon con num_pokedex > 0
+    const validPokemons = allPokemons.filter((pokemon) => pokemon.num > 0);
+
+    return fillTable(
+      "pokemon",
+      validPokemons,
+      (pokemon) => [
+        pokemon.num, // num_pokedex
+        pokemon.gen, // generation
+        pokemon.name, // name
+        pokemon.heightm, // height (dm)
+        pokemon.weightkg, // weight (hg)
+        null, // sprite_small_url
+        null, // sprite_default_url
+        null, // sprite_gif_url
+        null, // audio
+        pokemon.baseStats.hp || 0, // base_hp
+        pokemon.baseStats.atk || 0, // base_atk
+        pokemon.baseStats.def || 0, // base_def
+        pokemon.baseStats.spa || 0, // base_spatk
+        pokemon.baseStats.spd || 0, // base_spdef
+        pokemon.baseStats.spe || 0, // base_speed
+      ],
+      `INSERT INTO pokemon 
+        (num_pokedex, generation, name, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
+        VALUES ?`
+    );
+  } catch (error) {
+    console.error("❌ Error al llenar la tabla pokemon:", error.message);
+  }
+}
+
 module.exports = {
   authenticateUser,
   isUserRegistered,
@@ -250,4 +286,5 @@ module.exports = {
   fillAbilityTable,
   fillTypeTable,
   fillTypeEffectivenessTable,
+  fillPokemonTable,
 };

@@ -50,6 +50,11 @@ function AdminPanel() {
         >
           Rellenar tabla typeEffectiveness
         </button>
+        <button
+          onClick={() => handleAction("fill-db/pokemon", "Tabla pokemon rellenada.")}
+        >
+          Rellenar tabla pokemon
+        </button>
       </div>
       {error && <p style={{ color: "red" }}>{error}</p>}
       {success && <p style={{ color: "green" }}>{success}</p>}

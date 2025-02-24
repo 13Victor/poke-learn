@@ -5,6 +5,7 @@ const {
   fillAbilityTable,
   fillTypeTable,
   fillTypeEffectivenessTable,
+  fillPokemonTable,
 } = require("../database/db");
 
 const router = express.Router();
@@ -45,6 +46,11 @@ router.post("/fill-db/type", async (req, res) => {
 // Ruta para llenar la tabla typeEffectiveness
 router.post("/fill-db/typeEffectiveness", async (req, res) => {
   await handleDatabaseAction(fillTypeEffectivenessTable, res);
+});
+
+// Ruta para llenar la tabla typeEffectiveness
+router.post("/fill-db/pokemon", async (req, res) => {
+  await handleDatabaseAction(fillPokemonTable, res);
 });
 
 module.exports = router;
