@@ -76,10 +76,10 @@ CREATE TABLE `move` (
     `power` TINYINT UNSIGNED,
     `accuracy` TINYINT UNSIGNED,
     `pp` TINYINT UNSIGNED NOT NULL,
-    `category` ENUM('physical', 'special', 'status') NOT NULL,
+    `category` VARCHAR(255) NOT NULL,
     `effect` TEXT NOT NULL,
     `target` VARCHAR(255) NOT NULL,
-    `priority` TINYINT NOT NULL,
+    `priority` INT NOT NULL,
     FOREIGN KEY (`type_id`) REFERENCES `type`(`id`)
 );
 

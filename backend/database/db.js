@@ -4,6 +4,7 @@ const mysql = require("mysql2");
 const mysql2 = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const { Dex } = require("pokemon-showdown");
+const { Learnsets } = require("./learnsets.js");
 
 require("dotenv").config();
 
@@ -241,6 +242,7 @@ async function fillTypeEffectivenessTable() {
   );
 }
 
+// 📌 Rellenar la tabla pokemon
 async function fillPokemonTable() {
   try {
     const allPokemons = Dex.species.all();
@@ -248,25 +250,28 @@ async function fillPokemonTable() {
     // 🔹 Filtrar solo los Pokémon con num_pokedex > 0
     const validPokemons = allPokemons.filter((pokemon) => pokemon.num > 0);
 
+    const pikachuLearnset = Dex.learnsets.get("pikachu");
+    console.log(pikachuLearnset);
+
     return fillTable(
       "pokemon",
       validPokemons,
       (pokemon) => [
-        pokemon.num, // num_pokedex
-        pokemon.gen, // generation
-        pokemon.name, // name
-        pokemon.heightm, // height (dm)
-        pokemon.weightkg, // weight (hg)
-        null, // sprite_small_url
-        null, // sprite_default_url
-        null, // sprite_gif_url
-        null, // audio
-        pokemon.baseStats.hp || 0, // base_hp
-        pokemon.baseStats.atk || 0, // base_atk
-        pokemon.baseStats.def || 0, // base_def
-        pokemon.baseStats.spa || 0, // base_spatk
-        pokemon.baseStats.spd || 0, // base_spdef
-        pokemon.baseStats.spe || 0, // base_speed
+        pokemon.num,
+        pokemon.gen,
+        pokemon.name,
+        pokemon.heightm,
+        pokemon.weightkg,
+        null,
+        null,
+        null,
+        null,
+        pokemon.baseStats.hp || 0,
+        pokemon.baseStats.atk || 0,
+        pokemon.baseStats.def || 0,
+        pokemon.baseStats.spa || 0,
+        pokemon.baseStats.spd || 0,
+        pokemon.baseStats.spe || 0,
       ],
       `INSERT INTO pokemon 
         (num_pokedex, generation, name, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
@@ -275,6 +280,114 @@ async function fillPokemonTable() {
   } catch (error) {
     console.error("❌ Error al llenar la tabla pokemon:", error.message);
   }
+}
+
+// 📌 Rellenar la tabla move
+async function fillMoveTable() {
+  const allMoves = Dex.moves.all();
+  const validMoves = allMoves.filter((move) => !move.isNonstandard);
+
+  // Obtener los IDs de los tipos desde la base de datos
+  const typeRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, name FROM type");
+    return rows;
+  });
+
+  // Crear un mapa de nombres de tipos a IDs
+  const typeMap = typeRows.reduce((acc, row) => {
+    acc[row.name.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  // Generar los valores para la inserción
+  const values = [];
+  validMoves.forEach((move) => {
+    const typeId = typeMap[move.type.toLowerCase()] || null;
+
+    if (!typeId) {
+      console.warn(
+        `⚠️ Tipo no encontrado para movimiento: ${move.name} (${move.type})`
+      );
+      return;
+    }
+
+    values.push([
+      move.name, // name
+      typeId, // type_id
+      move.basePower || null, // power
+      move.accuracy === true ? 100 : move.accuracy || null, // accuracy
+      move.pp || 0, // pp
+      move.category || "Unknown", // category
+      move.shortDesc || move.desc || "", // effect
+      move.target || "Unknown", // target
+      move.priority || 0, // priority
+    ]);
+  });
+
+  // Usar la función fillTable para insertar los valores
+  return fillTable(
+    "move",
+    values,
+    (value) => value, // Los valores ya están en el formato correcto
+    "INSERT INTO move (name, type_id, power, accuracy, pp, category, effect, target, priority) VALUES ?"
+  );
+}
+
+async function fillPokemonMoveTable() {
+  // Obtener los IDs de los Pokémon desde la base de datos
+  const pokemonRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, name FROM pokemon");
+    return rows;
+  });
+
+  // Obtener los IDs de los movimientos desde la base de datos
+  const moveRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, name FROM move");
+    return rows;
+  });
+
+  // Crear mapas de nombres a IDs para una búsqueda eficiente
+  const pokemonMap = pokemonRows.reduce((acc, row) => {
+    acc[row.name.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  const moveMap = moveRows.reduce((acc, row) => {
+    acc[row.name.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  // Generar los valores para la inserción
+  const values = [];
+  Object.entries(Learnsets).forEach(([pokemonName, learnsetData]) => {
+    const pokemonId = pokemonMap[pokemonName.toLowerCase()];
+    if (!pokemonId) {
+      console.warn(
+        `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
+      );
+      return;
+    }
+
+    Object.keys(learnsetData.learnset).forEach((moveName) => {
+      const moveId = moveMap[moveName.toLowerCase()];
+      if (!moveId) {
+        console.warn(
+          `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
+        );
+        return;
+      }
+
+      values.push([pokemonId, moveId]);
+    });
+  });
+
+  // Usar la función fillTable para insertar los valores
+  return fillTable(
+    "pokemonMove",
+    values,
+    (value) => value, // Los valores ya están en el formato correcto
+    "INSERT INTO pokemonMove (pokemon_id, move_id) VALUES ?"
+  );
 }
 
 module.exports = {
@@ -287,4 +400,6 @@ module.exports = {
   fillTypeTable,
   fillTypeEffectivenessTable,
   fillPokemonTable,
+  fillMoveTable,
+  fillPokemonMoveTable,
 };
