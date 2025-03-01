@@ -4,11 +4,11 @@ const mysql = require("mysql2");
 const mysql2 = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const { Dex } = require("pokemon-showdown");
-const { Learnsets } = require("./learnsets.js");
+const { Learnsets } = require("../data/learnsets.js");
+const { Pokedex } = require("../data/pokedex.js");
 
 require("dotenv").config();
 
-// Configuración de la conexión a MySQL
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -28,7 +28,6 @@ const pool2 = mysql2.createPool({
   multipleStatements: true,
 });
 
-// 📌 Obtiene una imagen aleatoria de la carpeta "/uploads"
 function getRandomProfilePicture() {
   const folderPath = path.join(__dirname, "../public/profile_pictures"); // Ruta de imágenes
 
@@ -42,7 +41,6 @@ function getRandomProfilePicture() {
   }
 }
 
-// 📌 Función genérica para manejar operaciones con la base de datos
 async function withConnection(callback) {
   const connection = await pool2.getConnection();
   try {
@@ -53,7 +51,6 @@ async function withConnection(callback) {
   }
 }
 
-// 📌 Autentica un usuario comparando email/user_name y contraseña
 async function authenticateUser(emailOrUserName, password) {
   const query = `SELECT id, email, user_name, password, profile_picture FROM user WHERE email = ? OR user_name = ?`;
   const db = pool.promise();
@@ -74,7 +71,6 @@ async function authenticateUser(emailOrUserName, password) {
   return { success: true, user };
 }
 
-// 📌 Verifica si el email o el nombre de usuario ya existen
 async function isUserRegistered(email, user_name) {
   const query = `SELECT email, user_name FROM user WHERE email = ? OR user_name = ?`;
   const db = pool.promise();
@@ -93,7 +89,6 @@ async function isUserRegistered(email, user_name) {
   return { success: true };
 }
 
-// 📌 Registra un usuario en la base de datos con imagen de perfil aleatoria
 async function registerUser(email, password, user_name) {
   try {
     const profile_picture = getRandomProfilePicture(); // Imagen aleatoria o default
@@ -112,7 +107,6 @@ async function registerUser(email, password, user_name) {
   }
 }
 
-// 📌 Crea la base de datos y sus tablas
 async function createDatabase() {
   return withConnection(async (connection) => {
     const sqlPath = path.join(__dirname, "../pokelearn.sql"); // Archivo con las sentencias SQL
@@ -124,7 +118,6 @@ async function createDatabase() {
   });
 }
 
-// 📌 Función genérica para llenar tablas
 async function fillTable(tableName, data, mapData, insertQuery) {
   return withConnection(async (connection) => {
     // Limpiar la tabla antes de insertar nuevos datos
@@ -148,7 +141,6 @@ async function fillTable(tableName, data, mapData, insertQuery) {
   });
 }
 
-// 📌 Rellenar la tabla item
 async function fillItemTable() {
   const allItems = Dex.items.all();
   const validItems = allItems.filter(
@@ -164,7 +156,6 @@ async function fillItemTable() {
   );
 }
 
-// 📌 Rellenar la tabla ability
 async function fillAbilityTable() {
   const allAbilities = Dex.abilities.all();
   const validAbilities = allAbilities.filter(
@@ -179,7 +170,6 @@ async function fillAbilityTable() {
   );
 }
 
-// 📌 Rellenar la tabla type
 async function fillTypeTable() {
   const allTypes = Dex.types.all();
   const validTypes = allTypes.filter((type) => !type.isNonstandard);
@@ -192,7 +182,6 @@ async function fillTypeTable() {
   );
 }
 
-// 📌 Rellenar la tabla type_effectiveness
 async function fillTypeEffectivenessTable() {
   const allTypes = Dex.types.all();
   const validTypes = allTypes.filter((type) => !type.isNonstandard);
@@ -242,28 +231,24 @@ async function fillTypeEffectivenessTable() {
   );
 }
 
-// 📌 Rellenar la tabla pokemon
 async function fillPokemonTable() {
   try {
-    const allPokemons = Dex.species.all();
+    const allPokemons = Object.values(Pokedex);
 
-    // 🔹 Filtrar solo los Pokémon con num_pokedex > 0
+    console.log(allPokemons);
+
     const validPokemons = allPokemons.filter((pokemon) => pokemon.num > 0);
-
-    const pikachuLearnset = Dex.learnsets.get("pikachu");
-    console.log(pikachuLearnset);
 
     return fillTable(
       "pokemon",
       validPokemons,
       (pokemon) => [
         pokemon.num,
-        pokemon.gen,
         pokemon.name,
         pokemon.heightm,
         pokemon.weightkg,
         null,
-        null,
+        `${String(pokemon.num).padStart(4, "0")}.png`,
         null,
         null,
         pokemon.baseStats.hp || 0,
@@ -274,7 +259,7 @@ async function fillPokemonTable() {
         pokemon.baseStats.spe || 0,
       ],
       `INSERT INTO pokemon 
-        (num_pokedex, generation, name, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
+        (num_pokedex, name, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
         VALUES ?`
     );
   } catch (error) {
@@ -282,7 +267,6 @@ async function fillPokemonTable() {
   }
 }
 
-// 📌 Rellenar la tabla move
 async function fillMoveTable() {
   const allMoves = Dex.moves.all();
   const validMoves = allMoves.filter((move) => !move.isNonstandard);

@@ -23,7 +23,6 @@ CREATE TABLE `team` (
 CREATE TABLE `pokemon` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `num_pokedex` INT UNSIGNED NOT NULL,
-    `generation` TINYINT UNSIGNED NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `height` DECIMAL(10,1) NOT NULL,
     `weight` DECIMAL(10,1) NOT NULL,

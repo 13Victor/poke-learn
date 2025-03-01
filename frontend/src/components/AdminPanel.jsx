@@ -27,9 +27,10 @@ function AdminPanel() {
     }
   };
 
+
   return (
     <div>
-      <h2>Admin Panel</h2>
+    <h2>Admin Panel</h2>
       <p>Esta es una página protegida. Solo los usuarios autenticados pueden verla.</p>
       <div>
         <h4>Acciones base de datos</h4>
@@ -64,6 +65,11 @@ function AdminPanel() {
           onClick={() => handleAction("fill-db/pokemonMove", "Tabla pokemonMove rellenada.")}
         >
           Rellenar tabla pokemonMove
+        </button>
+        <button
+          onClick={() => handleAction("fill-db/sprites-hd", "Imagenes descargadas")}
+        >
+          Obtener imagenes
         </button>
       </div>
       {error && <p style={{ color: "red" }}>{error}</p>}
