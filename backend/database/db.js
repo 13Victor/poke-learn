@@ -235,8 +235,6 @@ async function fillPokemonTable() {
   try {
     const allPokemons = Object.values(Pokedex);
 
-    console.log(allPokemons);
-
     const validPokemons = allPokemons.filter((pokemon) => pokemon.num > 0);
 
     return fillTable(
@@ -297,6 +295,7 @@ async function fillMoveTable() {
 
     values.push([
       move.name, // name
+      move.id,
       typeId, // type_id
       move.basePower || null, // power
       move.accuracy === true ? 100 : move.accuracy || null, // accuracy
@@ -326,7 +325,7 @@ async function fillPokemonMoveTable() {
 
   // Obtener los IDs de los movimientos desde la base de datos
   const moveRows = await withConnection(async (connection) => {
-    const [rows] = await connection.query("SELECT id, name FROM move");
+    const [rows] = await connection.query("SELECT id, nameId FROM move");
     return rows;
   });
 
@@ -337,7 +336,7 @@ async function fillPokemonMoveTable() {
   }, {});
 
   const moveMap = moveRows.reduce((acc, row) => {
-    acc[row.name.toLowerCase()] = row.id;
+    acc[row.nameId.toLowerCase()] = row.id;
     return acc;
   }, {});
 
@@ -345,21 +344,24 @@ async function fillPokemonMoveTable() {
   const values = [];
   Object.entries(Learnsets).forEach(([pokemonName, learnsetData]) => {
     const pokemonId = pokemonMap[pokemonName.toLowerCase()];
-    if (!pokemonId) {
-      console.warn(
-        `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
-      );
-      return;
-    }
+    // Hay pokemons que no están en la base de datos porque son ilegales(de evento), por lo que no se insertan
+    // if (!pokemonId) {
+    //   console.warn(
+    //     `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
+    //   );
+    //   return;
+    // }
 
     Object.keys(learnsetData.learnset).forEach((moveName) => {
-      const moveId = moveMap[moveName.toLowerCase()];
-      if (!moveId) {
-        console.warn(
-          `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
-        );
-        return;
-      }
+      const moveId = moveMap[moveName.toLowerCase().trim().replace("-", "")];
+
+      // Hay ataques que no están en la base de datos porque son ilegales, por lo que no se insertan
+      //   if (!moveId) {
+      //     console.warn(
+      //       `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
+      //     );
+      //     return;
+      //   }
 
       values.push([pokemonId, moveId]);
     });
