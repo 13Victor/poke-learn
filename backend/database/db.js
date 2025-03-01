@@ -312,7 +312,7 @@ async function fillMoveTable() {
     "move",
     values,
     (value) => value, // Los valores ya están en el formato correcto
-    "INSERT INTO move (name, type_id, power, accuracy, pp, category, effect, target, priority) VALUES ?"
+    "INSERT INTO move (name, nameId, type_id, power, accuracy, pp, category, effect, target, priority) VALUES ?"
   );
 }
 
@@ -345,23 +345,23 @@ async function fillPokemonMoveTable() {
   Object.entries(Learnsets).forEach(([pokemonName, learnsetData]) => {
     const pokemonId = pokemonMap[pokemonName.toLowerCase()];
     // Hay pokemons que no están en la base de datos porque son ilegales(de evento), por lo que no se insertan
-    // if (!pokemonId) {
-    //   console.warn(
-    //     `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
-    //   );
-    //   return;
-    // }
+    if (!pokemonId) {
+      //   console.warn(
+      //     `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
+      //   );
+      return;
+    }
 
     Object.keys(learnsetData.learnset).forEach((moveName) => {
       const moveId = moveMap[moveName.toLowerCase().trim().replace("-", "")];
 
       // Hay ataques que no están en la base de datos porque son ilegales, por lo que no se insertan
-      //   if (!moveId) {
-      //     console.warn(
-      //       `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
-      //     );
-      //     return;
-      //   }
+      if (!moveId) {
+        // console.warn(
+        //   `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
+        // );
+        return;
+      }
 
       values.push([pokemonId, moveId]);
     });
