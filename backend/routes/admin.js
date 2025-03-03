@@ -8,7 +8,7 @@ const {
   fillPokemonTable,
   fillMoveTable,
   fillPokemonMoveTable,
-  descargarImagenes,
+  fillPokemonAbilityTable,
 } = require("../database/db");
 
 const router = express.Router();
@@ -64,8 +64,8 @@ router.post("/fill-db/pokemonMove", async (req, res) => {
   await handleDatabaseAction(fillPokemonMoveTable, res);
 });
 
-router.post("/fill-db/sprites-hd", async (req, res) => {
-  await handleDatabaseAction(descargarImagenes, res);
+router.post("/fill-db/pokemonAbility", async (req, res) => {
+  await handleDatabaseAction(fillPokemonAbilityTable, res);
 });
 
 module.exports = router;

@@ -67,9 +67,9 @@ function AdminPanel() {
           Rellenar tabla pokemonMove
         </button>
         <button
-          onClick={() => handleAction("fill-db/sprites-hd", "Imagenes descargadas")}
+          onClick={() => handleAction("fill-db/pokemonAbility", "Tabla pokemonAbility rellenada.")}
         >
-          Obtener imagenes
+          Rellenar tabla pokemonAbility
         </button>
       </div>
       {error && <p style={{ color: "red" }}>{error}</p>}

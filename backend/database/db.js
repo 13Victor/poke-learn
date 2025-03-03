@@ -6,6 +6,8 @@ const bcrypt = require("bcrypt");
 const { Dex } = require("pokemon-showdown");
 const { Learnsets } = require("../data/learnsets.js");
 const { Pokedex } = require("../data/pokedex.js");
+const { Abilities } = require("../data/abilities.js");
+const { AbilitiesText } = require("../data/text/abilities-desc.js");
 
 require("dotenv").config();
 
@@ -157,16 +159,20 @@ async function fillItemTable() {
 }
 
 async function fillAbilityTable() {
-  const allAbilities = Dex.abilities.all();
-  const validAbilities = allAbilities.filter(
-    (ability) => !ability.isNonstandard
-  );
+  const validAbilities = Object.keys(AbilitiesText).map((key) => {
+    const ability = AbilitiesText[key];
+    return {
+      name: ability.name, // Nombre de la habilidad
+      nameId: key, // Nombre en minúsculas
+      description: ability.shortDesc || ability.desc, // Descripción corta o larga
+    };
+  });
 
   return fillTable(
     "ability",
     validAbilities,
-    (ability) => [ability.name, ability.shortDesc || ability.desc],
-    "INSERT INTO ability (name, description) VALUES ?"
+    (ability) => [ability.name, ability.nameId, ability.description],
+    "INSERT INTO ability (name, nameId, description) VALUES ?"
   );
 }
 
@@ -233,9 +239,28 @@ async function fillTypeEffectivenessTable() {
 
 async function fillPokemonTable() {
   try {
-    const allPokemons = Object.values(Pokedex);
-
-    const validPokemons = allPokemons.filter((pokemon) => pokemon.num > 0);
+    const validPokemons = Object.keys(Pokedex)
+      .map((key) => {
+        const pokemon = Pokedex[key];
+        return {
+          num: pokemon.num,
+          name: pokemon.name,
+          nameId: key,
+          height: pokemon.heightm,
+          weight: pokemon.weightkg,
+          spriteSmallUrl: `${String(pokemon.num).padStart(4, "0")}.png`, // Sprite pequeño
+          spriteDefaultUrl: null,
+          spriteGifUrl: null,
+          audio: null,
+          baseHp: pokemon.baseStats.hp || 0,
+          baseAtk: pokemon.baseStats.atk || 0,
+          baseDef: pokemon.baseStats.def || 0,
+          baseSpatk: pokemon.baseStats.spa || 0,
+          baseSpdef: pokemon.baseStats.spd || 0,
+          baseSpeed: pokemon.baseStats.spe || 0,
+        };
+      })
+      .filter((pokemon) => pokemon.num > 0);
 
     return fillTable(
       "pokemon",
@@ -243,21 +268,22 @@ async function fillPokemonTable() {
       (pokemon) => [
         pokemon.num,
         pokemon.name,
-        pokemon.heightm,
-        pokemon.weightkg,
-        null,
-        `${String(pokemon.num).padStart(4, "0")}.png`,
-        null,
-        null,
-        pokemon.baseStats.hp || 0,
-        pokemon.baseStats.atk || 0,
-        pokemon.baseStats.def || 0,
-        pokemon.baseStats.spa || 0,
-        pokemon.baseStats.spd || 0,
-        pokemon.baseStats.spe || 0,
+        pokemon.nameId,
+        pokemon.height,
+        pokemon.weight,
+        pokemon.spriteSmallUrl,
+        pokemon.spriteDefaultUrl,
+        pokemon.spriteGifUrl,
+        pokemon.audio,
+        pokemon.baseHp,
+        pokemon.baseAtk,
+        pokemon.baseDef,
+        pokemon.baseSpatk,
+        pokemon.baseSpdef,
+        pokemon.baseSpeed,
       ],
       `INSERT INTO pokemon 
-        (num_pokedex, name, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
+        (num_pokedex, name, nameId, height, weight, sprite_small_url, sprite_default_url, sprite_gif_url, audio, base_hp, base_atk, base_def, base_spatk, base_spdef, base_speed) 
         VALUES ?`
     );
   } catch (error) {
@@ -376,6 +402,66 @@ async function fillPokemonMoveTable() {
   );
 }
 
+async function fillPokemonAbilityTable() {
+  // Obtener los IDs de los Pokémon desde la base de datos
+  const pokemonRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, name FROM pokemon");
+    return rows;
+  });
+
+  // Obtener los IDs de las habilidades desde la base de datos
+  const abilityRows = await withConnection(async (connection) => {
+    const [rows] = await connection.query("SELECT id, nameId FROM ability");
+    return rows;
+  });
+
+  // Crear mapas para búsqueda rápida
+  const pokemonMap = pokemonRows.reduce((acc, row) => {
+    acc[row.name.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  const abilityMap = abilityRows.reduce((acc, row) => {
+    acc[row.nameId.toLowerCase()] = row.id;
+    return acc;
+  }, {});
+
+  // Generar los valores para la inserción
+  const values = [];
+  Object.values(Pokedex).forEach((pokemon) => {
+    const pokemonId = pokemonMap[pokemon.name.toLowerCase()];
+    if (!pokemonId) {
+      console.warn(
+        `⚠️ Pokémon no encontrado en la base de datos: ${pokemon.name}`
+      );
+      return; // Si no está en la BD, se ignora
+    }
+
+    Object.entries(pokemon.abilities).forEach(([key, abilityName]) => {
+      const abilityId = abilityMap[abilityName.toLowerCase().trim()];
+      if (!abilityId) {
+        console.warn(
+          `⚠️ Habilidad no encontrada en la base de datos: ${abilityName} (Pokémon: ${pokemon.name})`
+        );
+        return; // Si no se encuentra la habilidad en la BD, se ignora
+      }
+
+      const isHidden = key === "H"; // Si la clave es "H", es habilidad oculta
+      values.push([pokemonId, abilityId, isHidden]);
+    });
+  });
+
+  console.log(`✅ Se insertarán ${values.length} registros en pokemonAbility`);
+
+  // Usar la función fillTable para insertar los valores
+  return fillTable(
+    "pokemonAbility",
+    values,
+    (value) => value, // Los valores ya están en el formato correcto
+    "INSERT INTO pokemonAbility (pokemon_id, ability_id, is_hidden) VALUES ?"
+  );
+}
+
 module.exports = {
   authenticateUser,
   isUserRegistered,
@@ -388,4 +474,5 @@ module.exports = {
   fillPokemonTable,
   fillMoveTable,
   fillPokemonMoveTable,
+  fillPokemonAbilityTable,
 };

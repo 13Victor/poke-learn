@@ -24,6 +24,7 @@ CREATE TABLE `pokemon` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `num_pokedex` INT UNSIGNED NOT NULL,
     `name` VARCHAR(255) NOT NULL,
+    `nameId` VARCHAR(255) NOT NULL,
     `height` DECIMAL(10,1) NOT NULL,
     `weight` DECIMAL(10,1) NOT NULL,
     `sprite_small_url` VARCHAR(255) NULL,
@@ -56,6 +57,7 @@ CREATE TABLE `pokemonType` (
 CREATE TABLE `ability` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL UNIQUE,
+    `nameId` VARCHAR(255) NOT NULL UNIQUE,
     `description` TEXT NOT NULL
 );
 
