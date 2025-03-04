@@ -8,6 +8,8 @@ const { Learnsets } = require("../data/learnsets.js");
 const { Pokedex } = require("../data/pokedex.js");
 const { Abilities } = require("../data/abilities.js");
 const { AbilitiesText } = require("../data/text/abilities-desc.js");
+const { Moves } = require("../data/moves.js");
+const { MovesText } = require("../data/text/moves-desc.js");
 
 require("dotenv").config();
 
@@ -292,8 +294,22 @@ async function fillPokemonTable() {
 }
 
 async function fillMoveTable() {
-  const allMoves = Dex.moves.all();
-  const validMoves = allMoves.filter((move) => !move.isNonstandard);
+  // Filtrar los movimientos válidos (sin isNonstandard)
+  const validMoves = Object.entries(Moves)
+    .filter(([_, move]) => move.isNonstandard !== "CAP")
+    .map(([key, move]) => ({
+      name: move.name, // Nombre del movimiento
+      nameId: key, // Identificador interno (ej. "bittermalice")
+      type: move.type, // Tipo del movimiento
+      basePower: move.basePower, // Poder base
+      accuracy: move.accuracy === true ? null : move.accuracy,
+      pp: move.pp || 0, // Puntos de Poder (PP)
+      category: move.category || "Unknown", // Categoría (Físico/Especial/Estado)
+      description: MovesText[key]?.desc || "",
+      short_description: MovesText[key]?.shortDesc || "", // Descripción corta
+      target: move.target || "Unknown", // Objetivo del movimiento
+      priority: move.priority || 0, // Prioridad
+    }));
 
   // Obtener los IDs de los tipos desde la base de datos
   const typeRows = await withConnection(async (connection) => {
@@ -301,97 +317,105 @@ async function fillMoveTable() {
     return rows;
   });
 
-  // Crear un mapa de nombres de tipos a IDs
+  // Crear un mapa de nombres de tipos a sus IDs
   const typeMap = typeRows.reduce((acc, row) => {
     acc[row.name.toLowerCase()] = row.id;
     return acc;
   }, {});
 
   // Generar los valores para la inserción
-  const values = [];
-  validMoves.forEach((move) => {
-    const typeId = typeMap[move.type.toLowerCase()] || null;
+  const values = validMoves
+    .map((move) => {
+      const typeId = typeMap[move.type.toLowerCase()] || null;
 
-    if (!typeId) {
-      console.warn(
-        `⚠️ Tipo no encontrado para movimiento: ${move.name} (${move.type})`
-      );
-      return;
-    }
+      if (!typeId) {
+        console.warn(
+          `⚠️ Tipo no encontrado para movimiento: ${move.name} (${move.type})`
+        );
+        return null; // Ignorar movimientos sin tipo válido
+      }
 
-    values.push([
-      move.name, // name
-      move.id,
-      typeId, // type_id
-      move.basePower || null, // power
-      move.accuracy === true ? 100 : move.accuracy || null, // accuracy
-      move.pp || 0, // pp
-      move.category || "Unknown", // category
-      move.shortDesc || move.desc || "", // effect
-      move.target || "Unknown", // target
-      move.priority || 0, // priority
-    ]);
-  });
+      return [
+        move.name, // name
+        move.nameId, // nameId
+        typeId, // type_id
+        move.basePower, // power
+        move.accuracy, // accuracy
+        move.pp, // pp
+        move.category, // category
+        move.description,
+        move.short_description, // effect (ahora tomado de MovesText)
+        move.target, // target
+        move.priority, // priority
+      ];
+    })
+    .filter(Boolean); // Eliminar valores nulos
+
+  console.log(
+    `✅ Se insertarán ${values.length} movimientos en la base de datos`
+  );
 
   // Usar la función fillTable para insertar los valores
   return fillTable(
     "move",
     values,
     (value) => value, // Los valores ya están en el formato correcto
-    "INSERT INTO move (name, nameId, type_id, power, accuracy, pp, category, effect, target, priority) VALUES ?"
+    "INSERT INTO move (name, nameId, type_id, power, accuracy, pp, category, description, short_description, target, priority) VALUES ?"
   );
 }
 
 async function fillPokemonMoveTable() {
-  // Obtener los IDs de los Pokémon desde la base de datos
+  // Obtener los IDs de los Pokémon desde la base de datos usando nameId
   const pokemonRows = await withConnection(async (connection) => {
-    const [rows] = await connection.query("SELECT id, name FROM pokemon");
+    const [rows] = await connection.query("SELECT id, nameId FROM pokemon");
     return rows;
   });
 
-  // Obtener los IDs de los movimientos desde la base de datos
+  // Obtener los IDs de los movimientos desde la base de datos usando nameId
   const moveRows = await withConnection(async (connection) => {
     const [rows] = await connection.query("SELECT id, nameId FROM move");
     return rows;
   });
 
-  // Crear mapas de nombres a IDs para una búsqueda eficiente
+  // Crear mapas de búsqueda rápida
   const pokemonMap = pokemonRows.reduce((acc, row) => {
-    acc[row.name.toLowerCase()] = row.id;
+    acc[row.nameId] = row.id;
     return acc;
   }, {});
 
   const moveMap = moveRows.reduce((acc, row) => {
-    acc[row.nameId.toLowerCase()] = row.id;
+    acc[row.nameId] = row.id;
     return acc;
   }, {});
 
   // Generar los valores para la inserción
   const values = [];
-  Object.entries(Learnsets).forEach(([pokemonName, learnsetData]) => {
-    const pokemonId = pokemonMap[pokemonName.toLowerCase()];
-    // Hay pokemons que no están en la base de datos porque son ilegales(de evento), por lo que no se insertan
+  Object.entries(Learnsets).forEach(([nameId, learnsetData]) => {
+    if (!learnsetData || !learnsetData.learnset) {
+      console.warn(`⚠️ Invalid learnset data for Pokémon: ${nameId}`);
+      return;
+    }
+
+    const pokemonId = pokemonMap[nameId];
     if (!pokemonId) {
-      //   console.warn(
-      //     `⚠️ Pokémon no encontrado en la base de datos: ${pokemonName}`
-      //   );
+      console.warn(`⚠️ Pokémon no encontrado en la base de datos: ${nameId}`);
       return;
     }
 
     Object.keys(learnsetData.learnset).forEach((moveName) => {
-      const moveId = moveMap[moveName.toLowerCase().trim().replace("-", "")];
-
-      // Hay ataques que no están en la base de datos porque son ilegales, por lo que no se insertan
+      const moveId = moveMap[moveName];
       if (!moveId) {
-        // console.warn(
-        //   `⚠️ Movimiento no encontrado en la base de datos: ${moveName}`
-        // );
+        console.warn(
+          `⚠️ Movimiento no encontrado en la base de datos: ${moveName} (Pokémon: ${nameId})`
+        );
         return;
       }
 
       values.push([pokemonId, moveId]);
     });
   });
+
+  console.log(`✅ Se insertarán ${values.length} registros en pokemonMove`);
 
   // Usar la función fillTable para insertar los valores
   return fillTable(
@@ -403,45 +427,43 @@ async function fillPokemonMoveTable() {
 }
 
 async function fillPokemonAbilityTable() {
-  // Obtener los IDs de los Pokémon desde la base de datos
+  // Obtener los IDs de los Pokémon desde la base de datos usando nameId
   const pokemonRows = await withConnection(async (connection) => {
-    const [rows] = await connection.query("SELECT id, name FROM pokemon");
+    const [rows] = await connection.query("SELECT id, nameId FROM pokemon");
     return rows;
   });
 
-  // Obtener los IDs de las habilidades desde la base de datos
+  // Obtener los IDs de las habilidades desde la base de datos usando name
   const abilityRows = await withConnection(async (connection) => {
-    const [rows] = await connection.query("SELECT id, nameId FROM ability");
+    const [rows] = await connection.query("SELECT id, name FROM ability");
     return rows;
   });
 
   // Crear mapas para búsqueda rápida
   const pokemonMap = pokemonRows.reduce((acc, row) => {
-    acc[row.name.toLowerCase()] = row.id;
+    acc[row.nameId] = row.id;
     return acc;
   }, {});
 
   const abilityMap = abilityRows.reduce((acc, row) => {
-    acc[row.nameId.toLowerCase()] = row.id;
+    acc[row.name] = row.id;
     return acc;
   }, {});
 
   // Generar los valores para la inserción
   const values = [];
-  Object.values(Pokedex).forEach((pokemon) => {
-    const pokemonId = pokemonMap[pokemon.name.toLowerCase()];
+  Object.entries(Pokedex).forEach(([nameId, pokemon]) => {
+    const pokemonId = pokemonMap[nameId];
     if (!pokemonId) {
-      console.warn(
-        `⚠️ Pokémon no encontrado en la base de datos: ${pokemon.name}`
-      );
+      console.warn(`⚠️ Pokémon no encontrado en la base de datos: ${nameId}`);
       return; // Si no está en la BD, se ignora
     }
 
     Object.entries(pokemon.abilities).forEach(([key, abilityName]) => {
-      const abilityId = abilityMap[abilityName.toLowerCase().trim()];
+      const abilityId = abilityMap[abilityName];
       if (!abilityId) {
         console.warn(
-          `⚠️ Habilidad no encontrada en la base de datos: ${abilityName} (Pokémon: ${pokemon.name})`
+          `⚠️ Habilidad no encontrada en la base de datos: ${abilityName} (Pokémon: ${nameId})`
         );
         return; // Si no se encuentra la habilidad en la BD, se ignora
       }
