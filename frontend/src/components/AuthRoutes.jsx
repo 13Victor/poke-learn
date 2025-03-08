@@ -3,6 +3,7 @@ import Login from './Login';
 import Register from './Register';
 import User from './User'
 import AdminPanel from "./AdminPanel";
+import TeamBuilder from "./TeamBuilder";
 
 function AuthRoutes() {
     
@@ -43,6 +44,7 @@ function AuthRoutes() {
             <Route path="/auth/register" element={<AuthRoute><Register /></AuthRoute>} />
             <Route path="/user" element={<PrivateRoute><User /></PrivateRoute>} />
             <Route path="/admin" element={<AdminPanelRoute><AdminPanel /></AdminPanelRoute>} />
+            <Route path="/teambuilder" element={<PrivateRoute><TeamBuilder /></PrivateRoute>} />
         </Routes>
     );
 };

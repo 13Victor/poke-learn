@@ -1,20 +1,15 @@
 import { useState, useEffect } from "react";
 
 const TeamBuilder = () => {
-  const [formats, setFormats] = useState([]);
-  const [selectedFormat, setSelectedFormat] = useState("");
   const [pokedex, setPokedex] = useState({});
   const [formatsData, setFormatsData] = useState({});
   const [filteredPokemon, setFilteredPokemon] = useState([]);
   const [banlist, setBanlist] = useState([]);
 
-  useEffect(() => {
-    // Cargar formatos
-    fetch("http://localhost:5000/data/formats")
-      .then((res) => res.json())
-      .then((data) => setFormats(data.Formats))
-      .catch((err) => console.error("Error cargando formatos:", err));
+  // Formato fijo: [Gen 9] OU
+  const selectedFormat = "[Gen 9] OU";
 
+  useEffect(() => {
     // Cargar Pokédex
     fetch("http://localhost:5000/data/pokedex")
       .then((res) => res.json())
@@ -26,56 +21,46 @@ const TeamBuilder = () => {
       .then((res) => res.json())
       .then((data) => setFormatsData(data.FormatsData))
       .catch((err) => console.error("Error cargando formatos de Pokémon:", err));
+
+    // Cargar la banlist de OU
+    fetch("http://localhost:5000/data/formats")
+      .then((res) => res.json())
+      .then((data) => {
+        const format = data.Formats.find((f) => f.name === selectedFormat);
+        if (format) {
+          setBanlist(format.banlist || []);
+        }
+      })
+      .catch((err) => console.error("Error cargando la banlist:", err));
   }, []);
-
-  // Cuando se elige un formato, obtener la banlist
-  useEffect(() => {
-    if (!selectedFormat || !formats) return;
-
-    // Buscar el formato en la lista de formatos
-    const format = formats.find((f) => f.name === selectedFormat);
-    if (!format) return;
-
-    setBanlist(format.banlist || []);
-  }, [selectedFormat, formats]);
 
   // Filtrar Pokémon según la banlist
   useEffect(() => {
-    if (!selectedFormat || !pokedex || !formatsData) return;
+    if (!pokedex || !formatsData) return;
 
-    // Obtener Pokémon jugables (excluyendo la banlist)
-    const allowedPokemon = Object.keys(pokedex).filter((pokemon) => {
-      return !banlist.includes(pokemon); // Excluir Pokémon baneados
+    const allowedPokemon = Object.keys(pokedex).map((pokemon) => {
+      const tier = formatsData[pokemon]?.tier || "Unknown"; // Obtener tier del Pokémon
+      const isBanned = banlist.includes(pokemon) || banlist.includes(tier); // Verificar si está baneado
+
+      return {
+        name: pokemon,
+        tier: isBanned ? `${tier}/illegal` : tier, // Si está baneado, marcarlo como ilegal
+      };
     });
 
     setFilteredPokemon(allowedPokemon);
-  }, [selectedFormat, pokedex, formatsData, banlist]);
+  }, [pokedex, formatsData, banlist]);
 
   return (
     <div>
-      <h2>Selecciona un Formato</h2>
-      <select
-        value={selectedFormat}
-        onChange={(e) => setSelectedFormat(e.target.value)}
-      >
-        <option value="">-- Selecciona un formato --</option>
-        {formats.map((format) => (
-          <option key={format.name} value={format.name}>
-            {format.name}
-          </option>
+      <h2>Pokémon disponibles en {selectedFormat}</h2>
+      <ul>
+        {filteredPokemon.map((pokemon) => (
+          <li key={pokemon.name}>
+            {pokemon.name} - {pokemon.tier}
+          </li>
         ))}
-      </select>
-
-      {selectedFormat && (
-        <div>
-          <h3>Pokémon disponibles</h3>
-          <ul>
-            {filteredPokemon.map((pokemon) => (
-              <li key={pokemon}>{pokemon}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      </ul>
     </div>
   );
 };
