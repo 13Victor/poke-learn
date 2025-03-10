@@ -1,0 +1,39 @@
+.pokemon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pokemon-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  width: 200px;
+  color: #000;
+  background: #f9f9f9;
+}
+
+.stats ul {
+  list-style: none;
+  padding: 0;
+}
+
+.stats li {
+  font-size: 14px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f4f4f4;
+  color: #000;
+}
