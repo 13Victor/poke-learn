@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 
 const TeamBuilder = () => {
-  const [pokedex, setPokedex] = useState({});
-  const [formatsData, setFormatsData] = useState({});
   const [filteredPokemon, setFilteredPokemon] = useState([]);
 
   useEffect(() => {
@@ -10,114 +8,11 @@ const TeamBuilder = () => {
     fetch("http://localhost:5000/data/pokedex")
       .then((res) => res.json())
       .then((data) => {
-        console.log("✅ Pokédex cargada:", data);
-        setPokedex(data.Pokedex);
+        console.log("✅ Pokémon cargados:", data);
+        setFilteredPokemon(data);
       })
       .catch((err) => console.error("❌ Error cargando Pokédex:", err));
-
-    console.log("📡 Fetching Formats Data...");
-    fetch("http://localhost:5000/data/formats-data")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("✅ Formats Data cargado:", data);
-        setFormatsData(data.FormatsData);
-      })
-      .catch((err) =>
-        console.error("❌ Error cargando formatos de Pokémon:", err)
-      );
   }, []);
-
-  // Asignar tiers respetando `battleOnly` y `baseSpecies`
-  useEffect(() => {
-    if (!pokedex || !formatsData) return;
-
-    console.log("🔄 Asignando tiers...");
-
-    const getTier = (pokemon) => {
-      // Primero intentamos obtener el tier directamente
-      if (formatsData[pokemon]?.tier) {
-        return formatsData[pokemon].tier;
-      }
-
-      // Verificamos si tiene battleOnly
-      const battleOnlyParent = pokedex[pokemon]?.battleOnly;
-      if (typeof battleOnlyParent === "string") {
-        // ✅ Solo usamos toLowerCase si es un string
-        const battleOnlyKey = battleOnlyParent
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "");
-        if (formatsData[battleOnlyKey]?.tier) {
-          console.log(
-            `ℹ️ ${pokemon} hereda el tier de su battleOnly: ${battleOnlyKey}`
-          );
-          return formatsData[battleOnlyKey].tier;
-        }
-      }
-
-      // Si tiene baseSpecies, tomamos el tier de su base
-      const baseSpecies = pokedex[pokemon]?.baseSpecies;
-      if (typeof baseSpecies === "string") {
-        const baseSpeciesKey = baseSpecies
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "");
-        if (formatsData[baseSpeciesKey]?.tier) {
-          console.log(
-            `ℹ️ ${pokemon} hereda el tier de su baseSpecies: ${baseSpeciesKey}`
-          );
-          return formatsData[baseSpeciesKey].tier;
-        }
-      }
-
-      // Si no hay ninguna fuente de tier, lo marcamos como "Unknown"
-      return "Unknown";
-    };
-
-    const bannedTiers = ["Uber", "AG", "Illegal"]; // ❌ Tiers prohibidas
-
-    const processedPokemon = Object.keys(pokedex)
-      .filter((pokemon) => {
-        const tier = getTier(pokemon);
-        const isNonstandard = formatsData[pokemon]?.isNonstandard || "";
-        const battleOnly = pokedex[pokemon]?.battleOnly || null;
-
-        // ❌ Excluir si el tier está en la lista de baneados
-        if (bannedTiers.some((banned) => tier.includes(banned))) {
-          console.log(`❌ ${pokemon} (${tier}) está baneado por tier.`);
-          return false;
-        }
-
-        // ❌ Excluir si isNonstandard es "CAP"
-        if (isNonstandard === "CAP") {
-          console.log(`❌ ${pokemon} está baneado por isNonstandard: CAP.`);
-          return false;
-        }
-
-        // ❌ Excluir si tiene battleOnly
-        if (battleOnly) {
-          console.log(
-            `❌ ${pokemon} está baneado porque tiene battleOnly (${battleOnly}).`
-          );
-          return false;
-        }
-
-        return true;
-      })
-      .map((pokemon) => {
-        const tier = getTier(pokemon);
-        const pokemonData = pokedex[pokemon];
-
-        return {
-          name: pokemonData.name,
-          types: pokemonData.types.join(", "),
-          abilities: Object.values(pokemonData.abilities).join(", "),
-          stats: pokemonData.baseStats,
-          tier: tier,
-        };
-      });
-
-    console.log("✅ Pokémon permitidos:", processedPokemon);
-    setFilteredPokemon(processedPokemon);
-  }, [pokedex, formatsData]);
 
   return (
     <div>
