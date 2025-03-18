@@ -1,0 +1,112 @@
+p {
+  margin: 0;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pokemonImageContainer {
+  width: 131px;
+  height: 131px;
+  background-color: #fff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pokemonImageContainer img {
+  width: 122px;
+  height: 122px;
+}
+
+.pokemonDataContainer {
+  padding-inline: 4px;
+  max-width: 304px;
+}
+
+.mainInfoContainer {
+  max-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+.pokemonTypeing {
+  display: flex;
+  gap: 4px;
+}
+
+.small-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.pokemonCurrentLevel {
+  background-color: #000;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 18px;
+  gap: 4px;
+  color: white;
+}
+
+.name-levelContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.item-abilityContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.itemContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.itemContainer img {
+  flex-shrink: 0;
+}
+
+.itemContainer input,
+.abilityInput {
+  flex-grow: 1;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 4px;
+  width: 100%;
+}
+
+.moveInputsContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.moveInput {
+  width: 100%;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 4px;
+}
+
+#separatorLine {
+  border-radius: 10px;
+  height: 1px;
+  border: none;
+  margin-block: 4px;
+  background-color: #fff;
+}
