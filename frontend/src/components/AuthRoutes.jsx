@@ -4,7 +4,7 @@ import Register from "./Register";
 import User from "./User";
 import AdminPanel from "./AdminPanel";
 import TeamBuilder from "./TeamBuilder";
-import TeamMaker from "./TeamMaker";
+import TeamMaker from "./TeamMaker/TeamMaker";
 
 function AuthRoutes() {
   const RootRedirect = () => {

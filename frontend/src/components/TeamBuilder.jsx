@@ -5,7 +5,7 @@ const TeamBuilder = () => {
 
   useEffect(() => {
     console.log("📡 Fetching Pokédex...");
-    fetch("http://localhost:5000/data/pokedex")
+    fetch("http://localhost:5000/data/availablePokemons")
       .then((res) => res.json())
       .then((data) => {
         console.log("✅ Pokémon cargados:", data);

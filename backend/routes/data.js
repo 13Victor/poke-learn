@@ -52,12 +52,14 @@ const processPokedex = () => {
 };
 
 // Nueva ruta para devolver los Pokémon ya filtrados
-router.get("/pokedex", (req, res) => {
+router.get("/availablePokemons", (req, res) => {
   const filteredPokedex = processPokedex();
   res.json(filteredPokedex);
 });
 
 // Otras rutas
+
+router.get("/pokedex", (req, res) => res.json(data.moves));
 router.get("/moves", (req, res) => res.json(data.moves));
 router.get("/items", (req, res) => res.json(data.items));
 router.get("/formats", (req, res) => res.json(data.formats));
