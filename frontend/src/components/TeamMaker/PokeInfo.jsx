@@ -1,4 +1,5 @@
-const PokeInfo = ({ name, level, types, image }) => {
+const PokeInfo = ({ name, level, types }) => {
+  console.log("🔍 Información de Pokémon:", name, level, types);
   return (
     <div className="mainInfoContainer flex">
       <span className="name-levelContainer flex">

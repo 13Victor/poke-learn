@@ -122,3 +122,25 @@ p {
   margin-block: 4px;
   background-color: #fff;
 }
+
+.pokemon-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pokemon-table th {
+  background-color: #000;
+  color: #fff;
+  padding: 8px;
+  text-align: left;
+}
+
+.pokemon-table td:first-child {
+  max-width: 40px;
+  padding: 2px;
+}
+
+.pokemon-table img {
+  height: 40px;
+  width: 40px;
+}

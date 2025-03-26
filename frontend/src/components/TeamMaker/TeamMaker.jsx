@@ -1,113 +1,65 @@
-import React from "react";
-import TeamSlot from "./PokeSlot";
+import React, { useState } from "react";
+import PokeSlot from "./PokeSlot";
 import "./TeamMaker.css";
 import PokemonTable from "./PokemonTable";
 
 const TeamMaker = () => {
-  const team = [
+  const [team, setTeam] = useState([
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0000.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 1",
+      level: 0,
+      image: "0000.png", // Placeholder por si no hay imagen
+      types: [],
     },
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0034.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 2",
+      level: 0,
+      image: "0000.png",
+      types: [],
     },
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0034.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 3",
+      level: 0,
+      image: "0000.png",
+      types: [],
     },
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0034.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 4",
+      level: 0,
+      image: "0000.png",
+      types: [],
     },
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0034.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 5",
+      level: 0,
+      image: "0000.png",
+      types: [],
     },
     {
-      name: "Nidoking",
-      level: 100,
-      image: "../../../src/assets/pokemon-hd/0034.png",
-      types: [
-        {
-          name: "Ground",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pok%C3%A9mon_Ground_Type_Icon.svg/1200px-Pok%C3%A9mon_Ground_Type_Icon.svg.png",
-        },
-        {
-          name: "Poison",
-          icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Pok%C3%A9mon_Poison_Type_Icon.svg/2048px-Pok%C3%A9mon_Poison_Type_Icon.svg.png",
-        },
-      ],
+      name: "Pokemon 6",
+      level: 0,
+      image: "0000.png",
+      types: [],
     },
-    /* Agrega aquí los otros 5 Pokémon */
-  ];
+  ]);
 
-  console.log("teammaker");
+  const handlePokemonSelect = (pokemon) => {
+    console.log("🔄 Actualizando slot 1 con:", pokemon);
+    setTeam((prevTeam) => {
+      const newTeam = [...prevTeam];
+      newTeam[0] = pokemon; // Reemplazamos solo el primer slot
+      return newTeam;
+    });
+  };
 
   return (
     <>
       <div className="teamContainer">
         {team.map((pokemon, index) => (
-          <TeamSlot key={index} pokemon={pokemon} index={index} />
+          <PokeSlot key={index} pokemon={pokemon} index={index} />
         ))}
       </div>
-      <PokemonTable />
+      <PokemonTable onPokemonSelect={handlePokemonSelect} />
     </>
   );
 };

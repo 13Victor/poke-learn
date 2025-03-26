@@ -1,38 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import TeamMakerMoveSet from "./MoveSet";
 import TeamMakerItemAbility from "./ItemAbility";
 import TeamMakerPokeInfo from "./PokeInfo";
 import "./TeamMaker.css";
 
 const PokeSlot = ({ pokemon, index }) => {
-  const [teamData, setTeamData] = useState({
-    item: "",
-    ability: "",
-    moves: {
-      Move1: "",
-      Move2: "",
-      Move3: "",
-      Move4: "",
-    },
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setTeamData((prevData) => ({
-      ...prevData,
-      moves:
-        name in prevData.moves
-          ? { ...prevData.moves, [name]: value }
-          : prevData.moves,
-      [name]: name in prevData.moves ? prevData[name] : value,
-    }));
-  };
+  if (!pokemon) {
+    return <div className="pokemonTeamCard flex emptySlot">Empty Slot</div>;
+  }
 
   return (
     <div className="pokemonTeamCard flex">
       <div className="pokemonImageContainer">
-        <img src={pokemon.image} alt={pokemon.name} />
+        <img src={`/assets/pokemon-hd/${pokemon.image}`} alt={pokemon.name} />
       </div>
       <div className="pokemonDataContainer">
         <TeamMakerPokeInfo
@@ -40,13 +20,12 @@ const PokeSlot = ({ pokemon, index }) => {
           level={pokemon.level}
           types={pokemon.types}
         />
-        <TeamMakerItemAbility
-          item={teamData.item}
-          ability={teamData.ability}
-          onChange={handleChange}
-        />
+        <TeamMakerItemAbility item="" ability="" onChange={() => {}} />
         <hr id="separatorLine" />
-        <TeamMakerMoveSet moves={teamData.moves} onChange={handleChange} />
+        <TeamMakerMoveSet
+          moves={{ Move1: "", Move2: "", Move3: "", Move4: "" }}
+          onChange={() => {}}
+        />
       </div>
       <div className="statsContainer"></div>
     </div>

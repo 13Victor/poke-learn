@@ -1,18 +1,13 @@
 const PokemonRow = ({ pokemon, onClick }) => {
   return (
     <tr onClick={() => onClick(pokemon)}>
+      <td>
+        <img src={`/assets/pokemon-hd/${pokemon.image}`} alt={pokemon.name} />
+      </td>
       <td>{pokemon.name}</td>
       <td>{pokemon.tier}</td>
-      <td>
-        {Array.isArray(pokemon.types)
-          ? pokemon.types.join(", ")
-          : pokemon.types}
-      </td>
-      <td>
-        {Array.isArray(pokemon.abilities)
-          ? pokemon.abilities.join(", ")
-          : pokemon.abilities}
-      </td>
+      <td>{pokemon.types.join(", ")}</td>
+      <td>{pokemon.abilities.join(", ")}</td>
       <td>{pokemon.stats.hp}</td>
       <td>{pokemon.stats.atk}</td>
       <td>{pokemon.stats.def}</td>

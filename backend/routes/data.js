@@ -2,53 +2,55 @@ const express = require("express");
 const router = express.Router();
 const data = require("../data/dataLoader");
 
-// Función para procesar el Pokédex antes de enviarlo al frontend
 const processPokedex = () => {
-  console.log("🔄 Procesando Pokédex en el backend...");
-
   const bannedTiers = ["Uber", "AG", "Illegal", "Unknown"];
 
-  return Object.keys(data.pokedex.Pokedex)
-    .filter((pokemon) => {
-      const pokemonData = data.pokedex.Pokedex[pokemon];
-      const formatData = data.formatsData.FormatsData[pokemon] || {};
-      const tier = formatData.tier || "Unknown";
-      const isNonstandard = formatData.isNonstandard || "";
-      const battleOnly = pokemonData.battleOnly || null;
+  const validPokemon = Object.keys(data.pokedex.Pokedex).filter((pokemon) => {
+    const pokemonData = data.pokedex.Pokedex[pokemon];
+    const formatData = data.formatsData.FormatsData[pokemon] || {};
+    const tier = formatData.tier || "Unknown";
+    const isNonstandard = formatData.isNonstandard || "";
+    const battleOnly = pokemonData.battleOnly || null;
 
-      // ❌ Excluir si el tier está en la lista de baneados
-      if (bannedTiers.some((banned) => tier.includes(banned))) {
-        console.log(`❌ ${pokemon} (${tier}) está baneado por tier.`);
-        return false;
-      }
+    return !(
+      bannedTiers.some((banned) => tier.includes(banned)) ||
+      isNonstandard === "CAP" ||
+      battleOnly
+    );
+  });
 
-      // ❌ Excluir si isNonstandard es "CAP"
-      if (isNonstandard === "CAP") {
-        console.log(`❌ ${pokemon} está baneado por isNonstandard: CAP.`);
-        return false;
-      }
+  const groupedByNum = validPokemon.reduce((acc, pokemon) => {
+    const num = data.pokedex.Pokedex[pokemon].num;
+    if (!acc[num]) acc[num] = [];
+    acc[num].push(pokemon);
+    return acc;
+  }, {});
 
-      // ❌ Excluir si tiene battleOnly
-      if (battleOnly) {
-        console.log(
-          `❌ ${pokemon} está baneado por battleOnly (${battleOnly}).`
-        );
-        return false;
-      }
+  return validPokemon.map((pokemon) => {
+    const pokemonData = data.pokedex.Pokedex[pokemon];
+    const formatData = data.formatsData.FormatsData[pokemon] || {};
+    const num = pokemonData.num;
 
-      return true;
-    })
-    .map((pokemon) => {
-      const pokemonData = data.pokedex.Pokedex[pokemon];
-      const formatData = data.formatsData.FormatsData[pokemon] || {};
-      return {
-        name: pokemonData.name,
-        types: pokemonData.types.join(", "),
-        abilities: Object.values(pokemonData.abilities).join(", "),
-        stats: pokemonData.baseStats,
-        tier: formatData.tier || "Unknown",
-      };
-    });
+    const variantIndex = groupedByNum[num].indexOf(pokemon);
+    const imageName =
+      variantIndex === 0
+        ? `${String(num).padStart(4, "0")}.png`
+        : `${String(num).padStart(4, "0")}_${String(variantIndex).padStart(
+            2,
+            "0"
+          )}.png`;
+
+    return {
+      num,
+      name: pokemonData.name,
+      image: imageName,
+      level: 100,
+      types: pokemonData.types, // 🔹 Ahora es un array
+      abilities: Object.values(pokemonData.abilities), // 🔹 También en array
+      stats: pokemonData.baseStats,
+      tier: formatData.tier || "Unknown",
+    };
+  });
 };
 
 // Nueva ruta para devolver los Pokémon ya filtrados
