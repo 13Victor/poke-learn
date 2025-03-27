@@ -144,3 +144,8 @@ p {
   height: 40px;
   width: 40px;
 }
+
+.selected-slot {
+  border: 3px solid #ffcc00; /* Borde amarillo cuando el slot está seleccionado */
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+}

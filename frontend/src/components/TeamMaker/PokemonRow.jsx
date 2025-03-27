@@ -2,7 +2,10 @@ const PokemonRow = ({ pokemon, onClick }) => {
   return (
     <tr onClick={() => onClick(pokemon)}>
       <td>
-        <img src={`/assets/pokemon-hd/${pokemon.image}`} alt={pokemon.name} />
+        <img
+          src={`/assets/pokemon-small-hd-sprites/${pokemon.image}`}
+          alt={pokemon.name}
+        />
       </td>
       <td>{pokemon.name}</td>
       <td>{pokemon.tier}</td>

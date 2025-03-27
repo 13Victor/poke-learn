@@ -3,16 +3,29 @@ import TeamMakerMoveSet from "./MoveSet";
 import TeamMakerItemAbility from "./ItemAbility";
 import TeamMakerPokeInfo from "./PokeInfo";
 import "./TeamMaker.css";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css"; // Estilos básicos
+import "tippy.js/animations/scale.css"; // Animación opcional
 
-const PokeSlot = ({ pokemon, index }) => {
-  if (!pokemon) {
-    return <div className="pokemonTeamCard flex emptySlot">Empty Slot</div>;
-  }
-
+const PokeSlot = ({ pokemon, index, isSelected, onSelect }) => {
   return (
-    <div className="pokemonTeamCard flex">
+    <div
+      className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
+      onClick={onSelect} // Cambia el slot seleccionado al hacer clic
+    >
       <div className="pokemonImageContainer">
-        <img src={`/assets/pokemon-hd/${pokemon.image}`} alt={pokemon.name} />
+        <Tippy
+          content={pokemon.name}
+          animation="scale"
+          delay={[300, 100]}
+          placement="top"
+          offset={[0, -25]}
+        >
+          <img
+            src={`/assets/pokemon-small-hd-sprites/${pokemon.image}`}
+            alt={pokemon.name}
+          />
+        </Tippy>
       </div>
       <div className="pokemonDataContainer">
         <TeamMakerPokeInfo
@@ -27,7 +40,6 @@ const PokeSlot = ({ pokemon, index }) => {
           onChange={() => {}}
         />
       </div>
-      <div className="statsContainer"></div>
     </div>
   );
 };
