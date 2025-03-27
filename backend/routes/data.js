@@ -62,7 +62,7 @@ router.get("/availablePokemons", (req, res) => {
 // Otras rutas
 
 router.get("/pokedex", (req, res) => res.json(data.moves));
-router.get("/moves", (req, res) => res.json(data.moves));
+router.get("/moves", (req, res) => res.json(data.moves.Moves));
 router.get("/items", (req, res) => res.json(data.items));
 router.get("/formats", (req, res) => res.json(data.formats));
 router.get("/formats-data", (req, res) => res.json(data.formatsData));

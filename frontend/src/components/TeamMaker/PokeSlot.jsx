@@ -1,7 +1,7 @@
 import React from "react";
-import TeamMakerMoveSet from "./MoveSet";
-import TeamMakerItemAbility from "./ItemAbility";
-import TeamMakerPokeInfo from "./PokeInfo";
+import MoveSet from "./MoveSet";
+import ItemAbility from "./ItemAbility";
+import PokeInfo from "./PokeInfo";
 import "./TeamMaker.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css"; // Estilos básicos
@@ -11,7 +11,7 @@ const PokeSlot = ({ pokemon, index, isSelected, onSelect }) => {
   return (
     <div
       className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
-      onClick={onSelect} // Cambia el slot seleccionado al hacer clic
+      onClick={onSelect}
     >
       <div className="pokemonImageContainer">
         <Tippy
@@ -28,14 +28,14 @@ const PokeSlot = ({ pokemon, index, isSelected, onSelect }) => {
         </Tippy>
       </div>
       <div className="pokemonDataContainer">
-        <TeamMakerPokeInfo
+        <PokeInfo
           name={pokemon.name}
           level={pokemon.level}
           types={pokemon.types}
         />
-        <TeamMakerItemAbility item="" ability="" onChange={() => {}} />
+        <ItemAbility item="" ability="" onChange={() => {}} />
         <hr id="separatorLine" />
-        <TeamMakerMoveSet
+        <MoveSet
           moves={{ Move1: "", Move2: "", Move3: "", Move4: "" }}
           onChange={() => {}}
         />

@@ -3,8 +3,13 @@ import React, { useState } from "react";
 import TeamContainer from "./TeamContainer";
 import "./TeamMaker.css";
 import PokemonTable from "./PokemonTable";
+import MoveTable from "./MoveTable";
+import { useViewMode } from "../../ViewModeContext";
 
 const TeamMaker = () => {
+  const { setViewMode } = useViewMode(); // Obtenemos el setter global
+  const { viewMode } = useViewMode(); // Obtenemos el getter global
+
   const [team, setTeam] = useState([
     { name: "Pokemon 1", level: 0, image: "0000.png", types: [] },
     { name: "Pokemon 2", level: 0, image: "0000.png", types: [] },
@@ -19,6 +24,10 @@ const TeamMaker = () => {
   const handleSlotClick = (index) => {
     console.log("🎯 Slot seleccionado:", index);
     setSelectedSlot(index);
+    console.log("⚡ Cambiando a vista de pokémon");
+    setViewMode("pokemon");
+
+    console.log(viewMode);
   };
 
   const handlePokemonSelect = (pokemon) => {
@@ -45,7 +54,11 @@ const TeamMaker = () => {
         selectedSlot={selectedSlot}
         handleSlotClick={handleSlotClick}
       />
-      <PokemonTable onPokemonSelect={handlePokemonSelect} />
+      {viewMode === "pokemon" ? (
+        <PokemonTable onPokemonSelect={handlePokemonSelect} />
+      ) : (
+        <MoveTable />
+      )}
     </>
   );
 };

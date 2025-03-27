@@ -1,11 +1,14 @@
 import { BrowserRouter as AppRoutes } from "react-router-dom";
 import AuthRoutes from "./components/AuthRoutes";
+import { ViewModeProvider } from "./ViewModeContext";
 import "./App.css";
 
 function App() {
   return (
     <AppRoutes>
-      <AuthRoutes />
+      <ViewModeProvider>
+        <AuthRoutes />
+      </ViewModeProvider>
     </AppRoutes>
   );
 }

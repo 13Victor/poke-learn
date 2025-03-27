@@ -123,9 +123,23 @@ p {
   background-color: #fff;
 }
 
+.table-container {
+  width: 100%;
+  max-height: 300px;
+  overflow-y: scroll;
+}
+
 .pokemon-table {
   width: 100%;
   border-collapse: collapse;
+  max-height: 100px;
+  overflow-y: scroll;
+}
+
+.pokemon-table thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .pokemon-table th {
@@ -146,6 +160,5 @@ p {
 }
 
 .selected-slot {
-  border: 3px solid #ffcc00; /* Borde amarillo cuando el slot está seleccionado */
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+  background-color: rgb(59, 59, 154);
 }
