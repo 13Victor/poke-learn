@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import PokemonRow from "./PokemonRow";
+import { useViewMode } from "../../ViewModeContext";
 
 const PokemonTable = ({ onPokemonSelect }) => {
+  const { setViewMode } = useViewMode(); // Contexto para cambiar la vista
   const [filteredPokemon, setFilteredPokemon] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +25,9 @@ const PokemonTable = ({ onPokemonSelect }) => {
   }, []);
 
   const handleRowClick = (pokemon) => {
-    onPokemonSelect(pokemon);
+    console.log("🔹 Pokémon seleccionado:", pokemon);
+    onPokemonSelect(pokemon); // Llamamos a la función onPokemonSelect pasada desde TeamMaker
+    setViewMode("moves"); // Cambia la vista a movimientos
   };
 
   if (loading) return <p>⏳ Cargando Pokémon...</p>;
@@ -32,7 +36,6 @@ const PokemonTable = ({ onPokemonSelect }) => {
   return (
     <div>
       <h2>Lista de Pokémon</h2>
-
       <div className="table-container">
         <table border="1" className="pokemon-table">
           <thead>

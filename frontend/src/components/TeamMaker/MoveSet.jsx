@@ -1,21 +1,31 @@
 import { useViewMode } from "../../ViewModeContext";
 
 const MoveSet = ({ moves }) => {
-  const { setViewMode } = useViewMode(); // Obtenemos el setter global
-  const { viewMode } = useViewMode(); // Obtenemos el getter global
+  console.log(moves);
 
-  const handleMoveClick = (event) => {
-    event.stopPropagation(); // 🔥 Evita que el clic llegue a PokeSlot
-    console.log("⚡ Cambiando a vista de movimientos");
-    setViewMode("moves");
-    console.log(viewMode);
+  const { selectedSlot, selectedMoveIndex, setSelectedMoveIndex } =
+    useViewMode();
+
+  const handleMoveClick = (index, event) => {
+    event.stopPropagation(); // Evita que el clic llegue al `PokeSlot`
+    setSelectedMoveIndex(index);
+    console.log(
+      `🎯 Seleccionado movimiento ${index + 1} del slot ${selectedSlot}`
+    );
   };
 
   return (
     <div className="moveInputsContainer">
-      {Object.keys(moves).map((move, index) => (
-        <button key={index} className="moveInput" onClick={handleMoveClick}>
-          {move || `Move ${index + 1}`}
+      {moves.map((move, index) => (
+        <button
+          key={index}
+          className={`moveInput ${
+            selectedMoveIndex === index ? "selected-move" : ""
+          }`}
+          onClick={(event) => handleMoveClick(index, event)}
+        >
+          {move || `Move ${index + 1}`}{" "}
+          {/* Si el movimiento está vacío, muestra "Move X" */}
         </button>
       ))}
     </div>

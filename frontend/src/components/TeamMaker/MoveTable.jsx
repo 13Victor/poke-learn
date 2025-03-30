@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import MoveRow from "./MoveRow";
 
-const MoveTable = () => {
+const MoveTable = ({ onMoveSelect }) => {
   const [moves, setMoves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,6 +23,10 @@ const MoveTable = () => {
       });
   }, []);
 
+  const handleRowClick = (move) => {
+    onMoveSelect(move); // Llama a la función pasada por el padre
+  };
+
   if (loading) return <p>⏳ Cargando Movimientos...</p>;
   if (error) return <p>❌ Error: {error}</p>;
 
@@ -42,15 +47,12 @@ const MoveTable = () => {
             </tr>
           </thead>
           <tbody>
-            {moves.map((move, index) => (
-              <tr key={index}>
-                <td>{move.name}</td>
-                <td>{move.type}</td>
-                <td>{move.category}</td>
-                <td>{move.basePower || "-"}</td>
-                <td>{move.accuracy || "-"}</td>
-                <td>{move.pp}</td>
-              </tr>
+            {moves.map((move) => (
+              <MoveRow
+                key={move.name}
+                move={move}
+                onClick={() => handleRowClick(move)}
+              />
             ))}
           </tbody>
         </table>
