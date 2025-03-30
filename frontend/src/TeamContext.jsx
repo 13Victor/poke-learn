@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 const TeamContext = createContext();
 
 export const TeamProvider = ({ children }) => {
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(0);
 
   return (
     <TeamContext.Provider value={{ selectedSlot, setSelectedSlot }}>
