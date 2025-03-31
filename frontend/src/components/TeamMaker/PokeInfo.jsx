@@ -2,11 +2,11 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css"; // Estilos básicos
 import "tippy.js/animations/scale.css"; // Animación opcional
 
-const PokeInfo = ({ name, level, types }) => {
+const PokeInfo = ({ name, level, types, index }) => {
   return (
     <div className="mainInfoContainer flex">
       <span className="name-levelContainer flex">
-        <p>{name}</p>
+        <p>{name || `Pokémon ${index + 1}`}</p>
         <span className="pokemonCurrentLevel flex-center">
           <strong>Lv.</strong>
           <p>{level}</p>

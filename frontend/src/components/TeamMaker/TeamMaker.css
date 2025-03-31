@@ -12,7 +12,6 @@ body {
   justify-content: flex-start !important;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    
 }
 
 .flex {
@@ -174,4 +173,8 @@ body {
 
 .selected-slot {
   background-color: rgb(59, 59, 154);
+}
+
+.selected-move {
+  background-color: rgb(182, 157, 61);
 }

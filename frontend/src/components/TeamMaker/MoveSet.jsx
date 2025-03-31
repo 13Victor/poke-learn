@@ -1,16 +1,25 @@
 import { useViewMode } from "../../ViewModeContext";
+import { useTeam } from "../../TeamContext";
 
-const MoveSet = ({ moves }) => {
-  console.log(moves);
+const MoveSet = ({ pokemon, moves, slotIndex }) => {
+  const { selectedSlot, setSelectedSlot } = useTeam();
+  const { selectedMove, setSelectedMove, setViewMode } = useViewMode();
 
-  const { selectedSlot, selectedMoveIndex, setSelectedMoveIndex } =
-    useViewMode();
+  const handleMoveClick = (moveIndex, event) => {
+    if (!pokemon.name) {
+      setViewMode("pokemon"); // Cambia el modo de vista a "pokemon"
+    } else {
+      setViewMode("moves"); // Cambia el modo de vista a "moveset"
+    }
 
-  const handleMoveClick = (index, event) => {
-    event.stopPropagation(); // Evita que el clic llegue al `PokeSlot`
-    setSelectedMoveIndex(index);
+    event.stopPropagation(); // Evita que el evento se propague
+
+    setSelectedSlot(slotIndex);
+    const nextMoveIndex = moveIndex < 3 ? moveIndex : 3;
+    setSelectedMove({ slot: slotIndex, moveIndex: nextMoveIndex });
+
     console.log(
-      `🎯 Seleccionado movimiento ${index + 1} del slot ${selectedSlot}`
+      `🎯 Seleccionado movimiento ${moveIndex + 1} del slot ${slotIndex}`
     );
   };
 
@@ -20,12 +29,15 @@ const MoveSet = ({ moves }) => {
         <button
           key={index}
           className={`moveInput ${
-            selectedMoveIndex === index ? "selected-move" : ""
+            selectedMove.slot === slotIndex &&
+            selectedMove.moveIndex === index &&
+            pokemon.name
+              ? "selected-move"
+              : ""
           }`}
           onClick={(event) => handleMoveClick(index, event)}
         >
-          {move || `Move ${index + 1}`}{" "}
-          {/* Si el movimiento está vacío, muestra "Move X" */}
+          {move || `Move ${index + 1}`}
         </button>
       ))}
     </div>

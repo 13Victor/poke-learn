@@ -1,11 +1,12 @@
+// ViewModeContext.js
 import { createContext, useContext, useState } from "react";
 
 const ViewModeContext = createContext();
 
 export const ViewModeProvider = ({ children }) => {
   const [viewMode, setViewMode] = useState("pokemon");
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [selectedMoveIndex, setSelectedMoveIndex] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(0);
+  const [selectedMove, setSelectedMove] = useState({ slot: 0, moveIndex: 0 }); // Añadir selectedMove aquí
 
   return (
     <ViewModeContext.Provider
@@ -14,8 +15,8 @@ export const ViewModeProvider = ({ children }) => {
         setViewMode,
         selectedSlot,
         setSelectedSlot,
-        selectedMoveIndex,
-        setSelectedMoveIndex,
+        selectedMove, // Asegúrate de proporcionar selectedMove
+        setSelectedMove, // Añadir setSelectedMove
       }}
     >
       {children}

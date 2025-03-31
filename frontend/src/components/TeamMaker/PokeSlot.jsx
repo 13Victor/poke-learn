@@ -7,7 +7,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css"; // Estilos básicos
 import "tippy.js/animations/scale.css"; // Animación opcional
 
-const PokeSlot = ({ pokemon, isSelected, onSelect }) => {
+const PokeSlot = ({ pokemon, isSelected, onSelect, index }) => {
   return (
     <div
       className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
@@ -15,7 +15,7 @@ const PokeSlot = ({ pokemon, isSelected, onSelect }) => {
     >
       <div className="pokemonImageContainer">
         <Tippy
-          content={pokemon.name}
+          content={pokemon.name || `Pokémon ${index + 1}`}
           animation="scale"
           delay={[300, 100]}
           placement="top"
@@ -32,10 +32,11 @@ const PokeSlot = ({ pokemon, isSelected, onSelect }) => {
           name={pokemon.name}
           level={pokemon.level}
           types={pokemon.types}
+          index={index}
         />
         <ItemAbility item="" ability="" onChange={() => {}} />
         <hr id="separatorLine" />
-        <MoveSet moves={pokemon.moveset} />
+        <MoveSet pokemon={pokemon} moves={pokemon.moveset} slotIndex={index} />
       </div>
     </div>
   );
