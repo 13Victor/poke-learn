@@ -125,8 +125,9 @@ const TeamMaker = () => {
       {viewMode === "moves" && (
         <MoveTable
           onMoveSelect={handleMoveSelect}
-          moves={team[selectedSlot].moveset} // Pasa el moveset del Pokémon seleccionado
-          slotIndex={selectedSlot} // Asegúrate de pasar el slot seleccionado
+          moves={team[selectedSlot].moveset}
+          slotIndex={selectedSlot}
+          selectedPokemon={team[selectedSlot]}
         />
       )}
     </>

@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from "react";
 import MoveRow from "./MoveRow";
 
-const MoveTable = ({ onMoveSelect }) => {
-  const [moves, setMoves] = useState([]);
+const MoveTable = ({ onMoveSelect, selectedPokemon }) => {
+  const [moves, setMoves] = useState({});
+  const [learnsets, setLearnsets] = useState({});
+  const [filteredMoves, setFilteredMoves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/data/moves") // Asegúrate de que esta ruta devuelve los movimientos
-      .then((res) => {
-        if (!res.ok)
-          throw new Error("No se pudo obtener la lista de movimientos.");
-        return res.json();
-      })
-      .then((data) => {
-        setMoves(Object.values(data)); // Convertir el objeto en un array
+    // Cargar datos de movimientos y learnsets
+    Promise.all([
+      fetch("http://localhost:5000/data/moves").then((res) => res.json()),
+      fetch("http://localhost:5000/data/learnsets").then((res) => res.json()),
+    ])
+      .then(([movesData, learnsetsData]) => {
+        setMoves(movesData);
+        setLearnsets(learnsetsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -23,8 +25,26 @@ const MoveTable = ({ onMoveSelect }) => {
       });
   }, []);
 
+  // Filtrar los movimientos basados en el Pokémon seleccionado
+  useEffect(() => {
+    if (!selectedPokemon || !selectedPokemon.id) {
+      setFilteredMoves([]);
+      return;
+    }
+
+    // Intenta obtener el learnset del Pokémon seleccionado o de su changesFrom si no tiene
+    const pokemonLearnset =
+      learnsets[selectedPokemon.id]?.learnset ||
+      learnsets[selectedPokemon.changesFrom]?.learnset ||
+      {};
+
+    const moveNames = Object.keys(pokemonLearnset);
+    const filtered = moveNames.map((move) => moves[move]).filter(Boolean);
+    setFilteredMoves(filtered);
+  }, [selectedPokemon, learnsets, moves]);
+
   const handleRowClick = (move) => {
-    onMoveSelect(move); // Llama a la función pasada por el padre
+    onMoveSelect(move);
   };
 
   if (loading) return <p>⏳ Cargando Movimientos...</p>;
@@ -32,7 +52,7 @@ const MoveTable = ({ onMoveSelect }) => {
 
   return (
     <div>
-      <h2>Lista de Movimientos</h2>
+      <h2>Movimientos disponibles</h2>
 
       <div className="table-container">
         <table border="1" className="pokemon-table">
@@ -47,13 +67,19 @@ const MoveTable = ({ onMoveSelect }) => {
             </tr>
           </thead>
           <tbody>
-            {moves.map((move) => (
-              <MoveRow
-                key={move.name}
-                move={move}
-                onClick={() => handleRowClick(move)}
-              />
-            ))}
+            {filteredMoves.length > 0 ? (
+              filteredMoves.map((move) => (
+                <MoveRow
+                  key={move.name}
+                  move={move}
+                  onClick={() => handleRowClick(move)}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6">❌ No hay movimientos disponibles</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

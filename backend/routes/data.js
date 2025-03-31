@@ -7,6 +7,7 @@ const processPokedex = () => {
 
   const validPokemon = Object.keys(data.pokedex.Pokedex).filter((pokemon) => {
     const pokemonData = data.pokedex.Pokedex[pokemon];
+    const pokemonId = pokemon;
     const formatData = data.formatsData.FormatsData[pokemon] || {};
     const tier = formatData.tier || "Unknown";
     const isNonstandard = formatData.isNonstandard || "";
@@ -26,6 +27,8 @@ const processPokedex = () => {
     return acc;
   }, {});
 
+  const cleanName = (name) => name.toLowerCase().replace(/[-\s]/g, "");
+
   return validPokemon.map((pokemon) => {
     const pokemonData = data.pokedex.Pokedex[pokemon];
     const formatData = data.formatsData.FormatsData[pokemon] || {};
@@ -43,8 +46,12 @@ const processPokedex = () => {
     return {
       num,
       name: pokemonData.name,
+      id: pokemon,
       image: imageName,
       level: 100,
+      changesFrom: pokemonData.changesFrom
+        ? cleanName(pokemonData.changesFrom)
+        : "",
       types: pokemonData.types, // 🔹 Ahora es un array
       abilities: Object.values(pokemonData.abilities), // 🔹 También en array
       stats: pokemonData.baseStats,
