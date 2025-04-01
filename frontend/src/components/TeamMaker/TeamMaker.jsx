@@ -14,6 +14,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
@@ -21,6 +23,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
@@ -28,6 +32,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
@@ -35,6 +41,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
@@ -42,6 +50,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
@@ -49,6 +59,8 @@ const TeamMaker = () => {
     {
       name: "",
       level: 0,
+      item: "",
+      ability: "",
       image: "0000.png",
       types: [],
       moveset: ["", "", "", ""],
