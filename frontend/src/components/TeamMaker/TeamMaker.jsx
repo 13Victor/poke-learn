@@ -2,13 +2,17 @@ import React, { useState } from "react";
 import TeamContainer from "./TeamContainer";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
-import { useViewMode } from "../../ViewModeContext";
 import { useTeam } from "../../TeamContext";
 
 const TeamMaker = () => {
-  const { viewMode, setViewMode, selectedMove, setSelectedMove } =
-    useViewMode(); // Destructura `selectedMove` y `setSelectedMove` aquí
-  const { selectedSlot, setSelectedSlot } = useTeam();
+  const {
+    selectedSlot,
+    setSelectedSlot,
+    viewMode,
+    setViewMode,
+    selectedMove,
+    setSelectedMove,
+  } = useTeam(); // Destructura `selectedMove` y `setSelectedMove` aquí
 
   const [team, setTeam] = useState([
     {

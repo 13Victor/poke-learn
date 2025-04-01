@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import PokemonRow from "./PokemonRow";
-import { useViewMode } from "../../ViewModeContext";
+import { useTeam } from "../../TeamContext";
 
 const PokemonTable = ({ onPokemonSelect }) => {
-  const { setViewMode } = useViewMode(); // Contexto para cambiar la vista
+  const { setViewMode } = useTeam(); // Contexto para cambiar la vista
   const [filteredPokemon, setFilteredPokemon] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

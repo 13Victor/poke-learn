@@ -1,9 +1,13 @@
-import { useViewMode } from "../../ViewModeContext";
 import { useTeam } from "../../TeamContext";
 
 const MoveSet = ({ pokemon, moves, slotIndex }) => {
-  const { selectedSlot, setSelectedSlot } = useTeam();
-  const { selectedMove, setSelectedMove, setViewMode } = useViewMode();
+  const {
+    selectedSlot,
+    setSelectedSlot,
+    selectedMove,
+    setSelectedMove,
+    setViewMode,
+  } = useTeam();
 
   const handleMoveClick = (moveIndex, event) => {
     if (!pokemon.name) {
