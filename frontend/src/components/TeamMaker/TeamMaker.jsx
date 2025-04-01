@@ -1,153 +1,79 @@
-import React, { useState } from "react";
+import React, { memo } from "react";
 import TeamContainer from "./TeamContainer";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
 import { useTeam } from "../../TeamContext";
 
-const TeamMaker = () => {
+const TeamMaker = memo(() => {
   const {
-    selectedSlot,
-    setSelectedSlot,
     viewMode,
-    setViewMode,
+    selectedSlot,
+    pokemons,
+    selectPokemon,
+    setMove,
     selectedMove,
     setSelectedMove,
-  } = useTeam(); // Destructura `selectedMove` y `setSelectedMove` aquí
+  } = useTeam();
 
-  const [team, setTeam] = useState([
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-    {
-      name: "",
-      level: 0,
-      item: "",
-      ability: "",
-      image: "0000.png",
-      types: [],
-      moveset: ["", "", "", ""],
-    },
-  ]);
+  const moveIndexRef = React.useRef(0);
 
-  console.log("Equipo inicial:", team); // Verifica el equipo inicial
-
-  const handleSlotClick = (index) => {
-    console.log("🎯 Slot seleccionado:", index);
-    setSelectedSlot(index);
-
-    // 🔄 Resetear el foco del movimiento al primer movimiento del nuevo slot
-    setSelectedMove({ slot: index, moveIndex: 0 });
-
-    setViewMode("pokemon");
-  };
+  React.useEffect(() => {
+    moveIndexRef.current = selectedMove.moveIndex;
+  }, [selectedMove]);
 
   const handlePokemonSelect = (pokemon) => {
-    if (
-      selectedSlot !== null &&
-      selectedSlot >= 0 &&
-      selectedSlot < team.length
-    ) {
-      // Copiar el Pokémon actual y preservar su moveset
-      const updatedTeam = [...team];
-      updatedTeam[selectedSlot] = {
-        ...pokemon,
-        moveset: team[selectedSlot].moveset || ["", "", "", ""], // Asegurarse de que el moveset no se pierda
-      };
-
-      console.log(updatedTeam[selectedSlot].moveset); // Verifica que moveset se conserva correctamente
-
-      setTeam(updatedTeam);
-      setSelectedMove({ slot: selectedSlot, moveIndex: 0 }); // ✅ Seleccionar automáticamente el primer movimiento
-      setViewMode("moves"); // ✅ Cambiar a la vista de movimientos
-    }
+    selectPokemon(selectedSlot, pokemon);
   };
 
   const handleMoveSelect = (move) => {
-    if (
-      selectedSlot !== null &&
-      selectedSlot >= 0 &&
-      selectedSlot < team.length
-    ) {
-      const updatedTeam = [...team];
-      const updatedPokemon = updatedTeam[selectedSlot];
+    if (selectedSlot !== null) {
+      // Usar el valor de la ref para el índice actual
+      const currentMoveIndex = moveIndexRef.current;
 
-      // Añadir el movimiento en el `selectedMove.moveIndex`
-      updatedPokemon.moveset[selectedMove.moveIndex] = move.name; // Colocamos el movimiento en la posición correcta
+      // Establecer el movimiento actual
+      setMove(selectedSlot, currentMoveIndex, move.name);
 
-      updatedTeam[selectedSlot] = updatedPokemon; // Reemplazamos el Pokémon actualizado
-      setTeam(updatedTeam); // Actualizamos el equipo con el nuevo movimiento
+      // Calcular y actualizar el siguiente índice
+      const nextMoveIndex = currentMoveIndex + 1;
+      console.log("Moviendo de índice", currentMoveIndex, "a", nextMoveIndex);
 
-      // Aumentamos el `moveIndex` para que el siguiente movimiento se coloque en el siguiente espacio
-      const nextMoveIndex = selectedMove.moveIndex + 1;
-
-      // Si el `moveIndex` es menor que 4 (porque hay 4 movimientos), actualizamos el estado para el siguiente movimiento
       if (nextMoveIndex < 4) {
-        setSelectedMove({ slot: selectedSlot, moveIndex: nextMoveIndex });
-      } else {
-        // Si ya se alcanzó el máximo (4 movimientos), no hacemos nada
-        console.log("Ya se han asignado todos los movimientos.");
+        // Actualizar la ref inmediatamente
+        moveIndexRef.current = nextMoveIndex;
+
+        // Y también actualizar el state para la UI
+        setSelectedMove({
+          slot: selectedSlot,
+          moveIndex: nextMoveIndex,
+        });
       }
     }
   };
 
-  return (
-    <>
-      <TeamContainer team={team} handleSlotClick={handleSlotClick} />
-      {viewMode === "pokemon" && (
-        <PokemonTable onPokemonSelect={handlePokemonSelect} />
-      )}
-      {viewMode === "moves" && (
+  // Solo renderizar el componente que está activo
+  const renderActiveComponent = () => {
+    if (viewMode === "pokemon") {
+      return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
+    }
+
+    if (viewMode === "moves") {
+      return (
         <MoveTable
           onMoveSelect={handleMoveSelect}
-          moves={team[selectedSlot].moveset}
-          slotIndex={selectedSlot}
-          selectedPokemon={team[selectedSlot]}
+          selectedPokemon={pokemons[selectedSlot]}
         />
-      )}
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <>
+      <TeamContainer />
+      {renderActiveComponent()}
     </>
   );
-};
+});
 
 export default TeamMaker;

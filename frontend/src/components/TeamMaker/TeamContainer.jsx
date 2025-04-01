@@ -1,23 +1,22 @@
-import React from "react";
+import React, { memo } from "react";
 import PokeSlot from "./PokeSlot";
 import { useTeam } from "../../TeamContext";
 
-const TeamContainer = ({ team, handleSlotClick }) => {
-  const { selectedSlot } = useTeam();
+const TeamContainer = memo(() => {
+  const { pokemons, selectedSlot } = useTeam();
 
   return (
     <div className="teamContainer">
-      {team.map((pokemon, index) => (
+      {pokemons.map((pokemon, index) => (
         <PokeSlot
           key={index}
-          index={index} // 👈 Pasar `index`
+          index={index}
           pokemon={pokemon}
           isSelected={selectedSlot === index}
-          onSelect={() => handleSlotClick(index)}
         />
       ))}
     </div>
   );
-};
+});
 
 export default TeamContainer;

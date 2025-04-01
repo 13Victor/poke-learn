@@ -1,34 +1,65 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import PokemonRow from "./PokemonRow";
-import { useTeam } from "../../TeamContext";
 
-const PokemonTable = ({ onPokemonSelect }) => {
-  const { setViewMode } = useTeam(); // Contexto para cambiar la vista
-  const [filteredPokemon, setFilteredPokemon] = useState([]);
+const PokemonTable = memo(({ onPokemonSelect }) => {
+  const [pokemons, setPokemons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
     fetch("http://localhost:5000/data/availablePokemons")
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo obtener la lista de Pokémon.");
         return res.json();
       })
       .then((data) => {
-        setFilteredPokemon(data);
-        setLoading(false);
+        if (isMounted) {
+          setPokemons(data);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const handleRowClick = (pokemon) => {
-    console.log("🔹 Pokémon seleccionado:", pokemon);
-    onPokemonSelect(pokemon); // Llamamos a la función onPokemonSelect pasada desde TeamMaker
-    setViewMode("moves"); // Cambia la vista a movimientos
-  };
+  // Memoizar la función de búsqueda para evitar recreaciones
+  const handleSearch = useCallback((e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  }, []);
+
+  // Filtrar los Pokémon basados en el término de búsqueda
+  const filteredPokemon = useCallback(() => {
+    if (!searchTerm) return pokemons;
+
+    return pokemons.filter(
+      (pokemon) =>
+        pokemon.name.toLowerCase().includes(searchTerm) ||
+        pokemon.types.some((type) => type.toLowerCase().includes(searchTerm)) ||
+        pokemon.abilities.some((ability) =>
+          ability.toLowerCase().includes(searchTerm)
+        )
+    );
+  }, [pokemons, searchTerm]);
+
+  // Memoizar el handler para evitar recreaciones
+  const handleRowClick = useCallback(
+    (pokemon) => {
+      console.log("🔹 Pokémon seleccionado:", pokemon);
+      onPokemonSelect(pokemon);
+    },
+    [onPokemonSelect]
+  );
 
   if (loading) return <p>⏳ Cargando Pokémon...</p>;
   if (error) return <p>❌ Error: {error}</p>;
@@ -36,6 +67,15 @@ const PokemonTable = ({ onPokemonSelect }) => {
   return (
     <div>
       <h2>Lista de Pokémon</h2>
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Buscar Pokémon, tipo, habilidad..."
+          value={searchTerm}
+          onChange={handleSearch}
+          className="search-input"
+        />
+      </div>
       <div className="table-container">
         <table border="1" className="pokemon-table">
           <thead>
@@ -54,11 +94,11 @@ const PokemonTable = ({ onPokemonSelect }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredPokemon.map((pokemon) => (
+            {filteredPokemon().map((pokemon) => (
               <PokemonRow
-                key={pokemon.name}
+                key={pokemon.id || pokemon.name}
                 pokemon={pokemon}
-                onClick={() => handleRowClick(pokemon)}
+                onClick={handleRowClick}
               />
             ))}
           </tbody>
@@ -66,6 +106,6 @@ const PokemonTable = ({ onPokemonSelect }) => {
       </div>
     </div>
   );
-};
+});
 
 export default PokemonTable;

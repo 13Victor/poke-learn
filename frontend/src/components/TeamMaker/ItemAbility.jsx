@@ -1,23 +1,39 @@
-const ItemAbility = ({ item, ability, onChange }) => {
-  return (
-    <div className="item-abilityContainer">
-      <div className="itemContainer">
-        <img
-          className="small-icon"
-          src="https://img.freepik.com/psd-premium/mariposa-colorida-es-realista-aislada-archivo-png-fondo-transparente_1304044-3907.jpg?semt=ais_hybrid"
-          alt="Item"
+import React, { memo } from "react";
+
+const ItemAbility = memo(
+  ({ item, ability, onItemChange, onAbilityChange }) => {
+    return (
+      <div className="item-abilityContainer">
+        <div className="itemContainer">
+          <img
+            className="small-icon"
+            src="/assets/items/item-placeholder.png" // Cambiado para usar un placeholder local
+            alt="Item"
+          />
+          <input
+            type="text"
+            name="item"
+            value={item || ""}
+            onChange={onItemChange}
+          />
+        </div>
+        <input
+          type="text"
+          name="ability"
+          className="abilityInput"
+          value={ability || ""}
+          onChange={onAbilityChange}
         />
-        <input type="text" name="item" value={item} onChange={onChange} />
       </div>
-      <input
-        type="text"
-        name="ability"
-        className="abilityInput"
-        value={ability}
-        onChange={onChange}
-      />
-    </div>
-  );
-};
+    );
+  },
+  (prevProps, nextProps) => {
+    // Solo re-renderizar cuando cambia el item o la habilidad
+    return (
+      prevProps.item === nextProps.item &&
+      prevProps.ability === nextProps.ability
+    );
+  }
+);
 
 export default ItemAbility;

@@ -1,45 +1,78 @@
-import React from "react";
+import React, { memo } from "react";
 import MoveSet from "./MoveSet";
 import ItemAbility from "./ItemAbility";
 import PokeInfo from "./PokeInfo";
 import "./TeamMaker.css";
 import Tippy from "@tippyjs/react";
-import "tippy.js/dist/tippy.css"; // Estilos básicos
-import "tippy.js/animations/scale.css"; // Animación opcional
+import "tippy.js/dist/tippy.css";
+import "tippy.js/animations/scale.css";
+import { useTeam } from "../../TeamContext";
 
-const PokeSlot = ({ pokemon, isSelected, onSelect, index }) => {
-  return (
-    <div
-      className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
-      onClick={onSelect}
-    >
-      <div className="pokemonImageContainer">
-        <Tippy
-          content={pokemon.name || `Pokémon ${index + 1}`}
-          animation="scale"
-          delay={[300, 100]}
-          placement="top"
-          offset={[0, -25]}
-        >
-          <img
-            src={`/assets/pokemon-small-hd-sprites/${pokemon.image}`}
-            alt={pokemon.name}
+// Componente para mostrar un slot del equipo
+const PokeSlot = memo(
+  ({ pokemon, isSelected, index }) => {
+    const { selectSlot, setItem, setAbility } = useTeam();
+
+    const handleSelect = () => {
+      selectSlot(index);
+    };
+
+    const handleItemChange = (e) => {
+      setItem(index, e.target.value);
+    };
+
+    const handleAbilityChange = (e) => {
+      setAbility(index, e.target.value);
+    };
+
+    return (
+      <div
+        className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
+        onClick={handleSelect}
+      >
+        <div className="pokemonImageContainer">
+          <Tippy
+            content={pokemon.name || `Pokémon ${index + 1}`}
+            animation="scale"
+            delay={[300, 100]}
+            placement="top"
+            offset={[0, -25]}
+          >
+            <img
+              src={`/assets/pokemon-small-hd-sprites/${pokemon.image}`}
+              alt={pokemon.name}
+            />
+          </Tippy>
+        </div>
+        <div className="pokemonDataContainer">
+          <PokeInfo
+            name={pokemon.name}
+            level={pokemon.level}
+            types={pokemon.types}
+            index={index}
           />
-        </Tippy>
+          <ItemAbility
+            item={pokemon.item}
+            ability={pokemon.ability}
+            onItemChange={handleItemChange}
+            onAbilityChange={handleAbilityChange}
+          />
+          <hr id="separatorLine" />
+          <MoveSet
+            pokemon={pokemon}
+            moves={pokemon.moveset}
+            slotIndex={index}
+          />
+        </div>
       </div>
-      <div className="pokemonDataContainer">
-        <PokeInfo
-          name={pokemon.name}
-          level={pokemon.level}
-          types={pokemon.types}
-          index={index}
-        />
-        <ItemAbility item="" ability="" onChange={() => {}} />
-        <hr id="separatorLine" />
-        <MoveSet pokemon={pokemon} moves={pokemon.moveset} slotIndex={index} />
-      </div>
-    </div>
-  );
-};
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.isSelected === nextProps.isSelected &&
+      prevProps.pokemon === nextProps.pokemon
+    );
+  }
+);
 
 export default PokeSlot;

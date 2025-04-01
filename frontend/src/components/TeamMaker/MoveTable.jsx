@@ -1,58 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import MoveRow from "./MoveRow";
 
 const MoveTable = ({ onMoveSelect, selectedPokemon }) => {
   const [moves, setMoves] = useState({});
   const [learnsets, setLearnsets] = useState({});
-  const [filteredMoves, setFilteredMoves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Cargar datos solo una vez al montar el componente
   useEffect(() => {
-    // Cargar datos de movimientos y learnsets
+    let isMounted = true;
+
     Promise.all([
       fetch("http://localhost:5000/data/moves").then((res) => res.json()),
       fetch("http://localhost:5000/data/learnsets").then((res) => res.json()),
     ])
       .then(([movesData, learnsetsData]) => {
-        setMoves(movesData);
-        setLearnsets(learnsetsData);
-        setLoading(false);
+        if (isMounted) {
+          setMoves(movesData);
+          setLearnsets(learnsetsData);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Filtrar los movimientos basados en el Pokémon seleccionado
-  useEffect(() => {
-    if (!selectedPokemon || !selectedPokemon.id) {
-      setFilteredMoves([]);
-      return;
+  // Memoizar la lista de movimientos filtrados para evitar recálculos innecesarios
+  const filteredMoves = useMemo(() => {
+    if (
+      !selectedPokemon ||
+      !selectedPokemon.id ||
+      Object.keys(learnsets).length === 0
+    ) {
+      return [];
     }
 
-    // Intenta obtener el learnset del Pokémon seleccionado o de su changesFrom si no tiene
     const pokemonLearnset =
       learnsets[selectedPokemon.id]?.learnset ||
       learnsets[selectedPokemon.changesFrom]?.learnset ||
       {};
 
     const moveNames = Object.keys(pokemonLearnset);
-    const filtered = moveNames.map((move) => moves[move]).filter(Boolean);
-    setFilteredMoves(filtered);
+    return moveNames.map((move) => moves[move]).filter(Boolean);
   }, [selectedPokemon, learnsets, moves]);
 
-  const handleRowClick = (move) => {
-    onMoveSelect(move);
-  };
+  // Memoizar el handler para evitar recreaciones
+  const handleRowClick = useCallback(
+    (move) => {
+      onMoveSelect(move);
+    },
+    [onMoveSelect]
+  );
 
   if (loading) return <p>⏳ Cargando Movimientos...</p>;
   if (error) return <p>❌ Error: {error}</p>;
 
   return (
     <div>
-      <h2>Movimientos disponibles</h2>
+      <h2>Movimientos disponibles para {selectedPokemon?.name || "???"}</h2>
 
       <div className="table-container">
         <table border="1" className="pokemon-table">
@@ -69,11 +83,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon }) => {
           <tbody>
             {filteredMoves.length > 0 ? (
               filteredMoves.map((move) => (
-                <MoveRow
-                  key={move.name}
-                  move={move}
-                  onClick={() => handleRowClick(move)}
-                />
+                <MoveRow key={move.name} move={move} onClick={handleRowClick} />
               ))
             ) : (
               <tr>
@@ -87,4 +97,8 @@ const MoveTable = ({ onMoveSelect, selectedPokemon }) => {
   );
 };
 
-export default MoveTable;
+// Memoizar el componente completo
+export default React.memo(MoveTable, (prevProps, nextProps) => {
+  // Solo renderizar si cambia el Pokémon seleccionado
+  return prevProps.selectedPokemon?.id === nextProps.selectedPokemon?.id;
+});
