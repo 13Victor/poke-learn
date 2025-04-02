@@ -3,8 +3,13 @@ import { useTeam } from "../../TeamContext";
 
 const MoveSet = memo(
   ({ pokemon, moves, slotIndex }) => {
-    const { selectedMove, setSelectedMove, setViewMode, setSelectedSlot } =
-      useTeam();
+    const {
+      selectedMove,
+      setSelectedMove,
+      setViewMode,
+      viewMode,
+      setSelectedSlot,
+    } = useTeam();
 
     const handleMoveClick = (moveIndex, event) => {
       if (!pokemon.name) {
@@ -28,7 +33,8 @@ const MoveSet = memo(
             className={`moveInput ${
               selectedMove.slot === slotIndex &&
               selectedMove.moveIndex === index &&
-              pokemon.name
+              pokemon.name &&
+              viewMode === "moves"
                 ? "selected-move"
                 : ""
             }`}
