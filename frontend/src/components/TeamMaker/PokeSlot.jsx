@@ -39,7 +39,7 @@ const PokeSlot = memo(
             offset={[0, -25]}
           >
             <img
-              src={`/assets/pokemon-small-hd-sprites/${pokemon.image}`}
+              src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
               alt={pokemon.name}
             />
           </Tippy>

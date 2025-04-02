@@ -21,7 +21,7 @@ const initialState = {
       level: 100,
       item: "",
       ability: "",
-      image: "0000.png",
+      image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
     })),

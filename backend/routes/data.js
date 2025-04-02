@@ -37,11 +37,11 @@ const processPokedex = () => {
     const variantIndex = groupedByNum[num].indexOf(pokemon);
     const imageName =
       variantIndex === 0
-        ? `${String(num).padStart(4, "0")}.png`
+        ? `${String(num).padStart(4, "0")}.webp`
         : `${String(num).padStart(4, "0")}_${String(variantIndex).padStart(
             2,
             "0"
-          )}.png`;
+          )}.webp`;
 
     return {
       num,

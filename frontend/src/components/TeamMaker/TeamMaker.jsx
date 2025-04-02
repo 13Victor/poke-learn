@@ -1,9 +1,18 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import TeamContainer from "./TeamContainer";
-import PokemonTable from "./PokemonTable";
-import MoveTable from "./MoveTable";
+import TableView from "./TableView";
 import { useTeam } from "../../TeamContext";
+import { usePokemonData } from "../../PokemonDataContext";
 
+// Loading indicator component
+const LoadingIndicator = memo(({ label }) => (
+  <div className="loading-indicator">
+    <div className="spinner"></div>
+    <p>⏳ Loading {label}...</p>
+  </div>
+));
+
+// Main TeamMaker component
 const TeamMaker = memo(() => {
   const {
     viewMode,
@@ -15,63 +24,60 @@ const TeamMaker = memo(() => {
     setSelectedMove,
   } = useTeam();
 
-  const moveIndexRef = React.useRef(0);
+  console.log("🔴 Rendering TeamMaker component");
 
-  React.useEffect(() => {
-    moveIndexRef.current = selectedMove.moveIndex;
-  }, [selectedMove]);
+  const { isAllDataLoaded, isLoading } = usePokemonData();
 
-  const handlePokemonSelect = (pokemon) => {
-    selectPokemon(selectedSlot, pokemon);
-  };
+  // Handle Pokémon selection
+  const handlePokemonSelect = React.useCallback(
+    (pokemon) => {
+      console.log("🔹 Selecting Pokémon:", pokemon.name);
+      selectPokemon(selectedSlot, pokemon);
+    },
+    [selectPokemon, selectedSlot]
+  );
 
-  const handleMoveSelect = (move) => {
-    if (selectedSlot !== null) {
-      // Usar el valor de la ref para el índice actual
-      const currentMoveIndex = moveIndexRef.current;
-
-      // Establecer el movimiento actual
-      setMove(selectedSlot, currentMoveIndex, move.name);
-
-      // Calcular y actualizar el siguiente índice
-      const nextMoveIndex = currentMoveIndex + 1;
-      console.log("Moviendo de índice", currentMoveIndex, "a", nextMoveIndex);
-
-      if (nextMoveIndex < 4) {
-        // Actualizar la ref inmediatamente
-        moveIndexRef.current = nextMoveIndex;
-
-        // Y también actualizar el state para la UI
-        setSelectedMove({
-          slot: selectedSlot,
-          moveIndex: nextMoveIndex,
-        });
-      }
-    }
-  };
-
-  // Solo renderizar el componente que está activo
-  const renderActiveComponent = () => {
-    if (viewMode === "pokemon") {
-      return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
-    }
-
-    if (viewMode === "moves") {
-      return (
-        <MoveTable
-          onMoveSelect={handleMoveSelect}
-          selectedPokemon={pokemons[selectedSlot]}
-        />
+  // Handle move selection with explicit slot tracking
+  const handleMoveSelect = React.useCallback(
+    (move, slotIndex, moveIndex) => {
+      console.log(
+        `🔹 Selecting move "${move.name}" for slot ${slotIndex}, move position ${moveIndex}`
       );
-    }
 
-    return null;
-  };
+      // Use the explicit slot and move index passed from the table
+      setMove(slotIndex, moveIndex, move.name);
+
+      // Calculate next move index and update selection
+      const nextMoveIndex = (moveIndex + 1) % 4;
+      setSelectedMove({
+        slot: slotIndex,
+        moveIndex: nextMoveIndex,
+      });
+    },
+    [setMove, setSelectedMove]
+  );
+
+  // Get currently selected Pokémon
+  const selectedPokemon = useMemo(() => {
+    return selectedSlot !== null ? pokemons[selectedSlot] : null;
+  }, [pokemons, selectedSlot]);
 
   return (
     <>
       <TeamContainer />
-      {renderActiveComponent()}
+
+      {isLoading && !isAllDataLoaded ? (
+        <LoadingIndicator label="data" />
+      ) : (
+        <TableView
+          viewMode={viewMode}
+          selectedSlot={selectedSlot}
+          selectedPokemon={selectedPokemon}
+          selectedMove={selectedMove}
+          onPokemonSelect={handlePokemonSelect}
+          onMoveSelect={handleMoveSelect}
+        />
+      )}
     </>
   );
 });
