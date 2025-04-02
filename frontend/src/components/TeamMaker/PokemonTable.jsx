@@ -1,37 +1,10 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useCallback, memo } from "react";
 import PokemonRow from "./PokemonRow";
+import { usePokemonData } from "../../PokemonDataContext";
 
 const PokemonTable = memo(({ onPokemonSelect }) => {
-  const [pokemons, setPokemons] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { pokemons, loading, error } = usePokemonData();
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    fetch("http://localhost:5000/data/availablePokemons")
-      .then((res) => {
-        if (!res.ok) throw new Error("No se pudo obtener la lista de Pokémon.");
-        return res.json();
-      })
-      .then((data) => {
-        if (isMounted) {
-          setPokemons(data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Memoizar la función de búsqueda para evitar recreaciones
   const handleSearch = useCallback((e) => {

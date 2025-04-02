@@ -1,38 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import MoveRow from "./MoveRow";
+import { usePokemonData } from "../../PokemonDataContext";
 
 const MoveTable = ({ onMoveSelect, selectedPokemon }) => {
-  const [moves, setMoves] = useState({});
-  const [learnsets, setLearnsets] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Cargar datos solo una vez al montar el componente
-  useEffect(() => {
-    let isMounted = true;
-
-    Promise.all([
-      fetch("http://localhost:5000/data/moves").then((res) => res.json()),
-      fetch("http://localhost:5000/data/learnsets").then((res) => res.json()),
-    ])
-      .then(([movesData, learnsetsData]) => {
-        if (isMounted) {
-          setMoves(movesData);
-          setLearnsets(learnsetsData);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { moves, learnsets, loading, error } = usePokemonData();
 
   // Memoizar la lista de movimientos filtrados para evitar recálculos innecesarios
   const filteredMoves = useMemo(() => {
