@@ -1,19 +1,7 @@
 import React, { memo } from "react";
 
-// Global image cache to avoid unnecessary reloads
-const loadedImagesCache = new Set();
-
 const PokemonRow = memo(({ pokemon, onClick }) => {
-  const imageKey = pokemon.image;
-
-  // Pre-cache the image
-  const handleImageLoad = () => {
-    loadedImagesCache.add(imageKey);
-  };
-
-  const handleImageError = () => {
-    loadedImagesCache.delete(imageKey);
-  };
+  const imageUrl = `/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`;
 
   return (
     <tr onClick={() => onClick(pokemon)}>
@@ -29,14 +17,15 @@ const PokemonRow = memo(({ pokemon, onClick }) => {
           }}
         >
           <img
-            src={`/assets/pokemon-small-hd-sprites-webp/${imageKey}`}
+            src={imageUrl}
             alt={pokemon.name}
             width="40"
             height="40"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading="lazy"
             style={{ display: "block" }}
+            onError={(e) => {
+              e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+              console.warn(`Failed to load image for ${pokemon.name}`);
+            }}
           />
         </div>
       </td>
@@ -54,7 +43,6 @@ const PokemonRow = memo(({ pokemon, onClick }) => {
   );
 });
 
-// Prevenir remontajes innecesarios con nombre de visualización personalizado
 PokemonRow.displayName = "PokemonRow";
 
 export default PokemonRow;

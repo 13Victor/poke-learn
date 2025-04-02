@@ -109,22 +109,138 @@ export const PokemonDataProvider = ({ children }) => {
       : loadResource("learnsets");
   }, [resources.learnsets.loaded, loadResource]);
 
-  // Optional: Preload all data on mount
+  // Preload all data on mount
   useEffect(() => {
     const preloadAllData = async () => {
+      // Si ya están cargados todos los datos, no hacer nada
+      if (
+        resources.pokemons.loaded &&
+        resources.moves.loaded &&
+        resources.learnsets.loaded
+      ) {
+        return;
+      }
+
+      console.log("🔄 Preloading all Pokémon data...");
+
       try {
-        // Load resources in sequence to avoid overwhelming the server
-        await getPokemons();
-        await getMoves();
-        await getLearnsets();
-        console.log("✅ All data preloaded successfully");
+        // Indicar que estamos cargando todos los datos
+        setResources((prev) => ({
+          pokemons: { ...prev.pokemons, loading: true },
+          moves: { ...prev.moves, loading: true },
+          learnsets: { ...prev.learnsets, loading: true },
+        }));
+
+        const startTime = performance.now();
+
+        // Cargar datos en paralelo
+        const results = await Promise.allSettled([
+          fetch("http://localhost:5000/data/availablePokemons").then((r) =>
+            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
+          ),
+          fetch("http://localhost:5000/data/moves").then((r) =>
+            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
+          ),
+          fetch("http://localhost:5000/data/learnsets").then((r) =>
+            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
+          ),
+        ]);
+
+        const endTime = performance.now();
+        console.log(
+          `⏱️ Data fetch attempts completed in ${(endTime - startTime).toFixed(
+            2
+          )}ms`
+        );
+
+        // Procesar resultados
+        const newResources = { ...resources };
+
+        // Pokémon data
+        if (results[0].status === "fulfilled") {
+          newResources.pokemons = {
+            loaded: true,
+            loading: false,
+            data: results[0].value,
+            error: null,
+          };
+          console.log(
+            `✅ Successfully loaded ${results[0].value.length} Pokémon`
+          );
+        } else {
+          newResources.pokemons = {
+            loaded: false,
+            loading: false,
+            data: [],
+            error: results[0].reason,
+          };
+          console.error("❌ Failed to load Pokémon data:", results[0].reason);
+        }
+
+        // Moves data
+        if (results[1].status === "fulfilled") {
+          newResources.moves = {
+            loaded: true,
+            loading: false,
+            data: results[1].value,
+            error: null,
+          };
+          console.log(`✅ Successfully loaded moves`);
+        } else {
+          newResources.moves = {
+            loaded: false,
+            loading: false,
+            data: {},
+            error: results[1].reason,
+          };
+          console.error("❌ Failed to load moves data:", results[1].reason);
+        }
+
+        // Learnsets data
+        if (results[2].status === "fulfilled") {
+          newResources.learnsets = {
+            loaded: true,
+            loading: false,
+            data: results[2].value,
+            error: null,
+          };
+          console.log(`✅ Successfully loaded learnsets`);
+        } else {
+          newResources.learnsets = {
+            loaded: false,
+            loading: false,
+            data: {},
+            error: results[2].reason,
+          };
+          console.error("❌ Failed to load learnsets data:", results[2].reason);
+        }
+
+        setResources(newResources);
+
+        const allSuccess = results.every((r) => r.status === "fulfilled");
+        if (allSuccess) {
+          console.log("✅ All data preloaded successfully");
+        } else {
+          console.warn("⚠️ Some data failed to load, see errors above");
+        }
       } catch (error) {
-        console.error("❌ Error preloading data:", error);
+        console.error("❌ Unexpected error during data preloading:", error);
+
+        // Actualizar estado para reflejar el error
+        setResources((prev) => ({
+          pokemons: { ...prev.pokemons, loading: false, error: error.message },
+          moves: { ...prev.moves, loading: false, error: error.message },
+          learnsets: {
+            ...prev.learnsets,
+            loading: false,
+            error: error.message,
+          },
+        }));
       }
     };
 
     preloadAllData();
-  }, [getPokemons, getMoves, getLearnsets]);
+  }, []); // Sin dependencias - solo se ejecuta una vez al montar
 
   const value = {
     // Resource states
