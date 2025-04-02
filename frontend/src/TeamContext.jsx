@@ -173,8 +173,32 @@ export const TeamProvider = ({ children }) => {
         });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "moves" });
       },
+
+      // Nuevo método para manejar la selección de movimientos y la actualización del índice
+      selectMove: (move) => {
+        const slotIndex = state.selectedSlot;
+        const moveIndex = state.selectedMove.moveIndex;
+
+        // Establecer el movimiento seleccionado
+        dispatch({
+          type: ACTIONS.SET_MOVE,
+          payload: { slotIndex, moveIndex, moveName: move.name },
+        });
+
+        // Avanzar al siguiente índice de movimiento
+        const nextMoveIndex = (moveIndex + 1) % 4;
+        dispatch({
+          type: ACTIONS.SET_SELECTED_MOVE,
+          payload: { slot: slotIndex, moveIndex: nextMoveIndex },
+        });
+      },
+
+      // Método para obtener el Pokémon seleccionado actualmente
+      getSelectedPokemon: () => {
+        return state.pokemons[state.selectedSlot];
+      },
     }),
-    []
+    [state.selectedSlot, state.selectedMove.moveIndex]
   );
 
   const value = { ...state, ...actions };

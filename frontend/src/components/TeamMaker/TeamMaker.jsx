@@ -1,7 +1,6 @@
-import React, { memo, useMemo } from "react";
+import React, { memo } from "react";
 import TeamContainer from "./TeamContainer";
 import TableView from "./TableView";
-import { useTeam } from "../../TeamContext";
 import { usePokemonData } from "../../PokemonDataContext";
 
 // Loading indicator component
@@ -12,55 +11,11 @@ const LoadingIndicator = memo(({ label }) => (
   </div>
 ));
 
-// Main TeamMaker component
+// Main TeamMaker component - simplified to only handle rendering decisions
 const TeamMaker = memo(() => {
-  const {
-    viewMode,
-    selectedSlot,
-    pokemons,
-    selectPokemon,
-    setMove,
-    selectedMove,
-    setSelectedMove,
-  } = useTeam();
-
-  console.log("🔴 Rendering TeamMaker component");
-
   const { isAllDataLoaded, isLoading } = usePokemonData();
 
-  // Handle Pokémon selection
-  const handlePokemonSelect = React.useCallback(
-    (pokemon) => {
-      console.log("🔹 Selecting Pokémon:", pokemon.name);
-      selectPokemon(selectedSlot, pokemon);
-    },
-    [selectPokemon, selectedSlot]
-  );
-
-  // Handle move selection with explicit slot tracking
-  const handleMoveSelect = React.useCallback(
-    (move, slotIndex, moveIndex) => {
-      console.log(
-        `🔹 Selecting move "${move.name}" for slot ${slotIndex}, move position ${moveIndex}`
-      );
-
-      // Use the explicit slot and move index passed from the table
-      setMove(slotIndex, moveIndex, move.name);
-
-      // Calculate next move index and update selection
-      const nextMoveIndex = (moveIndex + 1) % 4;
-      setSelectedMove({
-        slot: slotIndex,
-        moveIndex: nextMoveIndex,
-      });
-    },
-    [setMove, setSelectedMove]
-  );
-
-  // Get currently selected Pokémon
-  const selectedPokemon = useMemo(() => {
-    return selectedSlot !== null ? pokemons[selectedSlot] : null;
-  }, [pokemons, selectedSlot]);
+  console.log("🔴 TeamMaker component rendered");
 
   return (
     <>
@@ -69,14 +24,7 @@ const TeamMaker = memo(() => {
       {isLoading && !isAllDataLoaded ? (
         <LoadingIndicator label="data" />
       ) : (
-        <TableView
-          viewMode={viewMode}
-          selectedSlot={selectedSlot}
-          selectedPokemon={selectedPokemon}
-          selectedMove={selectedMove}
-          onPokemonSelect={handlePokemonSelect}
-          onMoveSelect={handleMoveSelect}
-        />
+        <TableView />
       )}
     </>
   );

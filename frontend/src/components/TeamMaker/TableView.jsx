@@ -1,67 +1,76 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useCallback } from "react";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
 import { usePokemonData } from "../../PokemonDataContext";
+import { useTeam } from "../../TeamContext";
 
 // TableView component that handles which table to display
-const TableView = memo(
-  ({
+const TableView = memo(() => {
+  const { isAllDataLoaded } = usePokemonData();
+  const {
     viewMode,
     selectedSlot,
-    selectedPokemon,
+    pokemons,
+    selectPokemon,
+    setMove,
     selectedMove,
-    onPokemonSelect,
-    onMoveSelect,
-  }) => {
-    const { isAllDataLoaded } = usePokemonData();
+    setSelectedMove,
+  } = useTeam();
 
-    // Show appropriate table based on viewMode
-    const renderTable = useMemo(() => {
-      if (viewMode === "pokemon") {
-        return <PokemonTable onPokemonSelect={onPokemonSelect} />;
-      }
+  // Get currently selected Pokémon
+  const selectedPokemon = useMemo(() => {
+    return selectedSlot !== null ? pokemons[selectedSlot] : null;
+  }, [pokemons, selectedSlot]);
 
-      if (viewMode === "moves" && selectedPokemon?.name) {
-        return (
-          <MoveTable
-            onMoveSelect={(move) =>
-              onMoveSelect(move, selectedSlot, selectedMove.moveIndex)
-            }
-            selectedPokemon={selectedPokemon}
-            selectedSlot={selectedSlot}
-            selectedMoveIndex={selectedMove.moveIndex}
-          />
-        );
-      }
+  // Handle Pokémon selection
+  const handlePokemonSelect = useCallback(
+    (pokemon) => {
+      console.log("🔹 Selecting Pokémon:", pokemon.name);
+      selectPokemon(selectedSlot, pokemon);
+    },
+    [selectPokemon, selectedSlot]
+  );
 
-      return null;
-    }, [
-      viewMode,
-      selectedPokemon?.id,
-      selectedSlot,
-      selectedMove.moveIndex,
-      onPokemonSelect,
-      onMoveSelect,
-    ]);
+  // Handle move selection with explicit slot tracking
+  const handleMoveSelect = useCallback(
+    (move) => {
+      const slotIndex = selectedSlot;
+      const moveIndex = selectedMove.moveIndex;
 
-    return renderTable;
-  },
-  (prevProps, nextProps) => {
-    // Rerender on view mode, slot, or selected move changes
-    if (prevProps.viewMode !== nextProps.viewMode) return false;
-    if (prevProps.selectedSlot !== nextProps.selectedSlot) return false;
-    if (prevProps.selectedMove.moveIndex !== nextProps.selectedMove.moveIndex)
-      return false;
+      console.log(
+        `🔹 Selecting move "${move.name}" for slot ${slotIndex}, move position ${moveIndex}`
+      );
 
-    if (
-      prevProps.viewMode === "moves" &&
-      prevProps.selectedPokemon?.id !== nextProps.selectedPokemon?.id
-    ) {
-      return false;
-    }
+      // Use the explicit slot and move index
+      setMove(slotIndex, moveIndex, move.name);
 
-    return true;
+      // Calculate next move index and update selection
+      const nextMoveIndex = (moveIndex + 1) % 4;
+      setSelectedMove({
+        slot: slotIndex,
+        moveIndex: nextMoveIndex,
+      });
+    },
+    [selectedSlot, selectedMove.moveIndex, setMove, setSelectedMove]
+  );
+
+  // Show appropriate table based on viewMode
+  if (viewMode === "pokemon") {
+    return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
   }
-);
+
+  if (viewMode === "moves" && selectedPokemon?.name) {
+    return (
+      <MoveTable
+        onMoveSelect={handleMoveSelect}
+        selectedPokemon={selectedPokemon}
+        selectedSlot={selectedSlot}
+        selectedMoveIndex={selectedMove.moveIndex}
+      />
+    );
+  }
+
+  return null;
+});
 
 export default TableView;
