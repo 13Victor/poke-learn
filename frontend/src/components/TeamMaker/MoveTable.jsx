@@ -80,28 +80,26 @@ const MoveTable = ({
 
       setIsProcessingMoves(true);
 
-      setTimeout(() => {
-        try {
-          const pokemonLearnset =
-            learnsets[selectedPokemon.id]?.learnset ||
-            learnsets[selectedPokemon.changesFrom]?.learnset ||
-            {};
+      try {
+        const pokemonLearnset =
+          learnsets[selectedPokemon.id]?.learnset ||
+          learnsets[selectedPokemon.changesFrom]?.learnset ||
+          {};
 
-          const moveNames = Object.keys(pokemonLearnset);
-          const availableMoves = moveNames
-            .map((move) => moves[move])
-            .filter(Boolean);
+        const moveNames = Object.keys(pokemonLearnset);
+        const availableMoves = moveNames
+          .map((move) => moves[move])
+          .filter(Boolean);
 
-          setPokemonMoves(availableMoves);
-          console.log(
-            `✅ ${availableMoves.length} moves processed for ${selectedPokemon.name}`
-          );
-        } catch (error) {
-          console.error(`❌ Error processing moves:`, error);
-        } finally {
-          setIsProcessingMoves(false);
-        }
-      }, 0);
+        setPokemonMoves(availableMoves);
+        console.log(
+          `✅ ${availableMoves.length} moves processed for ${selectedPokemon.name}`
+        );
+      } catch (error) {
+        console.error(`❌ Error processing moves:`, error);
+      } finally {
+        setIsProcessingMoves(false);
+      }
     };
 
     processMoveData();
