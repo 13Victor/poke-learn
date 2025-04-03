@@ -24,8 +24,9 @@ const initialState = {
       image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
+      itemSpriteNum: null, // Added to track item sprite
     })),
-  viewMode: "pokemon",
+  viewMode: "pokemon", // Can now be "pokemon", "moves", or "items"
   selectedSlot: 0,
   selectedMove: { slot: 0, moveIndex: 0 },
 };
@@ -41,6 +42,9 @@ function teamReducer(state, action) {
       newPokemons[slotIndex] = {
         ...pokemon,
         moveset: currentMoveset,
+        item: newPokemons[slotIndex].item || "",
+        itemSpriteNum: newPokemons[slotIndex].itemSpriteNum || null,
+        ability: newPokemons[slotIndex].ability || "",
       };
       return {
         ...state,
@@ -64,11 +68,12 @@ function teamReducer(state, action) {
     }
 
     case ACTIONS.SET_ITEM: {
-      const { slotIndex, item } = action.payload;
+      const { slotIndex, item, spriteNum } = action.payload;
       const newPokemons = [...state.pokemons];
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
         item,
+        itemSpriteNum: spriteNum,
       };
       return {
         ...state,
@@ -133,8 +138,11 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, moveIndex, moveName },
         }),
 
-      setItem: (slotIndex, item) =>
-        dispatch({ type: ACTIONS.SET_ITEM, payload: { slotIndex, item } }),
+      setItem: (slotIndex, item, spriteNum) =>
+        dispatch({
+          type: ACTIONS.SET_ITEM,
+          payload: { slotIndex, item, spriteNum },
+        }),
 
       setAbility: (slotIndex, ability) =>
         dispatch({
@@ -174,7 +182,7 @@ export const TeamProvider = ({ children }) => {
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "moves" });
       },
 
-      // Nuevo método para manejar la selección de movimientos y la actualización del índice
+      // Método para manejar la selección de movimientos y la actualización del índice
       selectMove: (move) => {
         const slotIndex = state.selectedSlot;
         const moveIndex = state.selectedMove.moveIndex;
@@ -191,6 +199,24 @@ export const TeamProvider = ({ children }) => {
           type: ACTIONS.SET_SELECTED_MOVE,
           payload: { slot: slotIndex, moveIndex: nextMoveIndex },
         });
+      },
+
+      // Nuevo método para manejar la selección de items
+      selectItem: (item) => {
+        const slotIndex = state.selectedSlot;
+
+        // Establecer el item seleccionado
+        dispatch({
+          type: ACTIONS.SET_ITEM,
+          payload: {
+            slotIndex,
+            item: item.name,
+            spriteNum: item.spritenum,
+          },
+        });
+
+        // Volver a la vista de Pokémon después de seleccionar un item
+        dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "pokemon" });
       },
 
       // Método para obtener el Pokémon seleccionado actualmente

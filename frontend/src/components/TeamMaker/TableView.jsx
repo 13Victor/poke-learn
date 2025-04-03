@@ -1,10 +1,11 @@
+// TableView.jsx actualizado
 import React, { memo, useMemo, useCallback } from "react";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
+import ItemTable from "./ItemTable"; // Importar ItemTable
 import { usePokemonData } from "../../PokemonDataContext";
 import { useTeam } from "../../TeamContext";
 
-// TableView component that handles which table to display
 const TableView = memo(() => {
   const { isAllDataLoaded } = usePokemonData();
   const {
@@ -15,6 +16,7 @@ const TableView = memo(() => {
     setMove,
     selectedMove,
     setSelectedMove,
+    selectItem, // Asegurar que se importe esta función
   } = useTeam();
 
   // Get currently selected Pokémon
@@ -54,6 +56,15 @@ const TableView = memo(() => {
     [selectedSlot, selectedMove.moveIndex, setMove, setSelectedMove]
   );
 
+  // Handle item selection
+  const handleItemSelect = useCallback(
+    (item) => {
+      console.log(`🔹 Selecting item "${item.name}" for slot ${selectedSlot}`);
+      selectItem(item);
+    },
+    [selectItem, selectedSlot]
+  );
+
   // Show appropriate table based on viewMode
   if (viewMode === "pokemon") {
     return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
@@ -66,6 +77,16 @@ const TableView = memo(() => {
         selectedPokemon={selectedPokemon}
         selectedSlot={selectedSlot}
         selectedMoveIndex={selectedMove.moveIndex}
+      />
+    );
+  }
+
+  if (viewMode === "items") {
+    return (
+      <ItemTable
+        onItemSelect={handleItemSelect}
+        selectedPokemon={selectedPokemon}
+        selectedSlot={selectedSlot}
       />
     );
   }

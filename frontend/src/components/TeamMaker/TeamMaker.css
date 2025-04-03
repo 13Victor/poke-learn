@@ -97,21 +97,17 @@ body {
 
 .itemContainer {
   display: flex;
+  max-height: 24px;
   align-items: center;
   gap: 4px;
 }
 
-.itemContainer img {
-  flex-shrink: 0;
-}
-
-.itemContainer input,
+.item-button,
 .abilityInput {
-  flex-grow: 1;
   height: 24px;
   box-sizing: border-box;
-  padding: 4px;
   width: 100%;
+  border-radius: 50px;
 }
 
 .moveInputsContainer {

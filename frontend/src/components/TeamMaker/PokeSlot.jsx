@@ -52,9 +52,11 @@ const PokeSlot = memo(
             index={index}
           />
           <ItemAbility
+            pokemon={pokemon}
             item={pokemon.item}
             ability={pokemon.ability}
-            onItemChange={handleItemChange}
+            itemSpriteNum={pokemon.itemSpriteNum}
+            slotIndex={index}
             onAbilityChange={handleAbilityChange}
           />
           <hr id="separatorLine" />
