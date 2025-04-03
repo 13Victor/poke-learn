@@ -6,13 +6,15 @@ const ItemAbility = memo(
     const { setViewMode, setSelectedSlot } = useTeam();
 
     const handleItemClick = (e) => {
+      e.stopPropagation();
+      setSelectedSlot(slotIndex);
+
+      // Si no hay un Pokémon seleccionado, mostrar la vista de Pokémon
       if (!pokemon.name) {
         setViewMode("pokemon");
       } else {
         setViewMode("items");
       }
-      e.stopPropagation();
-      setSelectedSlot(slotIndex);
     };
 
     // Función para calcular la posición del sprite
@@ -52,6 +54,7 @@ const ItemAbility = memo(
           className="abilityInput"
           value={ability || ""}
           onChange={onAbilityChange}
+          placeholder="Ability"
         />
       </div>
     );
@@ -61,7 +64,8 @@ const ItemAbility = memo(
     return (
       prevProps.item === nextProps.item &&
       prevProps.ability === nextProps.ability &&
-      prevProps.itemSpriteNum === nextProps.itemSpriteNum
+      prevProps.itemSpriteNum === nextProps.itemSpriteNum &&
+      prevProps.pokemon.name === nextProps.pokemon.name
     );
   }
 );
