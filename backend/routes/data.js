@@ -7,7 +7,6 @@ const processPokedex = () => {
 
   const validPokemon = Object.keys(data.pokedex.Pokedex).filter((pokemon) => {
     const pokemonData = data.pokedex.Pokedex[pokemon];
-    const pokemonId = pokemon;
     const formatData = data.formatsData.FormatsData[pokemon] || {};
     const tier = formatData.tier || "Unknown";
     const isNonstandard = formatData.isNonstandard || "";
@@ -70,7 +69,8 @@ router.get("/availablePokemons", (req, res) => {
 
 router.get("/pokedex", (req, res) => res.json(data.moves));
 router.get("/moves", (req, res) => res.json(data.moves.Moves));
-router.get("/items", (req, res) => res.json(data.items));
+router.get("/items", (req, res) => res.json(data.items.Items));
+router.get("/items-desc", (req, res) => res.json(data.itemsDesc.ItemsText));
 router.get("/formats", (req, res) => res.json(data.formats));
 router.get("/formats-data", (req, res) => res.json(data.formatsData));
 router.get("/learnsets", (req, res) => res.json(data.learnsets.Learnsets));

@@ -1,5 +1,6 @@
 const formats = require("./formats");
 const items = require("./items");
+const itemsDesc = require("./text/items-desc");
 const moves = require("./moves");
 const pokedex = require("./pokedex");
 const rulesets = require("./rulesets");
@@ -10,6 +11,7 @@ module.exports = {
   pokedex,
   moves,
   items,
+  itemsDesc,
   formats,
   rulesets,
   formatsData,

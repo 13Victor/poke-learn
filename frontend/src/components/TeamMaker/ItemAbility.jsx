@@ -7,7 +7,7 @@ const ItemAbility = memo(
         <div className="itemContainer">
           <img
             className="small-icon"
-            src="/assets/items/item-placeholder.png" // Cambiado para usar un placeholder local
+            src="/assets/items/item-placeholder.png"
             alt="Item"
           />
           <input
