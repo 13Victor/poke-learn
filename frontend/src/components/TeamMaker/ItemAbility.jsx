@@ -3,7 +3,8 @@ import { useTeam } from "../../TeamContext";
 
 const ItemAbility = memo(
   ({ item, ability, itemSpriteNum, slotIndex, onAbilityChange, pokemon }) => {
-    const { setViewMode, setSelectedSlot } = useTeam();
+    const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage } =
+      useTeam();
 
     const handleItemClick = (e) => {
       e.stopPropagation();
@@ -12,8 +13,10 @@ const ItemAbility = memo(
       // Si no hay un Pokémon seleccionado, mostrar la vista de Pokémon
       if (!pokemon.name) {
         setViewMode("pokemon");
+        setFlowStage(FLOW_STAGES.POKEMON);
       } else {
         setViewMode("items");
+        setFlowStage(FLOW_STAGES.ITEM);
       }
     };
 

@@ -1,8 +1,7 @@
-// TableView.jsx actualizado
 import React, { memo, useMemo, useCallback } from "react";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
-import ItemTable from "./ItemTable"; // Importar ItemTable
+import ItemTable from "./ItemTable";
 import { usePokemonData } from "../../PokemonDataContext";
 import { useTeam } from "../../TeamContext";
 
@@ -13,10 +12,11 @@ const TableView = memo(() => {
     selectedSlot,
     pokemons,
     selectPokemon,
-    setMove,
+    selectMove,
     selectedMove,
-    setSelectedMove,
-    selectItem, // Asegurar que se importe esta función
+    selectItem,
+    FLOW_STAGES,
+    flowStage,
   } = useTeam();
 
   // Get currently selected Pokémon
@@ -33,27 +33,17 @@ const TableView = memo(() => {
     [selectPokemon, selectedSlot]
   );
 
-  // Handle move selection with explicit slot tracking
+  // Handle move selection using the selectMove function that avanza automáticamente
   const handleMoveSelect = useCallback(
     (move) => {
-      const slotIndex = selectedSlot;
-      const moveIndex = selectedMove.moveIndex;
-
       console.log(
-        `🔹 Selecting move "${move.name}" for slot ${slotIndex}, move position ${moveIndex}`
+        `🔹 Selecting move "${move.name}" for slot ${selectedSlot}, move position ${selectedMove.moveIndex}`
       );
 
-      // Use the explicit slot and move index
-      setMove(slotIndex, moveIndex, move.name);
-
-      // Calculate next move index and update selection
-      const nextMoveIndex = (moveIndex + 1) % 4;
-      setSelectedMove({
-        slot: slotIndex,
-        moveIndex: nextMoveIndex,
-      });
+      // Usamos selectMove que ahora avanza automáticamente en el flujo
+      selectMove(move);
     },
-    [selectedSlot, selectedMove.moveIndex, setMove, setSelectedMove]
+    [selectedSlot, selectedMove.moveIndex, selectMove]
   );
 
   // Handle item selection
