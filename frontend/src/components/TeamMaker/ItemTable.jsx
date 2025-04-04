@@ -3,18 +3,7 @@ import { usePokemonData } from "../../PokemonDataContext";
 import ItemRow from "./ItemRow";
 
 const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
-  const {
-    getItems,
-    getItemsDesc,
-    items,
-    itemsDesc,
-    itemsLoaded,
-    itemsLoading,
-    itemsError,
-    itemsDescLoaded,
-    itemsDescLoading,
-    itemsDescError,
-  } = usePokemonData();
+  const { getItems, items, itemsLoaded, itemsLoading, itemsError } = usePokemonData();
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const tableRef = useRef(null);
@@ -23,58 +12,29 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
 
   // Load necessary data if not already loaded
   useEffect(() => {
-    const loadRequiredData = async () => {
-      // Load items and item descriptions in parallel if needed
-      const promises = [];
+    if (!itemsLoaded && !itemsLoading) {
+      getItems();
+    }
+  }, [itemsLoaded, itemsLoading, getItems]);
 
-      if (!itemsLoaded && !itemsLoading) {
-        promises.push(getItems());
-      }
-
-      if (!itemsDescLoaded && !itemsDescLoading) {
-        promises.push(getItemsDesc());
-      }
-
-      if (promises.length > 0) {
-        await Promise.all(promises);
-      }
-    };
-
-    loadRequiredData();
-  }, [
-    itemsLoaded,
-    itemsLoading,
-    itemsDescLoaded,
-    itemsDescLoading,
-    getItems,
-    getItemsDesc,
-  ]);
-
-  // Process items data when we have all required data
+  // Process items data when loaded
   useEffect(() => {
     const processItemsData = () => {
-      if (!itemsLoaded || !itemsDescLoaded || isProcessingItems) {
+      if (!itemsLoaded || isProcessingItems) {
         return;
       }
 
       setIsProcessingItems(true);
 
       try {
-        // Merge items with their descriptions
-        const mergedItems = Object.entries(items).map(([key, item]) => {
-          const itemWithDesc = { ...item, key };
+        // Convert the items object to an array for easier filtering and display
+        const itemsArray = Object.entries(items).map(([key, item]) => ({
+          ...item,
+          key,
+        }));
 
-          // Add description from itemsDesc if available
-          if (itemsDesc[key]) {
-            itemWithDesc.shortDesc = itemsDesc[key].shortDesc || "";
-            itemWithDesc.desc = itemsDesc[key].desc || "";
-          }
-
-          return itemWithDesc;
-        });
-
-        setProcessedItems(mergedItems);
-        console.log(`✅ ${mergedItems.length} items processed`);
+        setProcessedItems(itemsArray);
+        console.log(`✅ ${itemsArray.length} items processed`);
       } catch (error) {
         console.error(`❌ Error processing items:`, error);
       } finally {
@@ -83,7 +43,7 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
     };
 
     processItemsData();
-  }, [items, itemsDesc, itemsLoaded, itemsDescLoaded, isProcessingItems]);
+  }, [items, itemsLoaded, isProcessingItems]);
 
   // Handle search functionality
   const handleSearch = useCallback((e) => {
@@ -149,31 +109,26 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
       tableElement.addEventListener("scroll", optimizedScrollHandler, {
         passive: true,
       });
-      return () =>
-        tableElement.removeEventListener("scroll", optimizedScrollHandler);
+      return () => tableElement.removeEventListener("scroll", optimizedScrollHandler);
     }
   }, [handleScroll]);
 
   // Show appropriate loading state
-  if (itemsLoading || itemsDescLoading || isProcessingItems) {
+  if (itemsLoading || isProcessingItems) {
     return <p>⏳ Loading item data...</p>;
   }
 
-  if (itemsError || itemsDescError) {
-    return <p>❌ Error: {itemsError || itemsDescError}</p>;
+  if (itemsError) {
+    return <p>❌ Error: {itemsError}</p>;
   }
 
   // Only show visible rows
-  const visibleItems = filteredItems.slice(
-    visibleRange.start,
-    visibleRange.end
-  );
+  const visibleItems = filteredItems.slice(visibleRange.start, visibleRange.end);
 
   return (
     <div>
       <h2>
-        Select an item for {selectedPokemon?.name || "???"} (Slot{" "}
-        {selectedSlot + 1})
+        Select an item for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1})
       </h2>
 
       <div className="search-container">
@@ -201,9 +156,7 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
             </tr>
 
             {visibleItems.length > 0 ? (
-              visibleItems.map((item) => (
-                <ItemRow key={item.key} item={item} onClick={handleRowClick} />
-              ))
+              visibleItems.map((item) => <ItemRow key={item.key} item={item} onClick={handleRowClick} />)
             ) : (
               <tr>
                 <td colSpan="3">❌ No items found</td>
@@ -227,7 +180,6 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
 // Memoize the component to prevent unnecessary rerenders
 export default React.memo(ItemTable, (prevProps, nextProps) => {
   return (
-    prevProps.selectedSlot === nextProps.selectedSlot &&
-    prevProps.selectedPokemon?.id === nextProps.selectedPokemon?.id
+    prevProps.selectedSlot === nextProps.selectedSlot && prevProps.selectedPokemon?.id === nextProps.selectedPokemon?.id
   );
 });

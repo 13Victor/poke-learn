@@ -12,11 +12,7 @@ const processPokedex = () => {
     const isNonstandard = formatData.isNonstandard || "";
     const battleOnly = pokemonData.battleOnly || null;
 
-    return !(
-      bannedTiers.some((banned) => tier.includes(banned)) ||
-      isNonstandard === "CAP" ||
-      battleOnly
-    );
+    return !(bannedTiers.some((banned) => tier.includes(banned)) || isNonstandard === "CAP" || battleOnly);
   });
 
   const groupedByNum = validPokemon.reduce((acc, pokemon) => {
@@ -37,10 +33,7 @@ const processPokedex = () => {
     const imageName =
       variantIndex === 0
         ? `${String(num).padStart(4, "0")}.webp`
-        : `${String(num).padStart(4, "0")}_${String(variantIndex).padStart(
-            2,
-            "0"
-          )}.webp`;
+        : `${String(num).padStart(4, "0")}_${String(variantIndex).padStart(2, "0")}.webp`;
 
     return {
       num,
@@ -48,15 +41,48 @@ const processPokedex = () => {
       id: pokemon,
       image: imageName,
       level: 100,
-      changesFrom: pokemonData.changesFrom
-        ? cleanName(pokemonData.changesFrom)
-        : "",
-      types: pokemonData.types, // 🔹 Ahora es un array
-      abilities: Object.values(pokemonData.abilities), // 🔹 También en array
+      changesFrom: pokemonData.changesFrom ? cleanName(pokemonData.changesFrom) : "",
+      types: pokemonData.types,
+      abilities: Object.values(pokemonData.abilities),
       stats: pokemonData.baseStats,
       tier: formatData.tier || "Unknown",
     };
   });
+};
+
+// Process items to combine data and descriptions, with filtering
+const processItems = () => {
+  const items = data.items.Items;
+  const itemDescriptions = data.itemsDesc.ItemsText;
+  const filteredItems = {};
+
+  // Filter out unwanted items
+  for (const itemId in items) {
+    const item = items[itemId];
+    const isNonstandard = item.isNonstandard || "";
+
+    // Skip items with unwanted isNonstandard values or specific banned items
+    if (["Past", "CAP", "Unobtainable"].includes(isNonstandard) || itemId === "kingsrock" || itemId === "razorfang") {
+      continue;
+    }
+
+    // Add description data to the item
+    const itemWithDesc = { ...item };
+    if (itemDescriptions[itemId]) {
+      itemWithDesc.shortDesc = itemDescriptions[itemId].shortDesc || "";
+      itemWithDesc.desc = itemDescriptions[itemId].desc || "";
+    } else {
+      itemWithDesc.shortDesc = "";
+      itemWithDesc.desc = "";
+    }
+
+    // Add the key as a property so it's easier to work with on the frontend
+    itemWithDesc.key = itemId;
+
+    filteredItems[itemId] = itemWithDesc;
+  }
+
+  return filteredItems;
 };
 
 // Nueva ruta para devolver los Pokémon ya filtrados
@@ -65,11 +91,16 @@ router.get("/availablePokemons", (req, res) => {
   res.json(filteredPokedex);
 });
 
-// Otras rutas
+// Nueva ruta optimizada para items que combina datos y descripciones
+router.get("/items", (req, res) => {
+  const processedItems = processItems();
+  res.json(processedItems);
+});
 
+// Rutas originales mantenidas por compatibilidad
 router.get("/pokedex", (req, res) => res.json(data.moves));
 router.get("/moves", (req, res) => res.json(data.moves.Moves));
-router.get("/items", (req, res) => res.json(data.items.Items));
+router.get("/items-raw", (req, res) => res.json(data.items.Items)); // Renombrada para evitar conflictos
 router.get("/items-desc", (req, res) => res.json(data.itemsDesc.ItemsText));
 router.get("/formats", (req, res) => res.json(data.formats));
 router.get("/formats-data", (req, res) => res.json(data.formatsData));
