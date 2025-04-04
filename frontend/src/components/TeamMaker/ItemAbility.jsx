@@ -3,8 +3,7 @@ import { useTeam } from "../../TeamContext";
 
 const ItemAbility = memo(
   ({ item, ability, itemSpriteNum, slotIndex, onAbilityChange, pokemon }) => {
-    const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage } =
-      useTeam();
+    const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage } = useTeam();
 
     const handleItemClick = (e) => {
       e.stopPropagation();

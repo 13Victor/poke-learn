@@ -4,29 +4,32 @@ import MoveButton from "./MoveButton";
 
 const MoveSet = memo(
   ({ pokemon, moves, slotIndex }) => {
-    const {
-      selectedMove,
-      setSelectedMove,
-      setViewMode,
-      viewMode,
-      setSelectedSlot,
-    } = useTeam();
+    const { selectedMove, setSelectedMove, setViewMode, viewMode, setSelectedSlot, setFlowStage, FLOW_STAGES } =
+      useTeam();
 
     const handleMoveClick = React.useCallback(
       (moveIndex, event) => {
+        event.stopPropagation(); // Evitar propagación
+
+        // Si no hay un Pokémon seleccionado, redirigir a selección de Pokémon
         if (!pokemon.name) {
           setViewMode("pokemon");
+          setFlowStage(FLOW_STAGES.POKEMON);
         } else {
+          // Si hay Pokémon, configurar para selección de movimiento
           setViewMode("moves");
+
+          // Establecer la etapa del flujo según el índice del movimiento
+          const flowStage = [FLOW_STAGES.MOVE_1, FLOW_STAGES.MOVE_2, FLOW_STAGES.MOVE_3, FLOW_STAGES.MOVE_4][moveIndex];
+
+          setFlowStage(flowStage);
         }
-        event.stopPropagation(); // Evitar propagación
+
         setSelectedSlot(slotIndex);
         setSelectedMove({ slot: slotIndex, moveIndex });
-        console.log(
-          `🎯 Seleccionado movimiento ${moveIndex + 1} del slot ${slotIndex}`
-        );
+        console.log(`🎯 Seleccionado movimiento ${moveIndex + 1} del slot ${slotIndex}`);
       },
-      [pokemon.name, setViewMode, setSelectedSlot, setSelectedMove, slotIndex]
+      [pokemon.name, setViewMode, setSelectedSlot, setSelectedMove, slotIndex, setFlowStage, FLOW_STAGES]
     );
 
     return (

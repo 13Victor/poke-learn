@@ -9,7 +9,7 @@ const ACTIONS = {
   SET_VIEW_MODE: "SET_VIEW_MODE",
   SET_SELECTED_SLOT: "SET_SELECTED_SLOT",
   SET_SELECTED_MOVE: "SET_SELECTED_MOVE",
-  SET_FLOW_STAGE: "SET_FLOW_STAGE", // Nueva acción para el flujo de trabajo
+  SET_FLOW_STAGE: "SET_FLOW_STAGE",
 };
 
 // Etapas del flujo de trabajo
@@ -36,12 +36,12 @@ const initialState = {
       image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
-      itemSpriteNum: null, // Added to track item sprite
+      itemSpriteNum: null,
     })),
-  viewMode: "pokemon", // Can now be "pokemon", "moves", or "items"
+  viewMode: "pokemon",
   selectedSlot: 0,
   selectedMove: { slot: 0, moveIndex: 0 },
-  flowStage: FLOW_STAGES.POKEMON, // Nueva propiedad para seguir el flujo
+  flowStage: FLOW_STAGES.POKEMON,
 };
 
 // Reducer para manejar las actualizaciones de estado
@@ -50,15 +50,18 @@ function teamReducer(state, action) {
     case ACTIONS.SET_POKEMON: {
       const { slotIndex, pokemon } = action.payload;
       const newPokemons = [...state.pokemons];
-      // Preservar el moveset si ya existe
-      const currentMoveset = newPokemons[slotIndex].moveset || ["", "", "", ""];
+
+      // Aquí está el cambio principal: Reemplazar completamente los datos
+      // del Pokémon anterior, manteniendo solo el nivel predeterminado
       newPokemons[slotIndex] = {
         ...pokemon,
-        moveset: currentMoveset,
-        item: newPokemons[slotIndex].item || "",
-        itemSpriteNum: newPokemons[slotIndex].itemSpriteNum || null,
-        ability: newPokemons[slotIndex].ability || "",
+        level: 100, // Mantenemos el nivel por defecto
+        moveset: ["", "", "", ""], // Reset de movimientos
+        item: "", // Reset de item
+        itemSpriteNum: null, // Reset de sprite de item
+        ability: "", // Reset de habilidad
       };
+
       return {
         ...state,
         pokemons: newPokemons,
@@ -236,17 +239,13 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, ability },
         }),
 
-      setViewMode: (mode) =>
-        dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: mode }),
+      setViewMode: (mode) => dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: mode }),
 
-      setSelectedSlot: (slotIndex) =>
-        dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: slotIndex }),
+      setSelectedSlot: (slotIndex) => dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: slotIndex }),
 
-      setSelectedMove: (moveData) =>
-        dispatch({ type: ACTIONS.SET_SELECTED_MOVE, payload: moveData }),
+      setSelectedMove: (moveData) => dispatch({ type: ACTIONS.SET_SELECTED_MOVE, payload: moveData }),
 
-      setFlowStage: (stage) =>
-        dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: stage }),
+      setFlowStage: (stage) => dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: stage }),
 
       // Función para seleccionar slot y cambiar vista en una sola acción
       selectSlot: (slotIndex) => {
@@ -341,7 +340,7 @@ export const TeamProvider = ({ children }) => {
   const value = {
     ...state,
     ...actions,
-    FLOW_STAGES, // Exportamos las constantes para poder usarlas en otros componentes
+    FLOW_STAGES,
   };
 
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>;

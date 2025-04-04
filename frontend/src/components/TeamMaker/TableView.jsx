@@ -24,7 +24,7 @@ const TableView = memo(() => {
     return selectedSlot !== null ? pokemons[selectedSlot] : null;
   }, [pokemons, selectedSlot]);
 
-  // Handle Pokémon selection
+  // Handle Pokémon selection - esto limpiará los datos gracias a la modificación en el reducer
   const handlePokemonSelect = useCallback(
     (pokemon) => {
       console.log("🔹 Selecting Pokémon:", pokemon.name);
@@ -33,14 +33,10 @@ const TableView = memo(() => {
     [selectPokemon, selectedSlot]
   );
 
-  // Handle move selection using the selectMove function that avanza automáticamente
+  // Handle move selection
   const handleMoveSelect = useCallback(
     (move) => {
-      console.log(
-        `🔹 Selecting move "${move.name}" for slot ${selectedSlot}, move position ${selectedMove.moveIndex}`
-      );
-
-      // Usamos selectMove que ahora avanza automáticamente en el flujo
+      console.log(`🔹 Selecting move "${move.name}" for slot ${selectedSlot}, move position ${selectedMove.moveIndex}`);
       selectMove(move);
     },
     [selectedSlot, selectedMove.moveIndex, selectMove]
@@ -55,7 +51,7 @@ const TableView = memo(() => {
     [selectItem, selectedSlot]
   );
 
-  // Show appropriate table based on viewMode
+  // Determinar qué tabla mostrar basado en el viewMode
   if (viewMode === "pokemon") {
     return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
   }
@@ -72,13 +68,7 @@ const TableView = memo(() => {
   }
 
   if (viewMode === "items") {
-    return (
-      <ItemTable
-        onItemSelect={handleItemSelect}
-        selectedPokemon={selectedPokemon}
-        selectedSlot={selectedSlot}
-      />
-    );
+    return <ItemTable onItemSelect={handleItemSelect} selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} />;
   }
 
   return null;
