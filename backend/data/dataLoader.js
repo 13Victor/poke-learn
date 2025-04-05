@@ -6,6 +6,8 @@ const pokedex = require("./pokedex");
 const rulesets = require("./rulesets");
 const formatsData = require("./formats-data");
 const learnsets = require("./learnsets");
+const abilities = require("./abilities");
+const abilitiesDesc = require("./text/abilities-desc");
 
 module.exports = {
   pokedex,
@@ -16,4 +18,6 @@ module.exports = {
   rulesets,
   formatsData,
   learnsets,
+  abilities,
+  abilitiesDesc,
 };
