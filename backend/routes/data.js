@@ -85,11 +85,12 @@ const processItems = () => {
   return filteredItems;
 };
 
-// Añadir esta función para procesar las habilidades con descripciones
+// Process abilities with descriptions and filtering out banned abilities
 const processPokemonAbilities = () => {
   const pokemonData = data.pokedex.Pokedex;
-  const abilitiesDesc = data.abilitiesDesc.AbilitiesText; // ahora es un array
+  const abilitiesDesc = data.abilitiesDesc.AbilitiesText;
   const abilitiesDescArray = Object.values(abilitiesDesc);
+  const bannedAbilities = ["arenatrap", "moody", "sandveil", "shadowtag", "snowcloak"];
 
   const result = {};
 
@@ -101,6 +102,11 @@ const processPokemonAbilities = () => {
 
     for (const abilitySlot in abilities) {
       const abilityName = abilities[abilitySlot];
+
+      // Skip banned abilities
+      if (bannedAbilities.includes(abilityName.toLowerCase().replace(/\s|-/g, ""))) {
+        continue;
+      }
 
       // Buscar el objeto de la habilidad por .name
       const abilityDescData = abilitiesDescArray.find((a) => a.name.toLowerCase() === abilityName.toLowerCase()) || {};
@@ -118,6 +124,24 @@ const processPokemonAbilities = () => {
   return result;
 };
 
+// Process moves with filtering
+const processFilteredMoves = () => {
+  const moves = data.moves.Moves;
+  const bannedMoves = ["batonpass", "lastrespects", "shedtail"];
+  const filteredMoves = {};
+
+  for (const moveId in moves) {
+    // Skip banned moves
+    if (bannedMoves.includes(moveId)) {
+      continue;
+    }
+
+    filteredMoves[moveId] = moves[moveId];
+  }
+
+  return filteredMoves;
+};
+
 // Nueva ruta para devolver los Pokémon ya filtrados
 router.get("/availablePokemons", (req, res) => {
   const filteredPokedex = processPokedex();
@@ -130,17 +154,22 @@ router.get("/items", (req, res) => {
   res.json(processedItems);
 });
 
-// Nuevo endpoint para habilidades con descripciones
+// Nuevo endpoint para habilidades con descripciones (filtrado)
 router.get("/abilities", (req, res) => {
   const abilitiesWithDesc = processPokemonAbilities();
   res.json(abilitiesWithDesc);
 });
 
-// Rutas originales mantenidas por compatibilidad
+// Ruta de moves ahora con filtrado
+router.get("/moves", (req, res) => {
+  const filteredMoves = processFilteredMoves();
+  res.json(filteredMoves);
+});
+
+// Rutas originales mantenidas por compatibilidad, pero con filtrado añadido
 router.get("/pokedex", (req, res) => res.json(data.moves));
 router.get("/abilities-raw", (req, res) => res.json(data.abilities.Abilities));
 router.get("/abilities-desc", (req, res) => res.json(data.abilitiesDesc.AbilitiesText));
-router.get("/moves", (req, res) => res.json(data.moves.Moves));
 router.get("/items-raw", (req, res) => res.json(data.items.Items));
 router.get("/items-desc", (req, res) => res.json(data.itemsDesc.ItemsText));
 router.get("/formats", (req, res) => res.json(data.formats));
