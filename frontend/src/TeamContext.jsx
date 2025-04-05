@@ -6,13 +6,14 @@ const ACTIONS = {
   SET_MOVE: "SET_MOVE",
   SET_ITEM: "SET_ITEM",
   SET_ABILITY: "SET_ABILITY",
+  SET_ABILITY_TYPE: "SET_ABILITY_TYPE",
   SET_VIEW_MODE: "SET_VIEW_MODE",
   SET_SELECTED_SLOT: "SET_SELECTED_SLOT",
   SET_SELECTED_MOVE: "SET_SELECTED_MOVE",
   SET_FLOW_STAGE: "SET_FLOW_STAGE",
 };
 
-// Etapas del flujo de trabajo
+// Etapas del flujo de trabajo - Agregado ABILITY explícitamente
 const FLOW_STAGES = {
   POKEMON: "pokemon",
   ITEM: "item",
@@ -33,6 +34,7 @@ const initialState = {
       level: 100,
       item: "",
       ability: "",
+      abilityType: "",
       image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
@@ -60,8 +62,23 @@ function teamReducer(state, action) {
         item: "", // Reset de item
         itemSpriteNum: null, // Reset de sprite de item
         ability: "", // Reset de habilidad
+        abilityType: "", // Reset de tipo de habilidad
       };
 
+      return {
+        ...state,
+        pokemons: newPokemons,
+      };
+    }
+
+    case ACTIONS.SET_ABILITY: {
+      const { slotIndex, ability, abilityType } = action.payload;
+      const newPokemons = [...state.pokemons];
+      newPokemons[slotIndex] = {
+        ...newPokemons[slotIndex],
+        ability,
+        abilityType,
+      };
       return {
         ...state,
         pokemons: newPokemons,
@@ -90,19 +107,6 @@ function teamReducer(state, action) {
         ...newPokemons[slotIndex],
         item,
         itemSpriteNum: spriteNum,
-      };
-      return {
-        ...state,
-        pokemons: newPokemons,
-      };
-    }
-
-    case ACTIONS.SET_ABILITY: {
-      const { slotIndex, ability } = action.payload;
-      const newPokemons = [...state.pokemons];
-      newPokemons[slotIndex] = {
-        ...newPokemons[slotIndex],
-        ability,
       };
       return {
         ...state,
@@ -155,7 +159,13 @@ export const TeamProvider = ({ children }) => {
         break;
 
       case FLOW_STAGES.ITEM:
-        // Después del ítem, vamos al primer movimiento
+        // CAMBIO: Después del ítem, vamos a la selección de habilidad
+        dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.ABILITY });
+        dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "abilities" });
+        break;
+
+      case FLOW_STAGES.ABILITY:
+        // Después de la habilidad, vamos al primer movimiento
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.MOVE_1 });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "moves" });
         dispatch({
@@ -233,10 +243,10 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, item, spriteNum },
         }),
 
-      setAbility: (slotIndex, ability) =>
+      setAbility: (slotIndex, ability, abilityType) =>
         dispatch({
           type: ACTIONS.SET_ABILITY,
-          payload: { slotIndex, ability },
+          payload: { slotIndex, ability, abilityType },
         }),
 
       setViewMode: (mode) => dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: mode }),
@@ -306,7 +316,7 @@ export const TeamProvider = ({ children }) => {
         advanceFlow(currentStage, slotIndex);
       },
 
-      // Método para manejar la selección de items y avanzar al flujo de movimientos
+      // Método para manejar la selección de items y avanzar al flujo de habilidades
       selectItem: (item) => {
         const slotIndex = state.selectedSlot;
 
@@ -320,8 +330,25 @@ export const TeamProvider = ({ children }) => {
           },
         });
 
-        // Avanzar al siguiente paso del flujo: primer movimiento
+        // Avanzar al siguiente paso del flujo: habilidad
         advanceFlow(FLOW_STAGES.ITEM, slotIndex);
+      },
+
+      selectAbility: (ability, abilityType) => {
+        const slotIndex = state.selectedSlot;
+
+        // Establecer la habilidad seleccionada
+        dispatch({
+          type: ACTIONS.SET_ABILITY,
+          payload: {
+            slotIndex,
+            ability,
+            abilityType,
+          },
+        });
+
+        // Avanzar al siguiente paso del flujo: primer movimiento
+        advanceFlow(FLOW_STAGES.ABILITY, slotIndex);
       },
 
       // Método para obtener el Pokémon seleccionado actualmente

@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { useTeam } from "../../TeamContext";
 
 const ItemAbility = memo(
-  ({ item, ability, itemSpriteNum, slotIndex, onAbilityChange, pokemon }) => {
+  ({ item, ability, itemSpriteNum, slotIndex, abilityType, pokemon }) => {
     const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage } = useTeam();
 
     const handleItemClick = (e) => {
@@ -16,6 +16,20 @@ const ItemAbility = memo(
       } else {
         setViewMode("items");
         setFlowStage(FLOW_STAGES.ITEM);
+      }
+    };
+
+    const handleAbilityClick = (e) => {
+      e.stopPropagation();
+      setSelectedSlot(slotIndex);
+
+      // Si no hay un Pokémon seleccionado, mostrar la vista de Pokémon
+      if (!pokemon.name) {
+        setViewMode("pokemon");
+        setFlowStage(FLOW_STAGES.POKEMON);
+      } else {
+        setViewMode("abilities");
+        setFlowStage(FLOW_STAGES.ABILITY);
       }
     };
 
@@ -50,22 +64,18 @@ const ItemAbility = memo(
             {item || "Select Item"}
           </button>
         </div>
-        <input
-          type="text"
-          name="ability"
-          className="abilityInput"
-          value={ability || ""}
-          onChange={onAbilityChange}
-          placeholder="Ability"
-        />
+        <button className="ability-button" onClick={handleAbilityClick}>
+          {ability || "Select Ability"}
+        </button>
       </div>
     );
   },
   (prevProps, nextProps) => {
-    // Solo re-renderizar cuando cambia el item, la habilidad o el spriteNum
+    // Solo re-renderizar cuando cambia el item, la habilidad, el spriteNum o abilityType
     return (
       prevProps.item === nextProps.item &&
       prevProps.ability === nextProps.ability &&
+      prevProps.abilityType === nextProps.abilityType &&
       prevProps.itemSpriteNum === nextProps.itemSpriteNum &&
       prevProps.pokemon.name === nextProps.pokemon.name
     );

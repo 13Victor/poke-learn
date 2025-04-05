@@ -2,6 +2,7 @@ import React, { memo, useMemo, useCallback } from "react";
 import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
 import ItemTable from "./ItemTable";
+import AbilityTable from "./AbilityTable";
 import { usePokemonData } from "../../PokemonDataContext";
 import { useTeam } from "../../TeamContext";
 
@@ -15,6 +16,7 @@ const TableView = memo(() => {
     selectMove,
     selectedMove,
     selectItem,
+    selectAbility,
     FLOW_STAGES,
     flowStage,
   } = useTeam();
@@ -24,7 +26,7 @@ const TableView = memo(() => {
     return selectedSlot !== null ? pokemons[selectedSlot] : null;
   }, [pokemons, selectedSlot]);
 
-  // Handle Pokémon selection - esto limpiará los datos gracias a la modificación en el reducer
+  // Handle Pokémon selection
   const handlePokemonSelect = useCallback(
     (pokemon) => {
       console.log("🔹 Selecting Pokémon:", pokemon.name);
@@ -51,6 +53,15 @@ const TableView = memo(() => {
     [selectItem, selectedSlot]
   );
 
+  // Handle ability selection
+  const handleAbilitySelect = useCallback(
+    (ability, abilityType) => {
+      console.log(`🔹 Selecting ability "${ability}" (${abilityType}) for slot ${selectedSlot}`);
+      selectAbility(ability, abilityType);
+    },
+    [selectAbility, selectedSlot]
+  );
+
   // Determinar qué tabla mostrar basado en el viewMode
   if (viewMode === "pokemon") {
     return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
@@ -69,6 +80,16 @@ const TableView = memo(() => {
 
   if (viewMode === "items") {
     return <ItemTable onItemSelect={handleItemSelect} selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} />;
+  }
+
+  if (viewMode === "abilities") {
+    return (
+      <AbilityTable
+        onAbilitySelect={handleAbilitySelect}
+        selectedPokemon={selectedPokemon}
+        selectedSlot={selectedSlot}
+      />
+    );
   }
 
   return null;
