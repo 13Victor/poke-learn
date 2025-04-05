@@ -1,20 +1,9 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 
 import MoveRow from "./MoveRow";
 import { usePokemonData } from "../../PokemonDataContext";
 
-const MoveTable = ({
-  onMoveSelect,
-  selectedPokemon,
-  selectedSlot,
-  selectedMoveIndex,
-}) => {
+const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIndex }) => {
   const {
     getMoves,
     getLearnsets,
@@ -55,26 +44,12 @@ const MoveTable = ({
     };
 
     loadRequiredData();
-  }, [
-    selectedPokemon,
-    movesLoaded,
-    movesLoading,
-    learnsetsLoaded,
-    learnsetsLoading,
-    getMoves,
-    getLearnsets,
-  ]);
+  }, [selectedPokemon, movesLoaded, movesLoading, learnsetsLoaded, learnsetsLoading, getMoves, getLearnsets]);
 
   // Process move data when we have all required data
   useEffect(() => {
     const processMoveData = () => {
-      if (
-        !selectedPokemon ||
-        !selectedPokemon.id ||
-        !movesLoaded ||
-        !learnsetsLoaded ||
-        isProcessingMoves
-      ) {
+      if (!selectedPokemon || !selectedPokemon.id || !movesLoaded || !learnsetsLoaded || isProcessingMoves) {
         return;
       }
 
@@ -82,19 +57,13 @@ const MoveTable = ({
 
       try {
         const pokemonLearnset =
-          learnsets[selectedPokemon.id]?.learnset ||
-          learnsets[selectedPokemon.changesFrom]?.learnset ||
-          {};
+          learnsets[selectedPokemon.id]?.learnset || learnsets[selectedPokemon.changesFrom]?.learnset || {};
 
         const moveNames = Object.keys(pokemonLearnset);
-        const availableMoves = moveNames
-          .map((move) => moves[move])
-          .filter(Boolean);
+        const availableMoves = moveNames.map((move) => moves[move]).filter(Boolean);
 
         setPokemonMoves(availableMoves);
-        console.log(
-          `✅ ${availableMoves.length} moves processed for ${selectedPokemon.name}`
-        );
+        console.log(`✅ ${availableMoves.length} moves processed for ${selectedPokemon.name}`);
       } catch (error) {
         console.error(`❌ Error processing moves:`, error);
       } finally {
@@ -103,14 +72,7 @@ const MoveTable = ({
     };
 
     processMoveData();
-  }, [
-    selectedPokemon,
-    moves,
-    learnsets,
-    movesLoaded,
-    learnsetsLoaded,
-    isProcessingMoves,
-  ]);
+  }, [selectedPokemon, moves, learnsets, movesLoaded, learnsetsLoaded, isProcessingMoves]);
 
   // Reset scroll position when Pokémon changes
   useEffect(() => {
@@ -162,8 +124,7 @@ const MoveTable = ({
       tableElement.addEventListener("scroll", optimizedScrollHandler, {
         passive: true,
       });
-      return () =>
-        tableElement.removeEventListener("scroll", optimizedScrollHandler);
+      return () => tableElement.removeEventListener("scroll", optimizedScrollHandler);
     }
   }, [handleScroll]);
 
@@ -182,8 +143,7 @@ const MoveTable = ({
   return (
     <div>
       <h2>
-        Available moves for {selectedPokemon?.name || "???"} (Slot{" "}
-        {selectedSlot + 1}, Move {selectedMoveIndex + 1})
+        Available moves for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1}, Move {selectedMoveIndex + 1})
       </h2>
 
       <div ref={tableRef} className="table-container">
@@ -204,9 +164,7 @@ const MoveTable = ({
             </tr>
 
             {visibleMoves.length > 0 ? (
-              visibleMoves.map((move) => (
-                <MoveRow key={move.name} move={move} onClick={handleRowClick} />
-              ))
+              visibleMoves.map((move) => <MoveRow key={move.name} move={move} onClick={handleRowClick} />)
             ) : (
               <tr>
                 <td colSpan="6">❌ No moves available</td>

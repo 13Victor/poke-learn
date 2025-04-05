@@ -3,13 +3,7 @@ import PokemonRow from "./PokemonRow";
 import { usePokemonData } from "../../PokemonDataContext";
 
 const PokemonTable = memo(({ onPokemonSelect }) => {
-  const {
-    getPokemons,
-    pokemons,
-    pokemonsLoaded,
-    pokemonsLoading,
-    pokemonsError,
-  } = usePokemonData();
+  const { getPokemons, pokemons, pokemonsLoaded, pokemonsLoading, pokemonsError } = usePokemonData();
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const tableRef = React.useRef(null);
@@ -112,8 +106,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
       tableElement.addEventListener("scroll", optimizedScrollHandler, {
         passive: true,
       });
-      return () =>
-        tableElement.removeEventListener("scroll", optimizedScrollHandler);
+      return () => tableElement.removeEventListener("scroll", optimizedScrollHandler);
     }
   }, [handleScroll]);
 
@@ -127,10 +120,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   }
 
   // Only show visible rows
-  const visiblePokemon = filteredPokemon.slice(
-    visibleRange.start,
-    visibleRange.end
-  );
+  const visiblePokemon = filteredPokemon.slice(visibleRange.start, visibleRange.end);
 
   return (
     <div>
@@ -144,11 +134,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
           className="search-input"
         />
       </div>
-      <div
-        ref={tableRef}
-        className="table-container"
-        style={{ height: "300px", overflow: "auto" }}
-      >
+      <div ref={tableRef} className="table-container" style={{ height: "300px", overflow: "auto" }}>
         <table border="1" className="pokemon-table">
           <thead>
             <tr>
@@ -173,11 +159,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
             {visiblePokemon.length > 0 ? (
               visiblePokemon.map((pokemon) => (
-                <PokemonRow
-                  key={pokemon.id || pokemon.name}
-                  pokemon={pokemon}
-                  onClick={handleRowClick}
-                />
+                <PokemonRow key={pokemon.id || pokemon.name} pokemon={pokemon} onClick={handleRowClick} />
               ))
             ) : (
               <tr>

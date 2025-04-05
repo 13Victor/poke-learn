@@ -3,23 +3,11 @@ import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
 import ItemTable from "./ItemTable";
 import AbilityTable from "./AbilityTable";
-import { usePokemonData } from "../../PokemonDataContext";
 import { useTeam } from "../../TeamContext";
 
 const TableView = memo(() => {
-  const { isAllDataLoaded } = usePokemonData();
-  const {
-    viewMode,
-    selectedSlot,
-    pokemons,
-    selectPokemon,
-    selectMove,
-    selectedMove,
-    selectItem,
-    selectAbility,
-    FLOW_STAGES,
-    flowStage,
-  } = useTeam();
+  const { viewMode, selectedSlot, pokemons, selectPokemon, selectMove, selectedMove, selectItem, selectAbility } =
+    useTeam();
 
   // Get currently selected Pokémon
   const selectedPokemon = useMemo(() => {
