@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import MoveSet from "./MoveSet";
 import ItemAbility from "./ItemAbility";
 import PokeInfo from "./PokeInfo";
+import Stats from "./Stats";
 import "./TeamMaker.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
@@ -43,6 +44,7 @@ const PokeSlot = memo(
           <hr id="separatorLine" />
           <MoveSet pokemon={pokemon} moves={pokemon.moveset} slotIndex={index} />
         </div>
+        <Stats pokemon={pokemon} />
       </div>
     );
   },
