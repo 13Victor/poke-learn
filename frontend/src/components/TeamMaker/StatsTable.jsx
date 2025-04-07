@@ -35,16 +35,17 @@ const MAX_TOTAL_EVS = 508;
 const MAX_STAT_EVS = 252;
 
 const StatsTable = ({ selectedPokemon, selectedSlot }) => {
-  const { getPokemons, pokemons: allPokemons } = usePokemonData();
-  const { pokemons, setViewMode, advanceFromStats } = useTeam();
+  const { getPokemons } = usePokemonData();
+  const { updatePokemonStats, advanceFromStats } = useTeam();
   const [evs, setEvs] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   const [ivs, setIvs] = useState({ hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
   const [nature, setNature] = useState("Hardy");
   const [totalEvs, setTotalEvs] = useState(0);
   const [calculatedStats, setCalculatedStats] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   const [baseStats, setBaseStats] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+  const [initialized, setInitialized] = useState(false);
 
-  // Obtener los datos completos del Pokémon seleccionado de la lista de todos los Pokémon
+  // Obtener los datos completos del Pokémon seleccionado
   useEffect(() => {
     const fetchPokemonData = async () => {
       if (selectedPokemon?.name) {
@@ -64,39 +65,40 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     fetchPokemonData();
   }, [selectedPokemon?.name, getPokemons]);
 
-  // Cargar datos del Pokémon seleccionado
+  // Load initial values from selected Pokémon
   useEffect(() => {
     if (selectedPokemon && selectedPokemon.name) {
-      // Inicializar EVs, IVs y naturaleza desde los datos del Pokémon, o usar valores por defecto
+      // Initialize EVs, IVs, and nature from Pokémon data or default values
       setEvs(selectedPokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
       setIvs(selectedPokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
       setNature(selectedPokemon.nature || "Hardy");
+      setInitialized(true);
     }
   }, [selectedPokemon]);
 
-  // Calcular el total de EVs
+  // Calculate total EVs
   useEffect(() => {
     const total = Object.values(evs).reduce((sum, value) => sum + value, 0);
     setTotalEvs(total);
   }, [evs]);
 
-  // Función para calcular estadísticas finales
+  // Calculate final stats based on base stats, IVs, EVs, and nature
   const calculateStats = useCallback(() => {
-    if (!selectedPokemon || !selectedPokemon.name) return;
+    if (!selectedPokemon?.name || !baseStats.hp) return {};
 
     const level = selectedPokemon.level || 100;
     const natureObj = NATURES.find((n) => n.name === nature);
 
     const stats = {};
 
-    // Calcular HP: diferente fórmula
+    // Calculate HP
     stats.hp = Math.floor(((2 * baseStats.hp + ivs.hp + Math.floor(evs.hp / 4)) * level) / 100) + level + 10;
 
-    // Calcular otras estadísticas
+    // Calculate other stats
     for (const stat of ["atk", "def", "spa", "spd", "spe"]) {
       let value = Math.floor(((2 * baseStats[stat] + ivs[stat] + Math.floor(evs[stat] / 4)) * level) / 100) + 5;
 
-      // Aplicar modificadores de naturaleza
+      // Apply nature modifiers
       if (natureObj.plus === stat) {
         value = Math.floor(value * 1.1);
       } else if (natureObj.minus === stat) {
@@ -106,73 +108,73 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
       stats[stat] = value;
     }
 
-    setCalculatedStats(stats);
-  }, [selectedPokemon, baseStats, ivs, evs, nature]);
+    return stats;
+  }, [baseStats, ivs, evs, nature, selectedPokemon]);
 
+  // Calculate and update local state only when dependencies change
   useEffect(() => {
-    calculateStats();
-  }, [calculateStats]);
+    if (baseStats.hp > 0 && initialized) {
+      const stats = calculateStats();
+      setCalculatedStats(stats);
+    }
+  }, [baseStats, ivs, evs, nature, calculateStats, initialized]);
 
-  // Función para manejar cambios en EVs
+  // Handle EV changes with validation
   const handleEvChange = (stat, value) => {
-    const newValue = Math.max(0, Math.min(MAX_STAT_EVS, parseInt(value) || 0));
+    const parsedValue = parseInt(value) || 0;
+    const newValue = Math.max(0, Math.min(MAX_STAT_EVS, parsedValue));
 
-    // Calcular cuántos EVs adicionales se agregarían
+    // Calculate how many additional EVs would be added
     const difference = newValue - evs[stat];
     const newTotal = totalEvs + difference;
 
-    // Solo actualizar si no excede el límite total
+    // Only update if it doesn't exceed the total limit
     if (newTotal <= MAX_TOTAL_EVS) {
-      setEvs((prev) => ({ ...prev, [stat]: newValue }));
+      setEvs((prev) => ({
+        ...prev,
+        [stat]: newValue,
+      }));
     }
   };
 
-  // Función para manejar cambios en IVs
+  // Handle IV changes
   const handleIvChange = (stat, value) => {
-    const newValue = Math.max(0, Math.min(31, parseInt(value) || 0));
-    setIvs((prev) => ({ ...prev, [stat]: newValue }));
+    const parsedValue = parseInt(value) || 0;
+    const newValue = Math.max(0, Math.min(31, parsedValue));
+    setIvs((prev) => ({
+      ...prev,
+      [stat]: newValue,
+    }));
   };
 
-  // Función para manejar cambios en naturaleza
+  // Handle nature changes
   const handleNatureChange = (e) => {
     setNature(e.target.value);
   };
 
-  // Función para guardar cambios
-  // In the saveChanges function of StatsTable.jsx, add code to advance to the next step
-  const saveChanges = () => {
-    const updatedPokemons = [...pokemons];
-    updatedPokemons[selectedSlot] = {
-      ...selectedPokemon,
-      evs: { ...evs },
-      ivs: { ...ivs },
-      nature: nature,
-      stats: { ...calculatedStats },
-    };
-
-    // Update the state in TeamContext
-    pokemons[selectedSlot] = updatedPokemons[selectedSlot];
-
-    // Advance to the next step in the flow
-    advanceFromStats();
-  };
-
-  // Función para cancelar y volver atrás
-  const cancelChanges = () => {
-    setViewMode("pokemon");
-  };
-
-  // Función para limpiar EVs
+  // Reset EVs to zero
   const resetEvs = () => {
     setEvs({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   };
 
-  // Función para maximizar IVs
+  // Set IVs to max (31)
   const maxIvs = () => {
     setIvs({ hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
   };
 
-  // Crear etiquetas descriptivas para cada stat
+  // Handle save and continue - This is the ONLY place where we update the global context
+  const handleSave = () => {
+    // Calcular estadísticas finales
+    const stats = calculateStats();
+
+    // Actualizar el contexto con los valores finales
+    updatePokemonStats(selectedSlot, stats, evs, ivs, nature);
+
+    // Avanzar al siguiente paso
+    advanceFromStats();
+  };
+
+  // Get stat label for display
   const getStatLabel = (stat) => {
     switch (stat) {
       case "hp":
@@ -192,7 +194,7 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     }
   };
 
-  // Obtener el color de clase para cada stat basado en la naturaleza
+  // Get CSS class for stats affected by nature
   const getNatureClass = (stat) => {
     const natureObj = NATURES.find((n) => n.name === nature);
     if (!natureObj) return "";
@@ -232,11 +234,8 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
         <div className="actionButtons">
           <button onClick={resetEvs}>Reiniciar EVs</button>
           <button onClick={maxIvs}>Maximizar IVs</button>
-          <button onClick={cancelChanges} className="cancelButton">
-            Cancelar
-          </button>
-          <button onClick={saveChanges} className="saveButton">
-            Guardar cambios
+          <button className="saveButton" onClick={handleSave}>
+            Guardar y continuar
           </button>
         </div>
       </div>
