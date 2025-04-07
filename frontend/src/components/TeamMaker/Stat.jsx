@@ -10,6 +10,7 @@ const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
   const getGradientColor = (percent) => {
     // Definimos los colores para nuestro gradiente (de bajo a alto)
     const colors = [
+      { percent: null, color: { r: 77, g: 77, b: 255 } }, // Null (#c3c3c3)
       { percent: 0, color: { r: 255, g: 77, b: 77 } }, // Rojo (#ff4d4d)
       { percent: 20, color: { r: 255, g: 140, b: 0 } }, // Naranja (#ff8c00)
       { percent: 40, color: { r: 255, g: 215, b: 0 } }, // Amarillo (#ffd700)
@@ -48,39 +49,22 @@ const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
 
   return (
     <div className="statContainer">
-      <div className="statLabel">{label}</div>
+      <div
+        className="statLabel"
+        style={{
+          color: "black",
+          backgroundColor: statColor,
+        }}
+      >
+        {label}
+      </div>
       <div
         className="statValue"
         style={{
-          color: statColor,
-          fontWeight: "bold",
-          textShadow: "0px 0px 2px rgba(0,0,0,0.5)",
+          color: "black",
         }}
       >
         {value}
-      </div>
-
-      <div
-        className="statBar"
-        style={{
-          width: "100%",
-          height: "4px",
-          background: "#e0e0e0",
-          position: "relative",
-          borderRadius: "2px",
-          marginTop: "2px",
-        }}
-      >
-        <div
-          className="statBarFill"
-          style={{
-            width: `${percentage}%`,
-            height: "100%",
-            background: statColor,
-            borderRadius: "2px",
-            transition: "width 0.3s ease-out, background-color 0.3s ease",
-          }}
-        />
       </div>
     </div>
   );

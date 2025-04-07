@@ -2,11 +2,8 @@
 .pokemonStatsContainer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 8px;
-  background-color: #f5f5f5;
+  gap: 4px;
   border-radius: 8px;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilos para un contenedor individual de estadística */
@@ -14,15 +11,8 @@
   display: flex;
   flex-direction: column;
   border-radius: 4px;
-  padding: 4px;
   background-color: rgba(255, 255, 255, 0.7);
   transition: all 0.2s ease;
-}
-
-.statContainer:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Etiqueta de la estadística */
@@ -37,22 +27,6 @@
   font-size: 1rem;
   font-weight: bold;
   text-align: center;
-}
-
-/* Barra de progreso de la estadística */
-.statBar {
-  margin-top: 2px;
-  width: 100%;
-  height: 4px;
-  background: #e0e0e0;
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-}
-
-.statBarFill {
-  height: 100%;
-  transition: width 0.3s ease-out, background-color 0.3s ease;
 }
 
 /* Estilos para la tabla de estadísticas */
@@ -162,10 +136,6 @@
 
 .actionButtons button:first-child {
   margin-left: 0;
-}
-
-.actionButtons button:hover {
-  background-color: #5a6268;
 }
 
 .statsInfo {

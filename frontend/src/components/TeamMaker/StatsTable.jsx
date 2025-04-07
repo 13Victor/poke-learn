@@ -256,14 +256,24 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
               <td>{getStatLabel(stat)}</td>
               <td>{baseStats[stat] || 0}</td>
               <td>
-                <input
-                  type="number"
-                  min="0"
-                  max="252"
-                  step="4"
-                  value={value}
-                  onChange={(e) => handleEvChange(stat, e.target.value)}
-                />
+                <div className="input-group">
+                  <input
+                    type="range"
+                    min="0"
+                    max="252"
+                    step="4"
+                    value={value}
+                    onChange={(e) => handleEvChange(stat, e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="252"
+                    step="4"
+                    value={value}
+                    onChange={(e) => handleEvChange(stat, e.target.value)}
+                  />
+                </div>
               </td>
               <td>
                 <input

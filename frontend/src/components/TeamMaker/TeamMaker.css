@@ -53,6 +53,7 @@ body {
 }
 
 .pokemonDataContainer {
+  margin-right: 4px;
   max-width: 304px;
 }
 

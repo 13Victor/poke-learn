@@ -18,8 +18,17 @@ const PokeSlot = memo(
       selectSlot(index);
     };
 
+    // Definimos un estilo condicional para el borde
+    const slotStyle = {
+      border: `2px solid ${pokemon.name ? (isSelected ? "#007bff" : "transparent") : "#a0a0a0"}`,
+    };
+
     return (
-      <div className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
+      <div
+        className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
+        onClick={handleSelect}
+        style={slotStyle}
+      >
         <div className="pokemonImageContainer">
           <Tippy
             content={pokemon.name || `Pokémon ${index + 1}`}
