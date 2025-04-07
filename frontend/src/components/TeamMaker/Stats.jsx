@@ -1,19 +1,45 @@
 import React from "react";
 import "./Stats.css";
+import { useTeam } from "../../TeamContext";
 
-const Stats = ({ pokemon }) => {
-  // Si no hay estadísticas disponibles o no hay pokémon seleccionado, mostrar valores por defecto
-  const stats = pokemon?.stats || {
-    hp: 0,
-    atk: 0,
-    def: 0,
-    spa: 0,
-    spd: 0,
-    spe: 0,
+const Stats = ({ pokemon, index }) => {
+  const { setViewMode, selectedSlot, setSelectedSlot, setFlowStage, FLOW_STAGES } = useTeam();
+
+  // Get stats from pokemon - use calculated stats if available, otherwise baseStats
+  const stats = pokemon?.stats ||
+    pokemon?.baseStats || {
+      hp: 0,
+      atk: 0,
+      def: 0,
+      spa: 0,
+      spd: 0,
+      spe: 0,
+    };
+
+  const handleStatsClick = (e) => {
+    // Prevent event propagation
+    e.stopPropagation();
+
+    // Set the selected slot
+    setSelectedSlot(index);
+
+    // If no Pokémon is selected, show Pokémon selection view
+    if (!pokemon.name) {
+      setViewMode("pokemon");
+      setFlowStage(FLOW_STAGES.POKEMON);
+    } else {
+      // If Pokémon exists, go to stats view
+      setViewMode("stats");
+      setFlowStage(FLOW_STAGES.STATS); // We'll add this to FLOW_STAGES
+    }
   };
 
   return (
-    <div className="pokemonStatsContainer">
+    <div
+      className="pokemonStatsContainer"
+      onClick={handleStatsClick}
+      style={{ cursor: "pointer" }} // Always show pointer cursor
+    >
       <div className="hpContainer">
         <p>HP</p>
         <p>{stats.hp}</p>

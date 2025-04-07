@@ -3,6 +3,7 @@ import PokemonTable from "./PokemonTable";
 import MoveTable from "./MoveTable";
 import ItemTable from "./ItemTable";
 import AbilityTable from "./AbilityTable";
+import StatsTable from "./StatsTable"; // Import the new component
 import { useTeam } from "../../TeamContext";
 
 const TableView = memo(() => {
@@ -78,6 +79,11 @@ const TableView = memo(() => {
         selectedSlot={selectedSlot}
       />
     );
+  }
+
+  // Add the new view mode for stats
+  if (viewMode === "stats" && selectedPokemon?.name) {
+    return <StatsTable selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} />;
   }
 
   return null;

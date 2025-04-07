@@ -44,7 +44,7 @@ const PokeSlot = memo(
           <hr id="separatorLine" />
           <MoveSet pokemon={pokemon} moves={pokemon.moveset} slotIndex={index} />
         </div>
-        <Stats pokemon={pokemon} />
+        <Stats pokemon={pokemon} index={index} />
       </div>
     );
   },

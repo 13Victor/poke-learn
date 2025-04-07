@@ -44,7 +44,7 @@ const processPokedex = () => {
       changesFrom: pokemonData.changesFrom ? cleanName(pokemonData.changesFrom) : "",
       types: pokemonData.types,
       abilities: Object.values(pokemonData.abilities),
-      stats: pokemonData.baseStats,
+      baseStats: pokemonData.baseStats,
       tier: formatData.tier || "Unknown",
     };
   });

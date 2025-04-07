@@ -33,12 +33,12 @@ const PokemonRow = memo(({ pokemon, onClick }) => {
       <td>{pokemon.tier}</td>
       <td>{pokemon.typesString || pokemon.types.join(", ")}</td>
       <td>{pokemon.abilitiesString || pokemon.abilities.join(", ")}</td>
-      <td>{pokemon.stats.hp}</td>
-      <td>{pokemon.stats.atk}</td>
-      <td>{pokemon.stats.def}</td>
-      <td>{pokemon.stats.spa}</td>
-      <td>{pokemon.stats.spd}</td>
-      <td>{pokemon.stats.spe}</td>
+      <td>{pokemon.baseStats.hp}</td>
+      <td>{pokemon.baseStats.atk}</td>
+      <td>{pokemon.baseStats.def}</td>
+      <td>{pokemon.baseStats.spa}</td>
+      <td>{pokemon.baseStats.spd}</td>
+      <td>{pokemon.baseStats.spe}</td>
     </tr>
   );
 });

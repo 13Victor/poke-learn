@@ -11,9 +11,10 @@ const ACTIONS = {
   SET_SELECTED_SLOT: "SET_SELECTED_SLOT",
   SET_SELECTED_MOVE: "SET_SELECTED_MOVE",
   SET_FLOW_STAGE: "SET_FLOW_STAGE",
+  SET_POKEMON_STATS: "SET_POKEMON_STATS",
+  UPDATE_POKEMON_STATS: "UPDATE_POKEMON_STATS",
 };
 
-// Etapas del flujo de trabajo - Agregado ABILITY explícitamente
 const FLOW_STAGES = {
   POKEMON: "pokemon",
   ITEM: "item",
@@ -22,6 +23,7 @@ const FLOW_STAGES = {
   MOVE_2: "move_2",
   MOVE_3: "move_3",
   MOVE_4: "move_4",
+  STATS: "stats",
 };
 
 // Estado inicial
@@ -138,6 +140,41 @@ function teamReducer(state, action) {
         flowStage: action.payload,
       };
 
+    case ACTIONS.SET_POKEMON_STATS: {
+      const { slotIndex, evs, ivs, nature, stats } = action.payload;
+      const newPokemons = [...state.pokemons];
+
+      // Update the Pokémon with the new stat configuration
+      newPokemons[slotIndex] = {
+        ...newPokemons[slotIndex],
+        evs,
+        ivs,
+        nature,
+        stats,
+      };
+
+      return {
+        ...state,
+        pokemons: newPokemons,
+      };
+    }
+
+    case ACTIONS.UPDATE_POKEMON_STATS: {
+      const { slotIndex, stats, evs, ivs, nature } = action.payload;
+      const newPokemons = [...state.pokemons];
+      newPokemons[slotIndex] = {
+        ...newPokemons[slotIndex],
+        stats,
+        evs,
+        ivs,
+        nature,
+      };
+      return {
+        ...state,
+        pokemons: newPokemons,
+      };
+    }
+
     default:
       return state;
   }
@@ -201,8 +238,16 @@ export const TeamProvider = ({ children }) => {
         });
         break;
 
+      // In the advanceFlow function within TeamContext.jsx, modify the MOVE_4 case:
       case FLOW_STAGES.MOVE_4:
-        // Después del último movimiento, avanzamos al siguiente slot
+        // After the fourth move, go to stats configuration
+        dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.STATS });
+        dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "stats" });
+        break;
+
+      // Add a new case for STATS:
+      case FLOW_STAGES.STATS:
+        // After stats, proceed to the next slot
         const nextSlot = (slotIndex + 1) % 6;
         dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: nextSlot });
         dispatch({
@@ -359,6 +404,24 @@ export const TeamProvider = ({ children }) => {
       // Método para avanzar manualmente al siguiente paso en el flujo
       advanceToNextStep: () => {
         advanceFlow(state.flowStage, state.selectedSlot);
+      },
+
+      setPokemonStats: (slotIndex, evs, ivs, nature, stats) => {
+        dispatch({
+          type: ACTIONS.SET_POKEMON_STATS,
+          payload: { slotIndex, evs, ivs, nature, stats },
+        });
+      },
+
+      updatePokemonStats: (slotIndex, stats, evs, ivs, nature) => {
+        dispatch({
+          type: ACTIONS.UPDATE_POKEMON_STATS,
+          payload: { slotIndex, stats, evs, ivs, nature },
+        });
+      },
+
+      advanceFromStats: () => {
+        advanceFlow(FLOW_STAGES.STATS, state.selectedSlot);
       },
     }),
     [state.selectedSlot, state.selectedMove.moveIndex, state.flowStage]
