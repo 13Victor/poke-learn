@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useEffect, useRef } from "react"
 
 import MoveRow from "./MoveRow";
 import { usePokemonData } from "../../PokemonDataContext";
+import { useTeam } from "../../TeamContext";
 
 const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIndex }) => {
   const {
@@ -16,6 +17,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     learnsetsLoading,
     learnsetsError,
   } = usePokemonData();
+  const { pokemons } = useTeam(); // Accedemos a los pokemons del equipo para filtrar movimientos ya usados
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const tableRef = useRef(null);
   const [pokemonMoves, setPokemonMoves] = useState([]);
@@ -46,6 +48,18 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     loadRequiredData();
   }, [selectedPokemon, movesLoaded, movesLoading, learnsetsLoaded, learnsetsLoading, getMoves, getLearnsets]);
 
+  // Obtener los movimientos que ya están asignados al Pokémon actual
+  const assignedMoves = useMemo(() => {
+    if (!selectedPokemon || selectedSlot === undefined) return new Set();
+
+    // Obtenemos los movimientos asignados al Pokémon en el slot seleccionado
+    const pokemonInTeam = pokemons[selectedSlot];
+    if (!pokemonInTeam || !pokemonInTeam.moveset) return new Set();
+
+    // Crear un Set con los movimientos ya asignados (excepto el que se está editando actualmente)
+    return new Set(pokemonInTeam.moveset.filter((move, index) => move && index !== selectedMoveIndex));
+  }, [pokemons, selectedSlot, selectedMoveIndex, selectedPokemon]);
+
   // Process move data when we have all required data
   useEffect(() => {
     const processMoveData = () => {
@@ -60,10 +74,16 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
           learnsets[selectedPokemon.id]?.learnset || learnsets[selectedPokemon.changesFrom]?.learnset || {};
 
         const moveNames = Object.keys(pokemonLearnset);
-        const availableMoves = moveNames.map((move) => moves[move]).filter(Boolean);
+        const availableMoves = moveNames
+          .map((move) => moves[move])
+          .filter(Boolean)
+          // Filtramos para excluir los movimientos ya asignados
+          .filter((move) => !assignedMoves.has(move.name));
 
         setPokemonMoves(availableMoves);
-        console.log(`✅ ${availableMoves.length} moves processed for ${selectedPokemon.name}`);
+        console.log(
+          `✅ ${availableMoves.length} moves processed for ${selectedPokemon.name} (after filtering assigned moves)`
+        );
       } catch (error) {
         console.error(`❌ Error processing moves:`, error);
       } finally {
@@ -72,7 +92,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     };
 
     processMoveData();
-  }, [selectedPokemon, moves, learnsets, movesLoaded, learnsetsLoaded, isProcessingMoves]);
+  }, [selectedPokemon, moves, learnsets, movesLoaded, learnsetsLoaded, isProcessingMoves, assignedMoves]);
 
   // Reset scroll position when Pokémon changes
   useEffect(() => {

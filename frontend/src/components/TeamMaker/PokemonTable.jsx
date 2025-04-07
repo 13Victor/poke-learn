@@ -1,9 +1,11 @@
 import React, { useState, useCallback, memo, useMemo, useEffect } from "react";
 import PokemonRow from "./PokemonRow";
 import { usePokemonData } from "../../PokemonDataContext";
+import { useTeam } from "../../TeamContext";
 
 const PokemonTable = memo(({ onPokemonSelect }) => {
   const { getPokemons, pokemons, pokemonsLoaded, pokemonsLoading, pokemonsError } = usePokemonData();
+  const { pokemons: teamPokemons } = useTeam(); // Accedemos a los Pokémon del equipo
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const tableRef = React.useRef(null);
@@ -51,17 +53,25 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
     }
   }, []);
 
-  // Filter Pokémon based on search term
+  // Crear un conjunto con los nombres de los Pokémon ya en el equipo
+  const teamPokemonNames = useMemo(() => {
+    return new Set(teamPokemons.filter((p) => p.name).map((p) => p.name));
+  }, [teamPokemons]);
+
+  // Filter Pokémon based on search term and exclude those already in team
   const filteredPokemon = useMemo(() => {
-    if (!searchTerm) return processedData;
+    if (!processedData.length) return [];
 
     return processedData.filter(
       (pokemon) =>
-        pokemon.name.toLowerCase().includes(searchTerm) ||
-        pokemon.typesString.toLowerCase().includes(searchTerm) ||
-        pokemon.abilitiesString.toLowerCase().includes(searchTerm)
+        // Filtrar por término de búsqueda
+        (pokemon.name.toLowerCase().includes(searchTerm) ||
+          pokemon.typesString.toLowerCase().includes(searchTerm) ||
+          pokemon.abilitiesString.toLowerCase().includes(searchTerm)) &&
+        // Excluir Pokémon que ya están en el equipo
+        !teamPokemonNames.has(pokemon.name)
     );
-  }, [processedData, searchTerm]);
+  }, [processedData, searchTerm, teamPokemonNames]);
 
   // Row click handler
   const handleRowClick = useCallback(
@@ -167,7 +177,6 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
               </tr>
             )}
 
-            {/* Bottom space for proper scrollbar */}
             <tr
               style={{
                 height: `${(filteredPokemon.length - visibleRange.end) * 50}px`,
