@@ -1,14 +1,18 @@
-import React, { useState, useCallback, memo, useMemo, useEffect } from "react";
+import React, { useState, useCallback, memo, useMemo, useEffect, useRef } from "react";
 import PokemonRow from "./PokemonRow";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 
+// Definir altura de filas constante para todo el componente
+const ROW_HEIGHT = 38;
+
 const PokemonTable = memo(({ onPokemonSelect }) => {
   const { getPokemons, pokemons, pokemonsLoaded, pokemonsLoading, pokemonsError } = usePokemonData();
-  const { pokemons: teamPokemons } = useTeam(); // Accedemos a los Pokémon del equipo
+  const { pokemons: teamPokemons } = useTeam();
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
-  const tableRef = React.useRef(null);
+  const tableRef = useRef(null);
+  const scrollRAF = useRef(null);
   const [processedData, setProcessedData] = useState([]);
   const [isProcessingData, setIsProcessingData] = useState(false);
 
@@ -82,41 +86,45 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
     [onPokemonSelect]
   );
 
-  // Scroll handling with requestAnimationFrame
+  // Optimized scroll handling with debounce
   const handleScroll = useCallback(() => {
     if (!tableRef.current) return;
 
-    requestAnimationFrame(() => {
-      const { scrollTop, clientHeight, scrollHeight } = tableRef.current;
-      const rowHeight = 50;
+    // Cancel any existing RAF
+    if (scrollRAF.current) {
+      cancelAnimationFrame(scrollRAF.current);
+    }
 
-      const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 20);
-      const visibleRows = Math.ceil(clientHeight / rowHeight) + 40;
+    scrollRAF.current = requestAnimationFrame(() => {
+      const { scrollTop, clientHeight } = tableRef.current;
+
+      const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 20);
+      const visibleRows = Math.ceil(clientHeight / ROW_HEIGHT) + 40;
       const end = Math.min(filteredPokemon.length, start + visibleRows);
 
-      setVisibleRange({ start, end });
+      // Solo actualizamos si realmente hay un cambio
+      if (visibleRange.start !== start || visibleRange.end !== end) {
+        setVisibleRange({ start, end });
+      }
+
+      scrollRAF.current = null;
     });
-  }, [filteredPokemon.length]);
+  }, [filteredPokemon.length, visibleRange]);
 
   // Set up scroll listener
   useEffect(() => {
     const tableElement = tableRef.current;
     if (tableElement) {
-      let scrollTimeout;
-
-      const optimizedScrollHandler = () => {
-        if (!scrollTimeout) {
-          scrollTimeout = setTimeout(() => {
-            handleScroll();
-            scrollTimeout = null;
-          }, 16);
-        }
-      };
-
-      tableElement.addEventListener("scroll", optimizedScrollHandler, {
+      tableElement.addEventListener("scroll", handleScroll, {
         passive: true,
       });
-      return () => tableElement.removeEventListener("scroll", optimizedScrollHandler);
+
+      return () => {
+        tableElement.removeEventListener("scroll", handleScroll);
+        if (scrollRAF.current) {
+          cancelAnimationFrame(scrollRAF.current);
+        }
+      };
     }
   }, [handleScroll]);
 
@@ -133,7 +141,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   const visiblePokemon = filteredPokemon.slice(visibleRange.start, visibleRange.end);
 
   return (
-    <div>
+    <div className="table-container pokemon-table">
       <h2>Pokémon List</h2>
       <div className="search-container">
         <input
@@ -144,8 +152,8 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
           className="search-input"
         />
       </div>
-      <div ref={tableRef} className="table-container" style={{ height: "300px", overflow: "auto" }}>
-        <table border="1" className="pokemon-table">
+      <div ref={tableRef} className="table-wrapper">
+        <table>
           <thead>
             <tr>
               <th>#</th>
@@ -162,14 +170,20 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
             </tr>
           </thead>
           <tbody>
-            {/* Height container for proper scrollbar */}
-            <tr style={{ height: `${visibleRange.start * 50}px`, padding: 0 }}>
-              <td colSpan="11" style={{ padding: 0 }}></td>
-            </tr>
+            {visibleRange.start > 0 && (
+              <tr className="spacer-row" style={{ height: `${visibleRange.start * ROW_HEIGHT}px` }}>
+                <td colSpan="11"></td>
+              </tr>
+            )}
 
             {visiblePokemon.length > 0 ? (
-              visiblePokemon.map((pokemon) => (
-                <PokemonRow key={pokemon.id || pokemon.name} pokemon={pokemon} onClick={handleRowClick} />
+              visiblePokemon.map((pokemon, index) => (
+                <PokemonRow
+                  key={pokemon.id || pokemon.name}
+                  pokemon={pokemon}
+                  onClick={handleRowClick}
+                  isEven={(visibleRange.start + index) % 2 === 0}
+                />
               ))
             ) : (
               <tr>
@@ -177,19 +191,21 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
               </tr>
             )}
 
-            <tr
-              style={{
-                height: `${(filteredPokemon.length - visibleRange.end) * 50}px`,
-                padding: 0,
-              }}
-            >
-              <td colSpan="11" style={{ padding: 0 }}></td>
-            </tr>
+            {filteredPokemon.length > visibleRange.end && (
+              <tr
+                className="spacer-row"
+                style={{ height: `${(filteredPokemon.length - visibleRange.end) * ROW_HEIGHT}px` }}
+              >
+                <td colSpan="11"></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 });
+
+PokemonTable.displayName = "PokemonTable";
 
 export default PokemonTable;

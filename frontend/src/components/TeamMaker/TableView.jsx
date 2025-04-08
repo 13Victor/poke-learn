@@ -6,6 +6,8 @@ import AbilityTable from "./AbilityTable";
 import StatsTable from "./StatsTable";
 import { useTeam } from "../../contexts/TeamContext";
 
+import "../../styles/Tables.css";
+
 const TableView = memo(() => {
   const { viewMode, selectedSlot, pokemons, selectPokemon, selectMove, selectedMove, selectItem, selectAbility } =
     useTeam();

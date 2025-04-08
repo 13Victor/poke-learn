@@ -1,66 +1,3 @@
-/* Base styles and CSS reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-:root {
-  /* Grayscale palette */
-  --white: #ffffffff;
-  --white-smoke: #f0f0f0ff;
-  --silver: #c0c0c0ff;
-  --battleship-gray: #898989ff;
-  --eerie-black: #1f1f1fff;
-  --black: #000000ff;
-
-  /* Primary palette */
-  --picton-blue: #00a6fbff;
-  --picton-blue-light: #ccedfeff;
-  --steel-blue: #0582caff;
-  --lapis-lazuli: #006494ff;
-  --prussian-blue: #003554ff;
-  --rich-black: #051923ff;
-
-  --background: var(--white-smoke);
-  --text: var(--black);
-
-  /* Typography */
-  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    "Open Sans", "Helvetica Neue", sans-serif;
-
-  --font-size-xs: 0.75rem; /* 12px */
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-md: 1rem; /* 16px */
-  --font-size-lg: 1.125rem; /* 18px */
-  --font-size-xl: 1.25rem; /* 20px */
-  --font-size-2xl: 1.5rem; /* 24px */
-
-  /* Spacing */
-  --spacing-xs: 0.25rem; /* 4px */
-  --spacing-sm: 0.5rem; /* 8px */
-  --spacing-md: 0.75rem; /* 12px */
-  --spacing-lg: 1rem; /* 16px */
-  --spacing-xl: 1.5rem; /* 24px */
-  --spacing-2xl: 2rem; /* 32px */
-
-  /* Border radius */
-  --radius-sm: 0.25rem; /* 4px */
-  --radius-md: 0.5rem; /* 8px */
-  --radius-lg: 0.75rem; /* 12px */
-  --radius-full: 9999px; /* Rounded full */
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
-}
-
 /* Base element styles */
 body {
   font-family: var(--font-family);
@@ -71,6 +8,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: var(--spacing-lg);
 }
 
 h1,
@@ -257,7 +195,6 @@ label {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-sm);
-  margin: var(--spacing-lg) 0;
 }
 
 @media (max-width: 768px) {
@@ -291,47 +228,4 @@ label {
   100% {
     transform: rotate(360deg);
   }
-}
-
-/* Table styles */
-.table-container {
-  width: 100%;
-  max-height: 300px;
-  overflow-y: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--battleship-gray);
-}
-
-.pokemon-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.pokemon-table th {
-  background-color: var(--prussian-blue);
-  color: var(--white);
-  padding: var(--spacing-sm);
-  text-align: left;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.pokemon-table td {
-  padding: var(--spacing-sm);
-  border-bottom: 1px solid var(--white-smoke);
-}
-
-.pokemon-table tr:hover {
-  background-color: var(--white-smoke);
-}
-
-.pokemon-table td:first-child {
-  max-width: 40px;
-  padding: 2px;
-}
-
-.pokemon-table img {
-  height: 40px;
-  width: 40px;
 }

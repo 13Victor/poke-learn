@@ -1,15 +1,100 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 :root {
-  /* GRAYSCALE */
+  /* Grayscale palette */
   --white: #ffffffff;
-  --white-smoke: #f2f2f2ff;
+  --white-smoke: #f0f0f0ff;
+  --silver: #c0c0c0ff;
   --battleship-gray: #898989ff;
   --eerie-black: #1f1f1fff;
   --black: #000000ff;
 
-  /* PRIMARY */
+  /* Primary palette */
   --picton-blue: #00a6fbff;
+  --picton-blue-light: #ccedfeff;
   --steel-blue: #0582caff;
   --lapis-lazuli: #006494ff;
   --prussian-blue: #003554ff;
   --rich-black: #051923ff;
+
+  --background: var(--white-smoke);
+  --text: var(--black);
+
+  /* Typography */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+    "Open Sans", "Helvetica Neue", sans-serif;
+
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+
+  /* Spacing */
+  --spacing-xs: 0.25rem; /* 4px */
+  --spacing-sm: 0.5rem; /* 8px */
+  --spacing-md: 0.75rem; /* 12px */
+  --spacing-lg: 1rem; /* 16px */
+  --spacing-xl: 1.5rem; /* 24px */
+  --spacing-2xl: 2rem; /* 32px */
+
+  /* Border radius */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-full: 9999px; /* Rounded full */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  --type-normal: #9099a1;
+  --type-fire: #ff9c54;
+  --type-water: #4d90d5;
+  --type-electric: #f3d23b;
+  --type-grass: #63bb5b;
+  --type-ice: #74cec0;
+  --type-fighting: #ce4069;
+  --type-poison: #ab6ac8;
+  --type-ground: #d97746;
+  --type-flying: #92aade;
+  --type-psychic: #f97176;
+  --type-bug: #90c12c;
+  --type-rock: #c7b78b;
+  --type-ghost: #5269ac;
+  --type-dragon: #096dc4;
+  --type-dark: #5a5366;
+  --type-steel: #5a8ea1;
+  --type-fairy: #ec8fe6;
+
+  --type-normal-bs: rgba(144, 153, 161, 0.3);
+  --type-fire-bs: rgba(255, 156, 84, 0.3);
+  --type-water-bs: rgba(77, 144, 213, 0.3);
+  --type-electric-bs: rgba(243, 210, 59, 0.3);
+  --type-grass-bs: rgba(99, 187, 91, 0.3);
+  --type-ice-bs: rgba(116, 206, 192, 0.3);
+  --type-fighting-bs: rgba(206, 64, 105, 0.3);
+  --type-poison-bs: rgba(171, 106, 200, 0.3);
+  --type-ground-bs: rgba(217, 119, 70, 0.3);
+  --type-flying-bs: rgba(146, 170, 222, 0.3);
+  --type-psychic-bs: rgba(249, 113, 118, 0.3);
+  --type-bug-bs: rgba(144, 193, 44, 0.3);
+  --type-rock-bs: rgba(199, 183, 139, 0.3);
+  --type-ghost-bs: rgba(82, 105, 172, 0.3);
+  --type-dragon-bs: rgba(9, 109, 196, 0.3);
+  --type-dark-bs: rgba(90, 83, 102, 0.3);
+  --type-steel-bs: rgba(90, 142, 161, 0.3);
+  --type-fairy-bs: rgba(236, 143, 230, 0.3);
+  --type-show-all-bs: rgba(28, 28, 28, 0.3);
 }

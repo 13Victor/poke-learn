@@ -161,13 +161,13 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
   const visibleMoves = pokemonMoves.slice(visibleRange.start, visibleRange.end);
 
   return (
-    <div>
+    <div className="table-container move-table">
       <h2>
         Available moves for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1}, Move {selectedMoveIndex + 1})
       </h2>
 
-      <div ref={tableRef} className="table-container">
-        <table border="1" className="pokemon-table">
+      <div ref={tableRef} className="table-wrapper">
+        <table>
           <thead>
             <tr>
               <th>Name</th>
