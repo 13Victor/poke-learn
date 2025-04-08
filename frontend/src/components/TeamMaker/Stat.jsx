@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import "./Stats.css";
 
 // Este componente representa una estadística individual
 const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {

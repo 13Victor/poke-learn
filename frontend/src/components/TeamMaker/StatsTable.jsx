@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useTeam } from "../../TeamContext";
-import { usePokemonData } from "../../PokemonDataContext";
-import "./StatsTable.css";
+import { useTeam } from "../../contexts/TeamContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 
 const NATURES = [
   { name: "Hardy", plus: null, minus: null },

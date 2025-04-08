@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import PokeSlot from "./PokeSlot";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 // Componente wrapper que solo se renderiza cuando cambia el estado de selección
 const SlotWrapper = memo(
@@ -46,12 +46,7 @@ const TeamContainer = memo(() => {
   return (
     <div className="teamContainer">
       {pokemons.map((pokemon, index) => (
-        <SlotWrapper
-          key={index}
-          index={index}
-          pokemon={pokemon}
-          isSelected={selectedSlot === index}
-        />
+        <SlotWrapper key={index} index={index} pokemon={pokemon} isSelected={selectedSlot === index} />
       ))}
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 import MoveButton from "./MoveButton";
 
 const MoveSet = memo(

@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
-import { usePokemonData } from "../../PokemonDataContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 import ItemRow from "./ItemRow";
 
 const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {

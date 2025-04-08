@@ -4,7 +4,7 @@ import MoveTable from "./MoveTable";
 import ItemTable from "./ItemTable";
 import AbilityTable from "./AbilityTable";
 import StatsTable from "./StatsTable";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 const TableView = memo(() => {
   const { viewMode, selectedSlot, pokemons, selectPokemon, selectMove, selectedMove, selectItem, selectAbility } =

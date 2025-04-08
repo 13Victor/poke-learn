@@ -1,0 +1,15 @@
+:root {
+  /* GRAYSCALE */
+  --white: #ffffffff;
+  --white-smoke: #f2f2f2ff;
+  --battleship-gray: #898989ff;
+  --eerie-black: #1f1f1fff;
+  --black: #000000ff;
+
+  /* PRIMARY */
+  --picton-blue: #00a6fbff;
+  --steel-blue: #0582caff;
+  --lapis-lazuli: #006494ff;
+  --prussian-blue: #003554ff;
+  --rich-black: #051923ff;
+}

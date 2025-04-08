@@ -1,10 +1,12 @@
 import React from "react";
 import Stat from "./Stat";
-import "./Stats.css";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 const Stats = ({ pokemon, index }) => {
-  const { setViewMode, selectedSlot, setSelectedSlot, setFlowStage, FLOW_STAGES } = useTeam();
+  const { setViewMode, selectedSlot, setSelectedSlot, setFlowStage, FLOW_STAGES, flowStage, viewMode } = useTeam();
+
+  // Determinar si los stats están seleccionados actualmente
+  const isStatsSelected = flowStage === FLOW_STAGES.STATS && selectedSlot === index && viewMode === "stats";
 
   // Get stats from pokemon - use calculated stats if available, otherwise baseStats
   const stats = pokemon?.stats
@@ -73,13 +75,53 @@ const Stats = ({ pokemon, index }) => {
   };
 
   return (
-    <div className="pokemonStatsContainer" onClick={handleStatsClick} style={{ cursor: "pointer" }}>
-      <Stat label="HP" value={stats.hp} baseValue={pokemon?.baseStats?.hp} maxValue={maxValues.hp} />
-      <Stat label="Speed" value={stats.spe} baseValue={pokemon?.baseStats?.spe} maxValue={maxValues.spe} />
-      <Stat label="Atk" value={stats.atk} baseValue={pokemon?.baseStats?.atk} maxValue={maxValues.atk} />
-      <Stat label="Sp.Atk" value={stats.spa} baseValue={pokemon?.baseStats?.spa} maxValue={maxValues.spa} />
-      <Stat label="Def" value={stats.def} baseValue={pokemon?.baseStats?.def} maxValue={maxValues.def} />
-      <Stat label="Sp.Def" value={stats.spd} baseValue={pokemon?.baseStats?.spd} maxValue={maxValues.spd} />
+    <div
+      className={`pokemonStatsContainer ${isStatsSelected ? "stats-selected" : ""}`}
+      onClick={handleStatsClick}
+      style={{ cursor: "pointer" }}
+    >
+      <Stat
+        label="HP"
+        value={stats.hp}
+        baseValue={pokemon?.baseStats?.hp}
+        maxValue={maxValues.hp}
+        isStatsSelected={isStatsSelected}
+      />
+      <Stat
+        label="Speed"
+        value={stats.spe}
+        baseValue={pokemon?.baseStats?.spe}
+        maxValue={maxValues.spe}
+        isStatsSelected={isStatsSelected}
+      />
+      <Stat
+        label="Atk"
+        value={stats.atk}
+        baseValue={pokemon?.baseStats?.atk}
+        maxValue={maxValues.atk}
+        isStatsSelected={isStatsSelected}
+      />
+      <Stat
+        label="Sp. Atk"
+        value={stats.spa}
+        baseValue={pokemon?.baseStats?.spa}
+        maxValue={maxValues.spa}
+        isStatsSelected={isStatsSelected}
+      />
+      <Stat
+        label="Def"
+        value={stats.def}
+        baseValue={pokemon?.baseStats?.def}
+        maxValue={maxValues.def}
+        isStatsSelected={isStatsSelected}
+      />
+      <Stat
+        label="Sp. Def"
+        value={stats.spd}
+        baseValue={pokemon?.baseStats?.spd}
+        maxValue={maxValues.spd}
+        isStatsSelected={isStatsSelected}
+      />
     </div>
   );
 };

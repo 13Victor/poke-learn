@@ -1,8 +1,8 @@
 import { BrowserRouter as AppRoutes } from "react-router-dom";
 import AuthRoutes from "./components/AuthRoutes";
-import { TeamProvider } from "./TeamContext";
-import { PokemonDataProvider } from "./PokemonDataContext";
-import "./App.css";
+import { TeamProvider } from "./contexts/TeamContext";
+import { PokemonDataProvider } from "./contexts/PokemonDataContext";
+import "./styles/App.css";
 
 function App() {
   return (

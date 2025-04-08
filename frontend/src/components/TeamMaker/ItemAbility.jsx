@@ -1,9 +1,13 @@
 import React, { memo } from "react";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 const ItemAbility = memo(
   ({ item, ability, itemSpriteNum, slotIndex, abilityType, pokemon }) => {
-    const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage } = useTeam();
+    const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage, flowStage, selectedSlot } = useTeam();
+
+    // Determine if this item or ability is currently selected based on the flow stage and selected slot
+    const isItemSelected = flowStage === FLOW_STAGES.ITEM && selectedSlot === slotIndex;
+    const isAbilitySelected = flowStage === FLOW_STAGES.ABILITY && selectedSlot === slotIndex;
 
     const handleItemClick = (e) => {
       e.stopPropagation();
@@ -58,13 +62,16 @@ const ItemAbility = memo(
               }}
             />
           ) : (
-            <i className="fa-solid fa-cube"></i>
+            <i className="fa-solid fa-cube item-sprite small-icon"></i>
           )}
-          <button className="item-button" onClick={handleItemClick}>
+          <button className={`item-button ${isItemSelected ? "selected-item" : ""}`} onClick={handleItemClick}>
             {item || "Select Item"}
           </button>
         </div>
-        <button className="ability-button" onClick={handleAbilityClick}>
+        <button
+          className={`ability-button ${isAbilitySelected ? "selected-ability" : ""}`}
+          onClick={handleAbilityClick}
+        >
           {ability || "Select Ability"}
         </button>
       </div>

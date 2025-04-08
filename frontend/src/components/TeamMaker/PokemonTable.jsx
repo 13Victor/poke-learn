@@ -1,7 +1,7 @@
 import React, { useState, useCallback, memo, useMemo, useEffect } from "react";
 import PokemonRow from "./PokemonRow";
-import { usePokemonData } from "../../PokemonDataContext";
-import { useTeam } from "../../TeamContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 const PokemonTable = memo(({ onPokemonSelect }) => {
   const { getPokemons, pokemons, pokemonsLoaded, pokemonsLoading, pokemonsError } = usePokemonData();

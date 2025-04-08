@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 
 import MoveRow from "./MoveRow";
-import { usePokemonData } from "../../PokemonDataContext";
-import { useTeam } from "../../TeamContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIndex }) => {
   const {

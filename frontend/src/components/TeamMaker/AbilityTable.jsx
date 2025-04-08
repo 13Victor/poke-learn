@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { usePokemonData } from "../../PokemonDataContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 import AbilityRow from "./AbilityRow";
 
 const AbilityTable = ({ onAbilitySelect, selectedPokemon, selectedSlot }) => {

@@ -2,7 +2,8 @@ import React, { memo } from "react";
 import TeamContainer from "./TeamContainer";
 import TableView from "./TableView";
 import LoadingIndicator from "./LoadingIndicator";
-import { usePokemonData } from "../../PokemonDataContext";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
+import "../../styles/TeamMaker.css";
 
 const TeamMaker = memo(() => {
   const { isAllDataLoaded, isLoading } = usePokemonData();
@@ -13,11 +14,7 @@ const TeamMaker = memo(() => {
     <>
       <TeamContainer />
 
-      {isLoading && !isAllDataLoaded ? (
-        <LoadingIndicator label="data" />
-      ) : (
-        <TableView />
-      )}
+      {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
     </>
   );
 });

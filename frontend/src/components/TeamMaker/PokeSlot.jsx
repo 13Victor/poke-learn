@@ -3,11 +3,10 @@ import MoveSet from "./MoveSet";
 import ItemAbility from "./ItemAbility";
 import PokeInfo from "./PokeInfo";
 import Stats from "./Stats";
-import "./TeamMaker.css";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
-import { useTeam } from "../../TeamContext";
+import { useTeam } from "../../contexts/TeamContext";
 
 // Componente para mostrar un slot del equipo
 const PokeSlot = memo(
@@ -18,17 +17,8 @@ const PokeSlot = memo(
       selectSlot(index);
     };
 
-    // Definimos un estilo condicional para el borde
-    const slotStyle = {
-      border: `2px solid ${pokemon.name ? (isSelected ? "#007bff" : "transparent") : "#a0a0a0"}`,
-    };
-
     return (
-      <div
-        className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`}
-        onClick={handleSelect}
-        style={slotStyle}
-      >
+      <div className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
         <div className="pokemonImageContainer">
           <Tippy
             content={pokemon.name || `Pokémon ${index + 1}`}

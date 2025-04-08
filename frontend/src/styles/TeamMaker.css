@@ -1,0 +1,214 @@
+/* Pokemon Team Card */
+.pokemonTeamCard {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  position: relative;
+}
+
+.selected-slot {
+  width: 100%;
+  outline: 2px solid var(--picton-blue);
+  outline-offset: -2px;
+}
+
+/* Pokemon Image Container */
+.pokemonImageContainer {
+  border-radius: var(--radius-md);
+  background-color: var(--white-smoke);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+}
+
+.pokemonImageContainer img {
+  aspect-ratio: 1/1;
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-xs);
+  object-fit: contain;
+}
+
+/* Pokemon Data Container */
+.pokemonDataContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-inline: var(--spacing-sm);
+}
+
+/* Main Info Container */
+.mainInfoContainer {
+  height: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Name and Level Container */
+.name-levelContainer {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.name-levelContainer > p {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.pokemonCurrentLevel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white-smoke);
+  padding-inline: var(--spacing-sm);
+  height: 24px;
+  border-radius: var(--radius-full);
+  gap: var(--spacing-xs);
+}
+
+.pokemonCurrentLevel strong {
+  font-weight: 500;
+}
+
+/* Pokemon Typing */
+.pokemonTypeing {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.small-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Item and Ability Container */
+.item-abilityContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.item-abilityContainer button {
+  justify-content: left;
+}
+
+.itemContainer {
+  display: flex;
+  max-height: 28px;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.item-sprite {
+  background-color: var(--white-smoke);
+  border-radius: var(--radius-full);
+}
+
+.item-button,
+.ability-button {
+  height: 28px;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: var(--radius-full);
+  padding: 0 var(--spacing-sm);
+  background-color: var(--white-smoke);
+  transition: all var(--transition-fast);
+}
+
+.item-button:hover,
+.ability-button:hover {
+  background-color: var(--picton-blue-light);
+}
+
+/* Separator Line */
+#separatorLine {
+  border-radius: var(--radius-full);
+  height: 2px;
+  border: none;
+  margin-block: var(--spacing-xs);
+  background-color: var(--white-smoke);
+}
+
+/* Move Set Container */
+.moveInputsContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.moveInput {
+  width: 100%;
+  height: 32px;
+  box-sizing: border-box;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.moveInput:hover,
+.pokemonStatsContainer:hover .statValue {
+  background-color: var(--picton-blue-light);
+}
+
+.selected-move,
+.selected-item,
+.selected-ability,
+.stats-selected .statValue {
+  background-color: var(--picton-blue);
+}
+
+.selected-move:hover,
+.selected-item:hover,
+.selected-ability:hover,
+.stats-selected:hover .statValue {
+  background-color: var(--picton-blue);
+}
+
+/* Stats Container */
+.pokemonStatsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  width: 85px;
+}
+
+/* Individual Stat Container */
+.statContainer {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background-color: var(--silver);
+  transition: transform var(--transition-fast);
+}
+
+/* Stat Label */
+.statLabel {
+  width: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Stat Value */
+.statValue {
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  background-color: var(--white-smoke);
+}
