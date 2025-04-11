@@ -2,11 +2,15 @@ import React, { useCallback, useState, useEffect, useRef } from "react";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import ItemRow from "./ItemRow";
 
+// Definir altura de filas constante para todo el componente
+const ROW_HEIGHT = 40;
+
 const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
   const { getItems, items, itemsLoaded, itemsLoading, itemsError } = usePokemonData();
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 50 });
   const tableRef = useRef(null);
+  const scrollRAF = useRef(null);
   const [processedItems, setProcessedItems] = useState([]);
   const [isProcessingItems, setIsProcessingItems] = useState(false);
 
@@ -75,41 +79,45 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
     [onItemSelect]
   );
 
-  // Optimized scroll handler
+  // Optimized scroll handler with requestAnimationFrame
   const handleScroll = useCallback(() => {
     if (!tableRef.current) return;
 
-    requestAnimationFrame(() => {
-      const { scrollTop, clientHeight, scrollHeight } = tableRef.current;
-      const rowHeight = 40;
+    // Cancel any existing RAF
+    if (scrollRAF.current) {
+      cancelAnimationFrame(scrollRAF.current);
+    }
 
-      const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 15);
-      const visibleRows = Math.ceil(clientHeight / rowHeight) + 30;
+    scrollRAF.current = requestAnimationFrame(() => {
+      const { scrollTop, clientHeight } = tableRef.current;
+
+      const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 20);
+      const visibleRows = Math.ceil(clientHeight / ROW_HEIGHT) + 40;
       const end = Math.min(filteredItems.length, start + visibleRows);
 
-      setVisibleRange({ start, end });
+      // Solo actualizamos si realmente hay un cambio
+      if (visibleRange.start !== start || visibleRange.end !== end) {
+        setVisibleRange({ start, end });
+      }
+
+      scrollRAF.current = null;
     });
-  }, [filteredItems.length]);
+  }, [filteredItems.length, visibleRange]);
 
   // Set up scroll listener
   useEffect(() => {
     const tableElement = tableRef.current;
     if (tableElement) {
-      let scrollTimeout;
-
-      const optimizedScrollHandler = () => {
-        if (!scrollTimeout) {
-          scrollTimeout = setTimeout(() => {
-            handleScroll();
-            scrollTimeout = null;
-          }, 16);
-        }
-      };
-
-      tableElement.addEventListener("scroll", optimizedScrollHandler, {
+      tableElement.addEventListener("scroll", handleScroll, {
         passive: true,
       });
-      return () => tableElement.removeEventListener("scroll", optimizedScrollHandler);
+
+      return () => {
+        tableElement.removeEventListener("scroll", handleScroll);
+        if (scrollRAF.current) {
+          cancelAnimationFrame(scrollRAF.current);
+        }
+      };
     }
   }, [handleScroll]);
 
@@ -126,7 +134,7 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
   const visibleItems = filteredItems.slice(visibleRange.start, visibleRange.end);
 
   return (
-    <div>
+    <div className="table-container item-table">
       <h2>
         Select an item for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1})
       </h2>
@@ -141,8 +149,8 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
         />
       </div>
 
-      <div ref={tableRef} className="table-container">
-        <table border="1" className="pokemon-table">
+      <div ref={tableRef} className="table-wrapper">
+        <table>
           <thead>
             <tr>
               <th>Image</th>
@@ -151,25 +159,35 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
             </tr>
           </thead>
           <tbody>
-            <tr style={{ height: `${visibleRange.start * 40}px`, padding: 0 }}>
-              <td colSpan="3" style={{ padding: 0 }}></td>
-            </tr>
+            {visibleRange.start > 0 && (
+              <tr className="spacer-row" style={{ height: `${visibleRange.start * ROW_HEIGHT}px` }}>
+                <td colSpan="3"></td>
+              </tr>
+            )}
 
             {visibleItems.length > 0 ? (
-              visibleItems.map((item) => <ItemRow key={item.key} item={item} onClick={handleRowClick} />)
+              visibleItems.map((item, index) => (
+                <ItemRow
+                  key={item.key}
+                  item={item}
+                  onClick={handleRowClick}
+                  isEven={(visibleRange.start + index) % 2 === 0}
+                />
+              ))
             ) : (
               <tr>
                 <td colSpan="3">❌ No items found</td>
               </tr>
             )}
-            <tr
-              style={{
-                height: `${(filteredItems.length - visibleRange.end) * 40}px`,
-                padding: 0,
-              }}
-            >
-              <td colSpan="3" style={{ padding: 0 }}></td>
-            </tr>
+
+            {filteredItems.length > visibleRange.end && (
+              <tr
+                className="spacer-row"
+                style={{ height: `${(filteredItems.length - visibleRange.end) * ROW_HEIGHT}px` }}
+              >
+                <td colSpan="3"></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

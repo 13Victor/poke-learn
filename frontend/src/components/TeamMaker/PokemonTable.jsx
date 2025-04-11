@@ -142,7 +142,6 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   return (
     <div className="table-container pokemon-table">
-      <h2>Pokémon List</h2>
       <div className="search-container">
         <input
           type="text"

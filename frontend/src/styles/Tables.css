@@ -4,7 +4,17 @@
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  align-items: center;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Título común para todas las tablas */
+.table-container h2 {
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+  text-align: center;
 }
 
 table {
@@ -18,36 +28,17 @@ table {
 
 tbody tr {
   border-bottom: 1px solid var(--silver);
+  height: 40px; /* Altura consistente para todas las filas */
 }
 
-/* Anchos fijos para las columnas */
-.pokemon-table th:nth-child(1),
-.pokemon-table td:nth-child(1) {
-  width: 50px;
-}
-.pokemon-table th:nth-child(2),
-.pokemon-table td:nth-child(2) {
-  width: 120px;
-}
-.pokemon-table th:nth-child(3),
-.pokemon-table td:nth-child(3) {
-  width: 60px;
-}
-.pokemon-table th:nth-child(4),
-.pokemon-table td:nth-child(4) {
-  width: 120px;
-  text-align: center;
-}
-.pokemon-table th:nth-child(5),
-.pokemon-table td:nth-child(5) {
-  width: 200px;
-}
-.pokemon-table th:nth-child(n + 6),
-.pokemon-table td:nth-child(n + 6) {
-  width: 50px;
+/* Estilos comunes para todas las tablas */
+.table-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
 }
 
-/* Estilos para filas específicas en lugar de nth-child */
+/* Filas alternadas para todas las tablas */
 tr.even-row {
   background-color: var(--white);
 }
@@ -73,46 +64,46 @@ thead {
 th {
   font-weight: 600;
   white-space: nowrap;
-  height: 35px;
+  height: 40px; /* Altura consistente para las cabeceras */
+  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
+/* Hover consistente para todas las tablas */
 tr.even-row:hover,
 tr.odd-row:hover {
   background-color: var(--picton-blue-light);
   cursor: pointer;
 }
 
-.pokemon-image {
-  width: 34.5px;
-  height: 34.5px;
-  padding-bottom: 2px;
-  aspect-ratio: 1 / 1;
-  display: block;
-  object-fit: contain;
-  margin: 0 auto;
-}
-
+/* Contenedor de tabla con scroll */
 .table-wrapper {
   overflow-y: auto;
   flex-grow: 1;
   min-height: 0;
   will-change: transform; /* Optimización de rendimiento */
+  width: 100%;
+  /* Set a default height that will be overridden by flex-grow */
+  height: 300px;
 }
 
-th:first-child,
-td:nth-child(n + 6),
-th:nth-child(n + 6) {
-  text-align: center;
-}
-
+/* Contenedor de búsqueda */
 .search-container {
   margin-bottom: var(--spacing-md);
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--silver);
 }
 
 /* Optimizaciones de scroll */
@@ -135,6 +126,82 @@ th:nth-child(n + 6) {
   }
 }
 
+/* Estilos específicos para PokemonTable */
+.pokemon-table th:nth-child(1),
+.pokemon-table td:nth-child(1) {
+  width: 6%;
+  text-align: center;
+}
+.pokemon-table th:nth-child(2),
+.pokemon-table td:nth-child(2) {
+  width: 12%;
+}
+.pokemon-table th:nth-child(3),
+.pokemon-table td:nth-child(3) {
+  width: 6%;
+  text-align: center;
+}
+.pokemon-table th:nth-child(4),
+.pokemon-table td:nth-child(4) {
+  width: 20%;
+  text-align: center;
+}
+.pokemon-table th:nth-child(5),
+.pokemon-table td:nth-child(5) {
+  width: 20%;
+  text-align: center;
+}
+.pokemon-table th:nth-child(n + 6),
+.pokemon-table td:nth-child(n + 6) {
+  width: 6%;
+  text-align: center;
+}
+
+/* Estilos específicos para ItemTable */
+.item-table th:nth-child(1),
+.item-table td:nth-child(1) {
+  width: 6%;
+  text-align: center;
+}
+.item-table th:nth-child(2),
+.item-table td:nth-child(2) {
+  width: 19%;
+}
+.item-table th:nth-child(3),
+.item-table td:nth-child(3) {
+  width: 75%;
+  text-align: left;
+}
+
+/* Imágenes y sprites */
+.pokemon-image {
+  width: 34.5px;
+  height: 34.5px;
+  padding-bottom: 2px;
+  aspect-ratio: 1 / 1;
+  display: block;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.item-sprite-container {
+  display: flex;
+  justify-content: center;
+}
+
+.item-sprite {
+  width: 24px;
+  height: 24px;
+}
+
+.item-placeholder {
+  width: 24px;
+  height: 24px;
+  background-color: var(--silver-light);
+  border-radius: var(--radius-sm);
+}
+
+/* Estilos para tipos y habilidades */
 .type-icon-container {
   display: flex;
   align-items: center;
@@ -146,7 +213,9 @@ th:nth-child(n + 6) {
   font-weight: 500;
 }
 
-.types-cell {
+.types-cell,
+.pokemon-tier-cell,
+.abilities-cell {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -161,4 +230,15 @@ th:nth-child(n + 6) {
   height: 20px;
   min-width: 20px;
   object-fit: contain;
+}
+
+.pokemon-tier,
+.ability-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--silver);
+  padding-inline: var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-weight: 400;
 }

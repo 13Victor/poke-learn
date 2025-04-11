@@ -21,18 +21,34 @@ const PokemonRow = memo(
           />
         </td>
         <td>{pokemon.name}</td>
-        <td>{pokemon.tier}</td>
+        <td>
+          <div className="pokemon-tier-cell">
+            <p className="pokemon-tier">{pokemon.tier}</p>
+          </div>
+        </td>
         <td>
           <div className="types-cell">
             {pokemon.types.map((type, index) => (
-              <span className="type-icon-container" style={{ backgroundColor: `var(--type-${type.toLowerCase()})` }}>
+              <span
+                className="type-icon-container"
+                key={type}
+                style={{ backgroundColor: `var(--type-${type.toLowerCase()})` }}
+              >
                 <img className="type-icon" src={`/assets/type-icons/${type}.svg`} alt={type} />
                 <span className="type-name">{type}</span>
               </span>
             ))}
           </div>
         </td>
-        <td>{pokemon.abilitiesString || pokemon.abilities.join(", ")}</td>
+        <td>
+          <div className="abilities-cell">
+            {pokemon.abilities.map((ability, index) => (
+              <span className="ability-name" key={ability}>
+                {ability}
+              </span>
+            ))}
+          </div>
+        </td>
         <td>{pokemon.baseStats.hp}</td>
         <td>{pokemon.baseStats.atk}</td>
         <td>{pokemon.baseStats.def}</td>

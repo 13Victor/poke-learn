@@ -11,11 +11,15 @@ const TeamMaker = memo(() => {
   console.log("🔴 TeamMaker component rendered");
 
   return (
-    <>
-      <TeamContainer />
+    <div className="teammaker-container">
+      <div className="team-section">
+        <TeamContainer />
+      </div>
 
-      {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
-    </>
+      <div className="table-section">
+        {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
+      </div>
+    </div>
   );
 });
 

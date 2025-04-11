@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 
-const ItemRow = memo(({ item, onClick }) => {
+const ItemRow = memo(({ item, onClick, isEven }) => {
   // Cálculo de la posición en el sprite sheet
   const getSpritePosition = (spritenum) => {
     // Asumiendo que la cuadrícula es de X ítems por fila (necesitamos saber este valor)
@@ -16,7 +16,7 @@ const ItemRow = memo(({ item, onClick }) => {
   };
 
   return (
-    <tr onClick={() => onClick(item)}>
+    <tr onClick={() => onClick(item)} className={isEven ? "even-row" : "odd-row"}>
       <td>
         <div className="item-sprite-container">
           {item.spritenum !== undefined ? (
