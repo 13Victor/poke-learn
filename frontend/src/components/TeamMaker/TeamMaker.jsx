@@ -4,6 +4,7 @@ import TableView from "./TableView";
 import LoadingIndicator from "./LoadingIndicator";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/TeamMaker.css";
+import SaveTeamButton from "./SaveTeamButton";
 
 const TeamMaker = memo(() => {
   const { isAllDataLoaded, isLoading } = usePokemonData();
@@ -14,6 +15,7 @@ const TeamMaker = memo(() => {
     <div className="teammaker-container">
       <div className="team-section">
         <TeamContainer />
+        <SaveTeamButton />
       </div>
 
       <div className="table-section">

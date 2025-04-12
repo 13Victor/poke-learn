@@ -5,6 +5,7 @@ import User from "./User";
 import AdminPanel from "./AdminPanel";
 import TeamBuilder from "./TeamBuilder";
 import TeamMaker from "./TeamMaker/TeamMaker";
+import Teams from "./Teams/Teams";
 
 function AuthRoutes() {
   const RootRedirect = () => {
@@ -85,6 +86,14 @@ function AuthRoutes() {
         element={
           <PrivateRoute>
             <TeamMaker />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/teams"
+        element={
+          <PrivateRoute>
+            <Teams />
           </PrivateRoute>
         }
       />

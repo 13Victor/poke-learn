@@ -2,135 +2,93 @@ DROP DATABASE IF EXISTS pokelearn;
 CREATE DATABASE pokelearn;
 USE pokelearn;
 
+-- Tabla de usuarios
 CREATE TABLE `user` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_name` VARCHAR(255) NOT NULL UNIQUE,
     `email` VARCHAR(255) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
+    `profile_picture` VARCHAR(255) DEFAULT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `profile_picture` VARCHAR(255),
     `last_login` DATETIME
 );
 
+-- Tabla de equipos
 CREATE TABLE `team` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `user_id` INT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 
-CREATE TABLE `pokemon` (
+-- Tabla principal de Pokémon en equipos
+CREATE TABLE `team_pokemon` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `num_pokedex` INT UNSIGNED NOT NULL,
-    `name` VARCHAR(255) NOT NULL,
-    `nameId` VARCHAR(255) NOT NULL,
-    `height` DECIMAL(10,1) NOT NULL,
-    `weight` DECIMAL(10,1) NOT NULL,
-    `sprite_small_url` VARCHAR(255) NULL,
-    `sprite_default_url` VARCHAR(255) NULL,
-    `sprite_gif_url` VARCHAR(255) NULL,
-    `audio` VARCHAR(255) NULL,
-    `base_hp` TINYINT UNSIGNED NOT NULL,
-    `base_atk` TINYINT UNSIGNED NOT NULL,
-    `base_def` TINYINT UNSIGNED NOT NULL,
-    `base_spatk` TINYINT UNSIGNED NOT NULL,
-    `base_spdef` TINYINT UNSIGNED NOT NULL,
-    `base_speed` TINYINT UNSIGNED NOT NULL
-);
-
-CREATE TABLE `type` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL UNIQUE
-);
-
-CREATE TABLE `pokemonType` (
-    `pokemon_id` INT UNSIGNED NOT NULL,
-    `type_id` INT UNSIGNED NOT NULL,
-    `order` TINYINT UNSIGNED NOT NULL CHECK (`order` IN (1, 2)),
-    PRIMARY KEY (`pokemon_id`, `order`),
-    UNIQUE (`pokemon_id`, `type_id`),
-    FOREIGN KEY (`pokemon_id`) REFERENCES `pokemon`(`id`),
-    FOREIGN KEY (`type_id`) REFERENCES `type`(`id`)
-);
-
-CREATE TABLE `ability` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL UNIQUE,
-    `nameId` VARCHAR(255) NOT NULL UNIQUE,
-    `description` TEXT NOT NULL
-);
-
-CREATE TABLE `pokemonAbility` (
-    `pokemon_id` INT UNSIGNED NOT NULL,
-    `ability_id` INT UNSIGNED NOT NULL,
-    `is_hidden` BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY (`pokemon_id`, `ability_id`),
-    FOREIGN KEY (`pokemon_id`) REFERENCES `pokemon`(`id`),
-    FOREIGN KEY (`ability_id`) REFERENCES `ability`(`id`)
-);
-
-CREATE TABLE `move` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL UNIQUE,
-    `nameId` VARCHAR(255) NOT NULL UNIQUE,
-    `type_id` INT UNSIGNED NOT NULL,
-    `power` INT,
-    `accuracy` INT,
-    `pp` TINYINT UNSIGNED NOT NULL,
-    `category` VARCHAR(255) NOT NULL,
-    `description` TEXT NOT NULL,
-    `short_description` TEXT NOT NULL,
-    `target` VARCHAR(255) NOT NULL,
-    `priority` INT NOT NULL,
-    FOREIGN KEY (`type_id`) REFERENCES `type`(`id`)
-);
-
-CREATE TABLE `pokemonMove` (
-    `pokemon_id` INT UNSIGNED NOT NULL,
-    `move_id` INT UNSIGNED NOT NULL,
-    PRIMARY KEY (`pokemon_id`, `move_id`),
-    FOREIGN KEY (`pokemon_id`) REFERENCES `pokemon`(`id`),
-    FOREIGN KEY (`move_id`) REFERENCES `move`(`id`)
-);
-
-CREATE TABLE `item` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL UNIQUE,
-    `description` TEXT NOT NULL,
-    `sprite_num` INT UNSIGNED NOT NULL
-);
-
-CREATE TABLE `teamPokemon` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `pokemon_id` INT UNSIGNED NOT NULL,
     `team_id` INT UNSIGNED NOT NULL,
+    `pokemon_name` VARCHAR(255) NOT NULL,
+    `pokemon_id` VARCHAR(255) NOT NULL,
+    `image` VARCHAR(255) NOT NULL,
     `level` TINYINT UNSIGNED NOT NULL DEFAULT 100,
-    `ability_id` INT UNSIGNED NOT NULL,
-    `item_id` INT UNSIGNED,
-    `ev_hp` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `ev_atk` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `ev_def` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `ev_spatk` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `ev_spdef` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `ev_speed` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    `iv_hp` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    `iv_atk` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    `iv_def` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    `iv_spatk` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    `iv_spdef` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    `iv_speed` TINYINT UNSIGNED NOT NULL DEFAULT 31,
-    FOREIGN KEY (`pokemon_id`) REFERENCES `pokemon`(`id`),
-    FOREIGN KEY (`team_id`) REFERENCES `team`(`id`),
-    FOREIGN KEY (`ability_id`) REFERENCES `ability`(`id`),
-    FOREIGN KEY (`item_id`) REFERENCES `item`(`id`)
+    `nature` VARCHAR(50) NOT NULL DEFAULT 'Hardy',
+    `slot` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    FOREIGN KEY (`team_id`) REFERENCES `team`(`id`) ON DELETE CASCADE
 );
 
-CREATE TABLE `type_effectiveness` (
-    `attacker_type_id` INT UNSIGNED NOT NULL,
-    `defender_type_id` INT UNSIGNED NOT NULL,
-    `multiplier` DECIMAL(3,1) NOT NULL,
-    PRIMARY KEY (`attacker_type_id`, `defender_type_id`),
-    FOREIGN KEY (`attacker_type_id`) REFERENCES `type`(`id`),
-    FOREIGN KEY (`defender_type_id`) REFERENCES `type`(`id`)
+-- Tabla de EVs (Effort Values)
+CREATE TABLE `pokemon_evs` (
+    `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+    `hp` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `atk` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `def` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `spatk` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `spdef` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `speed` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
+
+-- Tabla de IVs (Individual Values)
+CREATE TABLE `pokemon_ivs` (
+    `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+    `hp` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    `atk` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    `def` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    `spatk` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    `spdef` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    `speed` TINYINT UNSIGNED NOT NULL DEFAULT 31,
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
+);
+
+-- Opcionalmente, tabla para estadísticas calculadas
+CREATE TABLE `pokemon_stats` (
+    `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+    `hp` SMALLINT UNSIGNED NOT NULL,
+    `atk` SMALLINT UNSIGNED NOT NULL,
+    `def` SMALLINT UNSIGNED NOT NULL,
+    `spatk` SMALLINT UNSIGNED NOT NULL,
+    `spdef` SMALLINT UNSIGNED NOT NULL,
+    `speed` SMALLINT UNSIGNED NOT NULL,
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
+);
+
+-- Tabla para movimientos de los pokemon
+CREATE TABLE `pokemon_moves` (
+    `team_pokemon_id` INT UNSIGNED NOT NULL,
+    `move_slot` TINYINT UNSIGNED NOT NULL CHECK (`move_slot` BETWEEN 1 AND 4),
+    `move_name` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`team_pokemon_id`, `move_slot`),
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
+);
+
+-- Tabla para items y abilities
+CREATE TABLE `pokemon_build` (
+    `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+    `item` VARCHAR(255),
+    `ability` VARCHAR(255) NOT NULL,
+    `ability_type` VARCHAR(10) NOT NULL,
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
+);
+
+-- Índices para mejorar el rendimiento
+CREATE INDEX `idx_team_user_id` ON `team` (`user_id`);
+CREATE INDEX `idx_team_pokemon_team_id` ON `team_pokemon` (`team_id`);

@@ -8,24 +8,24 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const adminRoutes = require("./routes/admin");
 const dataRoutes = require("./routes/data");
+const teamRoutes = require("./routes/teams");
 
 dotenv.config(); // Cargar variables de entorno
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/data", dataRoutes);
+app.use("/teams", teamRoutes);
 
 // Servir archivos estáticos desde la carpeta de imágenes
-app.use(
-  "/uploads/profile_pictures",
-  express.static(path.join(__dirname, "public/profile_pictures"))
-);
+app.use("/uploads/profile_pictures", express.static(path.join(__dirname, "public/profile_pictures")));
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 5000;

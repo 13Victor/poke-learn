@@ -17,6 +17,8 @@ const PokeSlot = memo(
       selectSlot(index);
     };
 
+    console.log(pokemon);
+
     return (
       <div className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
         <div className="pokemonImageContainer">
