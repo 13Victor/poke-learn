@@ -55,16 +55,30 @@ function teamReducer(state, action) {
       const { slotIndex, pokemon } = action.payload;
       const newPokemons = [...state.pokemons];
 
-      // Aquí está el cambio principal: Reemplazar completamente los datos
-      // del Pokémon anterior, manteniendo solo el nivel predeterminado
+      // Calcular stats iniciales
+      const level = 100;
+      const baseStats = pokemon.baseStats || {};
+      const initialStats = {
+        hp: Math.floor(((2 * baseStats.hp + 31) * level) / 100) + level + 10,
+        atk: Math.floor(((2 * baseStats.atk + 31) * level) / 100) + 5,
+        def: Math.floor(((2 * baseStats.def + 31) * level) / 100) + 5,
+        spa: Math.floor(((2 * baseStats.spa + 31) * level) / 100) + 5,
+        spd: Math.floor(((2 * baseStats.spd + 31) * level) / 100) + 5,
+        spe: Math.floor(((2 * baseStats.spe + 31) * level) / 100) + 5,
+      };
+
       newPokemons[slotIndex] = {
         ...pokemon,
-        level: 100, // Mantenemos el nivel por defecto
-        moveset: ["", "", "", ""], // Reset de movimientos
-        item: "", // Reset de item
-        itemSpriteNum: null, // Reset de sprite de item
-        ability: "", // Reset de habilidad
-        abilityType: "", // Reset de tipo de habilidad
+        level: 100,
+        moveset: ["", "", "", ""],
+        item: "",
+        itemSpriteNum: null,
+        ability: "",
+        abilityType: "",
+        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+        ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+        nature: "Hardy",
+        stats: initialStats,
       };
 
       return {

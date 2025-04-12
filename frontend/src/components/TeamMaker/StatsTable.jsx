@@ -44,9 +44,9 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
   const [baseStats, setBaseStats] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   const [initialized, setInitialized] = useState(false);
 
-  // Obtener los datos completos del Pokémon seleccionado
+  // Load initial values and baseStats when Pokemon changes
   useEffect(() => {
-    const fetchPokemonData = async () => {
+    const loadPokemonData = async () => {
       if (selectedPokemon?.name) {
         try {
           const allPokemonData = await getPokemons();
@@ -54,6 +54,12 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
 
           if (fullPokemonData?.baseStats) {
             setBaseStats(fullPokemonData.baseStats);
+
+            // Initialize stats from Pokemon or use defaults
+            setEvs(selectedPokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+            setIvs(selectedPokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
+            setNature(selectedPokemon.nature || "Hardy");
+            setInitialized(true);
           }
         } catch (error) {
           console.error("Error al obtener datos del Pokémon:", error);
@@ -61,19 +67,8 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
       }
     };
 
-    fetchPokemonData();
+    loadPokemonData();
   }, [selectedPokemon?.name, getPokemons]);
-
-  // Load initial values from selected Pokémon
-  useEffect(() => {
-    if (selectedPokemon && selectedPokemon.name) {
-      // Initialize EVs, IVs, and nature from Pokémon data or default values
-      setEvs(selectedPokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
-      setIvs(selectedPokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
-      setNature(selectedPokemon.nature || "Hardy");
-      setInitialized(true);
-    }
-  }, [selectedPokemon]);
 
   // Calculate total EVs
   useEffect(() => {
@@ -81,13 +76,12 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     setTotalEvs(total);
   }, [evs]);
 
-  // Calculate final stats based on base stats, IVs, EVs, and nature
+  // Calculate stats function
   const calculateStats = useCallback(() => {
-    if (!selectedPokemon?.name || !baseStats.hp) return {};
+    if (!initialized || !baseStats.hp) return {};
 
-    const level = selectedPokemon.level || 100;
+    const level = selectedPokemon?.level || 100;
     const natureObj = NATURES.find((n) => n.name === nature);
-
     const stats = {};
 
     // Calculate HP
@@ -97,7 +91,6 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     for (const stat of ["atk", "def", "spa", "spd", "spe"]) {
       let value = Math.floor(((2 * baseStats[stat] + ivs[stat] + Math.floor(evs[stat] / 4)) * level) / 100) + 5;
 
-      // Apply nature modifiers
       if (natureObj.plus === stat) {
         value = Math.floor(value * 1.1);
       } else if (natureObj.minus === stat) {
@@ -108,15 +101,21 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     }
 
     return stats;
-  }, [baseStats, ivs, evs, nature, selectedPokemon]);
+  }, [baseStats, ivs, evs, nature, initialized, selectedPokemon?.level]);
 
-  // Calculate and update local state only when dependencies change
+  // Update local state when values change
   useEffect(() => {
-    if (baseStats.hp > 0 && initialized) {
-      const stats = calculateStats();
-      setCalculatedStats(stats);
+    if (initialized && baseStats.hp > 0) {
+      setCalculatedStats(calculateStats());
     }
-  }, [baseStats, ivs, evs, nature, calculateStats, initialized]);
+  }, [initialized, baseStats, ivs, evs, nature, calculateStats]);
+
+  // Handle save and continue
+  const handleSaveAndContinue = () => {
+    const stats = calculateStats();
+    updatePokemonStats(selectedSlot, stats, evs, ivs, nature);
+    advanceFromStats();
+  };
 
   // Handle EV changes with validation
   const handleEvChange = (stat, value) => {
@@ -159,18 +158,6 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
   // Set IVs to max (31)
   const maxIvs = () => {
     setIvs({ hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
-  };
-
-  // Handle save and continue - This is the ONLY place where we update the global context
-  const handleSave = () => {
-    // Calcular estadísticas finales
-    const stats = calculateStats();
-
-    // Actualizar el contexto con los valores finales
-    updatePokemonStats(selectedSlot, stats, evs, ivs, nature);
-
-    // Avanzar al siguiente paso
-    advanceFromStats();
   };
 
   // Get stat label for display
@@ -233,7 +220,7 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
         <div className="actionButtons">
           <button onClick={resetEvs}>Reiniciar EVs</button>
           <button onClick={maxIvs}>Maximizar IVs</button>
-          <button className="saveButton" onClick={handleSave}>
+          <button onClick={handleSaveAndContinue} className="saveButton">
             Guardar y continuar
           </button>
         </div>

@@ -26,12 +26,12 @@ CREATE TABLE `team` (
 CREATE TABLE `team_pokemon` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `team_id` INT UNSIGNED NOT NULL,
-    `pokemon_name` VARCHAR(255) NOT NULL,
-    `pokemon_id` VARCHAR(255) NOT NULL,
-    `image` VARCHAR(255) NOT NULL,
-    `level` TINYINT UNSIGNED NOT NULL DEFAULT 100,
-    `nature` VARCHAR(50) NOT NULL DEFAULT 'Hardy',
-    `slot` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `pokemon_name` VARCHAR(255),
+    `pokemon_id` VARCHAR(255),
+    `image` VARCHAR(255) DEFAULT NULL,
+    `level` TINYINT UNSIGNED DEFAULT 100,
+    `nature` VARCHAR(50) DEFAULT 'Hardy',
+    `slot` TINYINT UNSIGNED NOT NULL,
     FOREIGN KEY (`team_id`) REFERENCES `team`(`id`) ON DELETE CASCADE
 );
 
@@ -59,23 +59,24 @@ CREATE TABLE `pokemon_ivs` (
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
 
--- Opcionalmente, tabla para estadísticas calculadas
+-- Tabla para estadísticas calculadas (Modificada)
 CREATE TABLE `pokemon_stats` (
-    `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
-    `hp` SMALLINT UNSIGNED NOT NULL,
-    `atk` SMALLINT UNSIGNED NOT NULL,
-    `def` SMALLINT UNSIGNED NOT NULL,
-    `spatk` SMALLINT UNSIGNED NOT NULL,
-    `spdef` SMALLINT UNSIGNED NOT NULL,
-    `speed` SMALLINT UNSIGNED NOT NULL,
-    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
+    `team_pokemon_id` INT UNSIGNED NOT NULL,
+    `hp` SMALLINT UNSIGNED DEFAULT 0,
+    `atk` SMALLINT UNSIGNED DEFAULT 0,
+    `def` SMALLINT UNSIGNED DEFAULT 0,
+    `spatk` SMALLINT UNSIGNED DEFAULT 0,
+    `spdef` SMALLINT UNSIGNED DEFAULT 0,
+    `speed` SMALLINT UNSIGNED DEFAULT 0,
+    PRIMARY KEY (`team_pokemon_id`),
+    FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Tabla para movimientos de los pokemon
 CREATE TABLE `pokemon_moves` (
     `team_pokemon_id` INT UNSIGNED NOT NULL,
     `move_slot` TINYINT UNSIGNED NOT NULL CHECK (`move_slot` BETWEEN 1 AND 4),
-    `move_name` VARCHAR(255) NOT NULL,
+    `move_name` VARCHAR(255),
     PRIMARY KEY (`team_pokemon_id`, `move_slot`),
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
@@ -83,9 +84,9 @@ CREATE TABLE `pokemon_moves` (
 -- Tabla para items y abilities
 CREATE TABLE `pokemon_build` (
     `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
-    `item` VARCHAR(255),
-    `ability` VARCHAR(255) NOT NULL,
-    `ability_type` VARCHAR(10) NOT NULL,
+    `item` VARCHAR(255) DEFAULT NULL,
+    `ability` VARCHAR(255) DEFAULT NULL,
+    `ability_type` VARCHAR(10) DEFAULT NULL,
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
 

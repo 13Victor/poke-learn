@@ -29,19 +29,34 @@ const SaveTeamButton = () => {
         },
         body: JSON.stringify({
           name: teamName,
-          pokemon: pokemons.map((pokemon) => ({
+          pokemon: pokemons.map((pokemon, index) => ({
             pokemon_name: pokemon.name,
             pokemon_id: pokemon.id,
             level: pokemon.level,
             image: pokemon.image,
             nature: pokemon.nature,
-            evs: pokemon.evs,
-            ivs: pokemon.ivs,
-            stats: pokemon.stats,
+            evs: {
+              hp: pokemon.evs?.hp || 0,
+              atk: pokemon.evs?.atk || 0,
+              def: pokemon.evs?.def || 0,
+              spa: pokemon.evs?.spa || 0, // Nota: en la BD es spatk
+              spd: pokemon.evs?.spd || 0, // Nota: en la BD es spdef
+              spe: pokemon.evs?.spe || 0, // Nota: en la BD es speed
+            },
+            ivs: {
+              hp: pokemon.ivs?.hp || 31,
+              atk: pokemon.ivs?.atk || 31,
+              def: pokemon.ivs?.def || 31,
+              spa: pokemon.ivs?.spa || 31,
+              spd: pokemon.ivs?.spd || 31,
+              spe: pokemon.ivs?.spe || 31,
+            },
+            stats: pokemon.stats || {},
             ability: pokemon.ability,
             abilityType: pokemon.abilityType,
             item: pokemon.item,
             moves: pokemon.moveset,
+            slot: index + 1,
           })),
         }),
       });

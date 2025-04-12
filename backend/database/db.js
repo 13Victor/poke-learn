@@ -133,43 +133,74 @@ async function createTeam(userId, name, pokemon) {
   try {
     await conn.beginTransaction();
 
+    // Crear el equipo
     const [teamResult] = await conn.query("INSERT INTO team (name, user_id) VALUES (?, ?)", [name, userId]);
     const teamId = teamResult.insertId;
 
+    // Insertar cada pokemon
     for (let i = 0; i < pokemon.length; i++) {
       const p = pokemon[i];
+
+      // Insertar pokemon base
       const [pokemonResult] = await conn.query(
         `INSERT INTO team_pokemon (team_id, pokemon_name, pokemon_id, image, level, nature, slot) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [teamId, p.pokemon_name, p.pokemon_id, p.image, p.level || 100, p.nature || "Hardy", i + 1]
+        [teamId, p.pokemon_name, p.pokemon_id, p.image, p.level || 100, p.nature || "Hardy", p.slot]
       );
       const pokemonId = pokemonResult.insertId;
 
-      // Insert additional data
+      // Insertar EVs - ajustar nombres de campos
       if (p.evs) {
         await conn.query(
           `INSERT INTO pokemon_evs (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [pokemonId, p.evs.hp, p.evs.atk, p.evs.def, p.evs.spa, p.evs.spd, p.evs.spe]
+          [
+            pokemonId,
+            p.evs.hp || 0,
+            p.evs.atk || 0,
+            p.evs.def || 0,
+            p.evs.spa || 0, // spa -> spatk
+            p.evs.spd || 0, // spd -> spdef
+            p.evs.spe || 0, // spe -> speed
+          ]
         );
       }
 
+      // Insertar IVs - ajustar nombres de campos
       if (p.ivs) {
         await conn.query(
           `INSERT INTO pokemon_ivs (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [pokemonId, p.ivs.hp, p.ivs.atk, p.ivs.def, p.ivs.spa, p.ivs.spd, p.ivs.spe]
+          [
+            pokemonId,
+            p.ivs.hp || 31,
+            p.ivs.atk || 31,
+            p.ivs.def || 31,
+            p.ivs.spa || 31, // spa -> spatk
+            p.ivs.spd || 31, // spd -> spdef
+            p.ivs.spe || 31, // spe -> speed
+          ]
         );
       }
 
+      // Insertar stats calculadas - ajustar nombres de campos
       if (p.stats) {
         await conn.query(
           `INSERT INTO pokemon_stats (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [pokemonId, p.stats.hp, p.stats.atk, p.stats.def, p.stats.spa, p.stats.spd, p.stats.spe]
+          [
+            pokemonId,
+            p.stats.hp || 0,
+            p.stats.atk || 0,
+            p.stats.def || 0,
+            p.stats.spa || 0, // spa -> spatk
+            p.stats.spd || 0, // spd -> spdef
+            p.stats.spe || 0, // spe -> speed
+          ]
         );
       }
 
+      // ...existing code for moves and build...
       if (p.moves) {
         const moveValues = p.moves.map((move, idx) => [pokemonId, idx + 1, move]);
         await conn.query(`INSERT INTO pokemon_moves (team_pokemon_id, move_slot, move_name) VALUES ?`, [moveValues]);

@@ -8,42 +8,31 @@ const Stats = ({ pokemon, index }) => {
   // Determinar si los stats están seleccionados actualmente
   const isStatsSelected = flowStage === FLOW_STAGES.STATS && selectedSlot === index && viewMode === "stats";
 
-  // Get stats from pokemon - use calculated stats if available, otherwise baseStats
-  const stats = pokemon?.stats
-    ? pokemon.stats
-    : pokemon?.baseStats
-    ? {
-        hp: calculateHP(pokemon.baseStats.hp, pokemon.level || 100),
-        atk: calculateStat(pokemon.baseStats.atk, pokemon.level || 100),
-        def: calculateStat(pokemon.baseStats.def, pokemon.level || 100),
-        spa: calculateStat(pokemon.baseStats.spa, pokemon.level || 100),
-        spd: calculateStat(pokemon.baseStats.spd, pokemon.level || 100),
-        spe: calculateStat(pokemon.baseStats.spe, pokemon.level || 100),
-      }
-    : {
-        hp: 0,
-        atk: 0,
-        def: 0,
-        spa: 0,
-        spd: 0,
-        spe: 0,
-      };
+  // Calculamos las stats base si no hay stats guardadas
+  const calculateBaseStats = () => {
+    if (!pokemon?.baseStats) return null;
 
-  // Simple function to calculate HP stat from base stat and level
-  function calculateHP(baseStat, level) {
-    if (!baseStat) return 0;
-    // Formula for HP: ((2 * Base + 31 + (0/4)) * Level / 100) + Level + 10
-    // Assuming 31 IVs, 0 EVs, neutral nature for simplicity
-    return Math.floor(((2 * baseStat + 31) * level) / 100) + level + 10;
-  }
+    const level = pokemon.level || 100;
+    return {
+      hp: Math.floor(((2 * pokemon.baseStats.hp + 31) * level) / 100) + level + 10,
+      atk: Math.floor(((2 * pokemon.baseStats.atk + 31) * level) / 100) + 5,
+      def: Math.floor(((2 * pokemon.baseStats.def + 31) * level) / 100) + 5,
+      spa: Math.floor(((2 * pokemon.baseStats.spa + 31) * level) / 100) + 5,
+      spd: Math.floor(((2 * pokemon.baseStats.spd + 31) * level) / 100) + 5,
+      spe: Math.floor(((2 * pokemon.baseStats.spe + 31) * level) / 100) + 5,
+    };
+  };
 
-  // Simple function to calculate other stats from base stat and level
-  function calculateStat(baseStat, level) {
-    if (!baseStat) return 0;
-    // Formula for other stats: ((2 * Base + 31 + (0/4)) * Level / 100) + 5
-    // Assuming 31 IVs, 0 EVs, neutral nature for simplicity
-    return Math.floor(((2 * baseStat + 31) * level) / 100) + 5;
-  }
+  // Get stats from pokemon - use calculated stats if available, otherwise calculate base stats
+  const stats = pokemon?.stats ||
+    calculateBaseStats() || {
+      hp: 0,
+      atk: 0,
+      def: 0,
+      spa: 0,
+      spd: 0,
+      spe: 0,
+    };
 
   const handleStatsClick = (e) => {
     // Prevent event propagation
