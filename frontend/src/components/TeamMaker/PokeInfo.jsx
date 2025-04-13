@@ -21,11 +21,7 @@ const PokeInfo = ({ name, level, types, index }) => {
             delay={[300, 100]}
             placement="top"
           >
-            <img
-              className="small-icon"
-              src={`/assets/type-icons/${type}.svg`}
-              alt={type}
-            />
+            <img className="small-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
           </Tippy>
         ))}
       </span>

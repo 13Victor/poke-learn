@@ -29,14 +29,7 @@ const PokemonRow = memo(
         <td>
           <div className="types-cell">
             {pokemon.types.map((type, index) => (
-              <span
-                className="type-icon-container"
-                key={type}
-                style={{ backgroundColor: `var(--type-${type.toLowerCase()})` }}
-              >
-                <img className="type-icon" src={`/assets/type-icons/${type}.svg`} alt={type} />
-                <span className="type-name">{type}</span>
-              </span>
+              <img className="type-icon" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
             ))}
           </div>
         </td>

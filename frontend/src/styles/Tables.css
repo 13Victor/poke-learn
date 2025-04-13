@@ -201,18 +201,6 @@ tr.odd-row:hover {
   border-radius: var(--radius-sm);
 }
 
-/* Estilos para tipos y habilidades */
-.type-icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  gap: var(--spacing-xs);
-  color: var(--white);
-  padding-inline: var(--spacing-xs) var(--spacing-md);
-  font-weight: 500;
-}
-
 .types-cell,
 .pokemon-tier-cell,
 .abilities-cell {
@@ -226,9 +214,7 @@ tr.odd-row:hover {
 }
 
 .type-icon {
-  width: 20px;
   height: 20px;
-  min-width: 20px;
   object-fit: contain;
 }
 
@@ -241,4 +227,5 @@ tr.odd-row:hover {
   padding-inline: var(--spacing-md);
   border-radius: var(--radius-full);
   font-weight: 400;
+  min-height: 20px;
 }
