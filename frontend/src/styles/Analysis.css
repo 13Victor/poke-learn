@@ -56,11 +56,11 @@
 
 /* Solo dos colores: azul para bueno (resistencias/cobertura) y rojo para malo (debilidades) */
 .tally__mark_good {
-  background-color: #4169e1; /* Azul */
+  background-color: #6ab2db;
 }
 
 .tally__mark_bad {
-  background-color: #dc143c; /* Rojo */
+  background-color: #db6a6a;
 }
 
 .tally__mark:hover {

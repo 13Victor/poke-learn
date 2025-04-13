@@ -14,8 +14,10 @@
   --black: #000000ff;
 
   /* Primary palette */
-  --picton-blue: #00a6fbff;
   --picton-blue-light: #ccedfeff;
+  --picton-blue-normal: rgb(120, 210, 255);
+  --blue-gray: #6ab2dbff;
+  --picton-blue: #00a6fbff;
   --steel-blue: #0582caff;
   --lapis-lazuli: #006494ff;
   --prussian-blue: #003554ff;

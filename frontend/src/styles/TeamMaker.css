@@ -192,14 +192,14 @@
 .selected-item,
 .selected-ability,
 .stats-selected .statValue {
-  background-color: var(--picton-blue);
+  background-color: var(--picton-blue-normal);
 }
 
 .selected-move:hover,
 .selected-item:hover,
 .selected-ability:hover,
 .stats-selected:hover .statValue {
-  background-color: var(--picton-blue);
+  background-color: var(--picton-blue-light);
 }
 
 /* Stats Container */
