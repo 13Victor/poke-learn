@@ -276,7 +276,7 @@
     "ghost": 2,
     "dragon": 1,
     "dark": 0.5,
-    "steel": 0.5,
+    "steel": 1,
     "fairy": 1
   },
   "dragon": {
@@ -316,7 +316,7 @@
     "ghost": 2,
     "dragon": 1,
     "dark": 0.5,
-    "steel": 0.5,
+    "steel": 1,
     "fairy": 0.5
   },
   "steel": {

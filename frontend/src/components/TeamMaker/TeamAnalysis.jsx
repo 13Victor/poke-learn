@@ -25,30 +25,43 @@ const TYPE_ORDER = [
   "fairy",
 ];
 
-const TypeTally = ({ type, defensiveMarks, coverageMarks }) => (
-  <div className={`tally tally_${type}`}>
-    <span className="tally__type-symbol">{type}</span>
-    <div className="tally__group">
-      {/* Defense marks */}
-      <ul className="tally__marks">
-        {Array.from({ length: MAX_MARKS }).map((_, i) => {
-          const mark = defensiveMarks[i];
-          return mark ? (
-            <li key={i} className={`tally__mark ${mark === "resistant" ? "tally__mark_good" : "tally__mark_bad"}`}></li>
-          ) : (
-            <li key={i} className="tally__mark"></li>
-          );
-        })}
-      </ul>
-      {/* Coverage marks */}
-      <ul className="tally__marks">
-        {Array.from({ length: MAX_MARKS }).map((_, i) => (
-          <li key={i} className={`tally__mark ${coverageMarks[i] ? "tally__mark_good" : ""}`}></li>
-        ))}
-      </ul>
+const TypeTally = ({ type, defensiveMarks, coverageMarks }) => {
+  // Ordenar las marcas defensivas: primero resistencias (azul), luego debilidades (rojo)
+  const sortedDefensiveMarks = [
+    ...defensiveMarks.filter((mark) => mark === "resistant"),
+    ...defensiveMarks.filter((mark) => mark === "weak"),
+  ];
+
+  // Filtrar y compactar las marcas de cobertura (eliminar huecos)
+  const compactCoverageMarks = coverageMarks.filter(Boolean);
+
+  return (
+    <div className={`tally tally_${type}`}>
+      <span className="tally__type-symbol">{type}</span>
+      <div className="tally__group">
+        <ul className="tally__marks">
+          {Array.from({ length: MAX_MARKS }).map((_, i) => (
+            <li
+              key={i}
+              className={`tally__mark ${
+                sortedDefensiveMarks[i] === "resistant"
+                  ? "tally__mark_good"
+                  : sortedDefensiveMarks[i] === "weak"
+                  ? "tally__mark_bad"
+                  : ""
+              }`}
+            />
+          ))}
+        </ul>
+        <ul className="tally__marks">
+          {Array.from({ length: MAX_MARKS }).map((_, i) => (
+            <li key={i} className={`tally__mark ${i < compactCoverageMarks.length ? "tally__mark_good" : ""}`} />
+          ))}
+        </ul>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TeamAnalysis = () => {
   const { pokemons } = useTeam();
@@ -56,16 +69,16 @@ const TeamAnalysis = () => {
 
   const analysis = useMemo(() => {
     const defenseMarks = TYPE_ORDER.reduce((acc, type) => {
-      acc[type] = Array(6).fill(null);
+      acc[type] = [];
       return acc;
     }, {});
 
     const coverageMarks = TYPE_ORDER.reduce((acc, type) => {
-      acc[type] = Array(6).fill(false);
+      acc[type] = [];
       return acc;
     }, {});
 
-    pokemons.forEach((pokemon, pokemonIndex) => {
+    pokemons.forEach((pokemon) => {
       if (!pokemon.name || !pokemon.types) return;
 
       // Análisis defensivo
@@ -75,25 +88,31 @@ const TeamAnalysis = () => {
           totalEffectiveness *= types[attackingType][defenderType.toLowerCase()];
         });
 
-        // Solo marcamos si hay resistencia o debilidad, dejamos null para neutral
         if (totalEffectiveness < 1) {
-          defenseMarks[attackingType][pokemonIndex] = "resistant";
+          defenseMarks[attackingType].push("resistant");
         } else if (totalEffectiveness > 1) {
-          defenseMarks[attackingType][pokemonIndex] = "weak";
+          defenseMarks[attackingType].push("weak");
         }
       });
 
-      // Análisis ofensivo (cobertura)
-      pokemon.types.forEach((attackerType) => {
-        TYPE_ORDER.forEach((defenderType) => {
+      // Análisis ofensivo (solo una marca por Pokémon, aunque sea efectivo con ambos tipos)
+      TYPE_ORDER.forEach((defenderType) => {
+        let isEffective = false;
+        pokemon.types.forEach((attackerType) => {
           if (types[attackerType.toLowerCase()][defenderType] > 1) {
-            coverageMarks[defenderType][pokemonIndex] = true;
+            isEffective = true;
           }
         });
+        if (isEffective) {
+          coverageMarks[defenderType].push(true);
+        }
       });
     });
 
-    return { defense: defenseMarks, coverage: coverageMarks };
+    return {
+      defense: defenseMarks,
+      coverage: coverageMarks,
+    };
   }, [pokemons, types]);
 
   return (
