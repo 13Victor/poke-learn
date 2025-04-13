@@ -175,5 +175,6 @@ router.get("/items-desc", (req, res) => res.json(data.itemsDesc.ItemsText));
 router.get("/formats", (req, res) => res.json(data.formats));
 router.get("/formats-data", (req, res) => res.json(data.formatsData));
 router.get("/learnsets", (req, res) => res.json(data.learnsets.Learnsets));
+router.get("/types", (req, res) => res.json(data.types));
 
 module.exports = router;

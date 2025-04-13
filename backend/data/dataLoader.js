@@ -8,6 +8,7 @@ const formatsData = require("./formats-data");
 const learnsets = require("./learnsets");
 const abilities = require("./abilities");
 const abilitiesDesc = require("./text/abilities-desc");
+const types = require("./types.json");
 
 module.exports = {
   pokedex,
@@ -20,4 +21,5 @@ module.exports = {
   learnsets,
   abilities,
   abilitiesDesc,
+  types,
 };

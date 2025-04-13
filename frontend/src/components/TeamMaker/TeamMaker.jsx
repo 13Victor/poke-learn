@@ -5,6 +5,7 @@ import LoadingIndicator from "./LoadingIndicator";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/TeamMaker.css";
 import SaveTeamButton from "./SaveTeamButton";
+import TeamAnalysis from "./TeamAnalysis";
 
 const TeamMaker = memo(() => {
   const { isAllDataLoaded, isLoading } = usePokemonData();
@@ -17,6 +18,8 @@ const TeamMaker = memo(() => {
         <TeamContainer />
         <SaveTeamButton />
       </div>
+
+      <TeamAnalysis />
 
       <div className="table-section">
         {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}

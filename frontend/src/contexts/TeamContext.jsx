@@ -13,6 +13,7 @@ const ACTIONS = {
   SET_FLOW_STAGE: "SET_FLOW_STAGE",
   SET_POKEMON_STATS: "SET_POKEMON_STATS",
   UPDATE_POKEMON_STATS: "UPDATE_POKEMON_STATS",
+  UPDATE_TEAM_ANALYSIS: "UPDATE_TEAM_ANALYSIS",
 };
 
 const FLOW_STAGES = {
@@ -46,6 +47,10 @@ const initialState = {
   selectedSlot: 0,
   selectedMove: { slot: 0, moveIndex: 0 },
   flowStage: FLOW_STAGES.POKEMON,
+  teamAnalysis: {
+    coverage: [],
+    defense: {},
+  },
 };
 
 // Reducer para manejar las actualizaciones de estado
@@ -186,6 +191,13 @@ function teamReducer(state, action) {
       return {
         ...state,
         pokemons: newPokemons,
+      };
+    }
+
+    case ACTIONS.UPDATE_TEAM_ANALYSIS: {
+      return {
+        ...state,
+        teamAnalysis: action.payload,
       };
     }
 
@@ -436,6 +448,13 @@ export const TeamProvider = ({ children }) => {
 
       advanceFromStats: () => {
         advanceFlow(FLOW_STAGES.STATS, state.selectedSlot);
+      },
+
+      updateTeamAnalysis: (analysis) => {
+        dispatch({
+          type: ACTIONS.UPDATE_TEAM_ANALYSIS,
+          payload: analysis,
+        });
       },
     }),
     [state.selectedSlot, state.selectedMove.moveIndex, state.flowStage]

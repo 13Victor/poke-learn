@@ -1,0 +1,141 @@
+.team__type-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  justify-content: stretch;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 1em;
+  padding: 1em;
+  margin: 1em 0;
+}
+
+.type-analysis__grid {
+  display: grid;
+  gap: 1em;
+  grid-template-columns: repeat(auto-fill, 6.875em);
+  justify-content: space-evenly;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.type-analysis__heading {
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.tally {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.tally__marks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 2px;
+}
+
+.tally__marks-defense {
+  margin-bottom: 2px;
+}
+
+.tally__mark {
+  width: 0.5em;
+  height: 2em;
+  background-color: #e6e6e6;
+  border-radius: 0.125em;
+  transition: all 0.2s ease;
+}
+
+/* Solo dos colores: azul para bueno (resistencias/cobertura) y rojo para malo (debilidades) */
+.tally__mark_good {
+  background-color: #4169e1; /* Azul */
+}
+
+.tally__mark_bad {
+  background-color: #dc143c; /* Rojo */
+}
+
+.tally__mark:hover {
+  transform: translateY(-4px);
+}
+
+/* Type symbols styles */
+.tally__type-symbol {
+  background-color: var(--type-color);
+  color: white;
+  padding: 0.3em 0.6em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+/* Define colors for each type */
+.tally_normal .tally__type-symbol {
+  --type-color: #a8a878;
+}
+.tally_fire .tally__type-symbol {
+  --type-color: #f08030;
+}
+.tally_water .tally__type-symbol {
+  --type-color: #6890f0;
+}
+.tally_electric .tally__type-symbol {
+  --type-color: #f8d030;
+}
+.tally_grass .tally__type-symbol {
+  --type-color: #78c850;
+}
+.tally_ice .tally__type-symbol {
+  --type-color: #98d8d8;
+}
+.tally_fighting .tally__type-symbol {
+  --type-color: #c03028;
+}
+.tally_poison .tally__type-symbol {
+  --type-color: #a040a0;
+}
+.tally_ground .tally__type-symbol {
+  --type-color: #e0c068;
+}
+.tally_flying .tally__type-symbol {
+  --type-color: #a890f0;
+}
+.tally_psychic .tally__type-symbol {
+  --type-color: #f85888;
+}
+.tally_bug .tally__type-symbol {
+  --type-color: #a8b820;
+}
+.tally_rock .tally__type-symbol {
+  --type-color: #b8a038;
+}
+.tally_ghost .tally__type-symbol {
+  --type-color: #705898;
+}
+.tally_dragon .tally__type-symbol {
+  --type-color: #7038f8;
+}
+.tally_dark .tally__type-symbol {
+  --type-color: #705848;
+}
+.tally_steel .tally__type-symbol {
+  --type-color: #b8b8d0;
+}
+.tally_fairy .tally__type-symbol {
+  --type-color: #ee99ac;
+}
+
+.tally__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
