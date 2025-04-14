@@ -1,28 +1,26 @@
 .team__type-analysis {
   display: flex;
-}
-
-.analysis-section {
-  background: #fff;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  background-color: var(--white);
+  padding-inline: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  width: 100%;
 }
 
 .type-analysis__grid {
-  display: flex;
+  display: grid;
   height: 100%;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: var(--spacing-sm);
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Un poco más para acomodar márgenes */
   list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.type-analysis__heading {
 }
 
 .tally {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  width: 100%;
 }
 
 .tally__type {
@@ -32,9 +30,8 @@
   flex-shrink: 0;
 }
 
-.type-icon {
+.tally__type .type-icon {
   width: 100%;
-  border-radius: var(--radius-full);
   height: auto;
 }
 

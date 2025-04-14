@@ -108,18 +108,16 @@ const TeamAnalysis = () => {
 
   return (
     <div className="team__type-analysis">
-      <div className="analysis-section">
-        <h3 className="type-analysis__heading">Type Analysis</h3>
-        <div className="type-analysis__grid">
-          {TYPE_ORDER.map((type) => (
-            <TypeTally
-              key={type}
-              type={type}
-              defenseMarks={analysis.defense[type]}
-              coverageMarks={analysis.coverage[type]}
-            />
-          ))}
-        </div>
+      <h3 className="type-analysis__heading">Type Analysis</h3>
+      <div className="type-analysis__grid">
+        {TYPE_ORDER.map((type) => (
+          <TypeTally
+            key={type}
+            type={type}
+            defenseMarks={analysis.defense[type]}
+            coverageMarks={analysis.coverage[type]}
+          />
+        ))}
       </div>
     </div>
   );

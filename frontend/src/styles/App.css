@@ -188,6 +188,7 @@ label {
 
 /* Team container */
 .teamContainer {
+  min-width: 1200px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-sm);
