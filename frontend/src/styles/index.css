@@ -23,6 +23,8 @@
   --prussian-blue: #003554ff;
   --rich-black: #051923ff;
 
+  --red-gray: rgb(219, 106, 106);
+
   --background: var(--white-smoke);
   --text: var(--black);
 

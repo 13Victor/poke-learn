@@ -25,37 +25,28 @@ const TYPE_ORDER = [
   "fairy",
 ];
 
-const TypeTally = ({ type, defensiveMarks, coverageMarks }) => {
-  // Ordenar las marcas defensivas: primero resistencias (azul), luego debilidades (rojo)
-  const sortedDefensiveMarks = [
-    ...defensiveMarks.filter((mark) => mark === "resistant"),
-    ...defensiveMarks.filter((mark) => mark === "weak"),
-  ];
-
-  // Filtrar y compactar las marcas de cobertura (eliminar huecos)
-  const compactCoverageMarks = coverageMarks.filter(Boolean);
+const TypeTally = ({ type, defenseMarks, coverageMarks }) => {
+  const upperType = type.charAt(0).toUpperCase() + type.slice(1);
 
   return (
-    <div className={`tally tally_${type}`}>
-      <span className="tally__type-symbol">{type}</span>
-      <div className="tally__group">
+    <div className="tally">
+      <div className="tally__type">
+        <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" />
+      </div>
+      <div className="tally__marks-container">
         <ul className="tally__marks">
           {Array.from({ length: MAX_MARKS }).map((_, i) => (
             <li
-              key={i}
+              key={`defense-${i}`}
               className={`tally__mark ${
-                sortedDefensiveMarks[i] === "resistant"
-                  ? "tally__mark_good"
-                  : sortedDefensiveMarks[i] === "weak"
-                  ? "tally__mark_bad"
-                  : ""
+                defenseMarks[i] ? `tally__mark_${defenseMarks[i] === "resistant" ? "good" : "bad"}` : ""
               }`}
             />
           ))}
         </ul>
         <ul className="tally__marks">
           {Array.from({ length: MAX_MARKS }).map((_, i) => (
-            <li key={i} className={`tally__mark ${i < compactCoverageMarks.length ? "tally__mark_good" : ""}`} />
+            <li key={`coverage-${i}`} className={`tally__mark ${coverageMarks[i] ? "tally__mark_good" : ""}`} />
           ))}
         </ul>
       </div>
@@ -81,7 +72,7 @@ const TeamAnalysis = () => {
     pokemons.forEach((pokemon) => {
       if (!pokemon.name || !pokemon.types) return;
 
-      // Análisis defensivo
+      // Defense analysis
       TYPE_ORDER.forEach((attackingType) => {
         let totalEffectiveness = 1;
         pokemon.types.forEach((defenderType) => {
@@ -95,7 +86,7 @@ const TeamAnalysis = () => {
         }
       });
 
-      // Análisis ofensivo (solo una marca por Pokémon, aunque sea efectivo con ambos tipos)
+      // Offensive analysis (only one mark per Pokémon, even if effective with both types)
       TYPE_ORDER.forEach((defenderType) => {
         let isEffective = false;
         pokemon.types.forEach((attackerType) => {
@@ -117,16 +108,18 @@ const TeamAnalysis = () => {
 
   return (
     <div className="team__type-analysis">
-      <h3 className="type-analysis__heading">Team Analysis</h3>
-      <div className="type-analysis__grid">
-        {TYPE_ORDER.map((type) => (
-          <TypeTally
-            key={type}
-            type={type}
-            defensiveMarks={analysis.defense[type]}
-            coverageMarks={analysis.coverage[type]}
-          />
-        ))}
+      <div className="analysis-section">
+        <h3 className="type-analysis__heading">Type Analysis</h3>
+        <div className="type-analysis__grid">
+          {TYPE_ORDER.map((type) => (
+            <TypeTally
+              key={type}
+              type={type}
+              defenseMarks={analysis.defense[type]}
+              coverageMarks={analysis.coverage[type]}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

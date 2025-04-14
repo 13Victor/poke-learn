@@ -6,7 +6,8 @@
 }
 
 .team-section {
-  flex-shrink: 0;
+  gap: var(--spacing-md);
+  display: flex;
   margin-bottom: var(--spacing-md);
 }
 

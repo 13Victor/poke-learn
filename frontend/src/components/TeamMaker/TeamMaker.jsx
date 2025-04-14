@@ -16,11 +16,11 @@ const TeamMaker = memo(() => {
     <div className="teammaker-container">
       <div className="team-section">
         <TeamContainer />
-        <SaveTeamButton />
+
+        <TeamAnalysis />
       </div>
 
-      <TeamAnalysis />
-
+      <SaveTeamButton />
       <div className="table-section">
         {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
       </div>
