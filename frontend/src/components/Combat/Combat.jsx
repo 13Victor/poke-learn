@@ -19,7 +19,8 @@ const Combat = () => {
   const [format, setFormat] = useState("gen7randombattle");
   const [requestData, setRequestData] = useState(null);
   const [playerForceSwitch, setPlayerForceSwitch] = useState(false);
-  const [cpuWaiting, setCpuWaiting] = useState(false);
+  const [cpuForceSwitch, setCpuForceSwitch] = useState(false);
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
   const logContainerRef = useRef(null);
 
   // Iniciar una nueva batalla
@@ -30,7 +31,7 @@ const Combat = () => {
       setBattleLogs([]);
       setRequestData(null);
       setPlayerForceSwitch(false);
-      setCpuWaiting(false);
+      setCpuForceSwitch(false);
 
       // Paso 1: Crear la batalla
       const createResponse = await API.post("/battle/start", { format });
@@ -56,10 +57,18 @@ const Combat = () => {
   const processLogs = (logs) => {
     console.log("Procesando logs:", logs);
 
+    // Mantener un registro de si encontramos requests para p1 y p2
+    let p1RequestFound = false;
+    let p2RequestFound = false;
+
     // Recorrer cada log recibido
     for (const log of logs) {
       // Dividir por líneas para buscar el request en cualquier parte del mensaje
       const lines = log.split("\n");
+
+      // Determinar si es un mensaje para p1 o p2
+      const isP1Message = log.includes("sideupdate\np1");
+      const isP2Message = log.includes("sideupdate\np2");
 
       // Buscar la línea que contiene |request|
       for (const line of lines) {
@@ -72,57 +81,136 @@ const Combat = () => {
             const request = JSON.parse(requestJson);
             console.log("REQUEST parseado:", request);
 
-            setRequestData(request);
+            if (isP1Message) {
+              p1RequestFound = true;
+              setRequestData(request);
 
-            // Comprobar si el jugador está forzado a cambiar de Pokémon
-            if (request.forceSwitch && request.forceSwitch[0] === true) {
-              setPlayerForceSwitch(true);
-              setCpuWaiting(true);
-            } else {
-              setPlayerForceSwitch(false);
+              // Comprobar si el jugador está forzado a cambiar de Pokémon
+              if (request.forceSwitch && request.forceSwitch[0] === true) {
+                setPlayerForceSwitch(true);
+                console.log("El jugador debe cambiar de Pokémon");
+              } else {
+                setPlayerForceSwitch(false);
+              }
+            } else if (isP2Message) {
+              p2RequestFound = true;
+
+              // Comprobar si la CPU está forzada a cambiar de Pokémon
+              if (request.forceSwitch && request.forceSwitch[0] === true) {
+                setCpuForceSwitch(true);
+                console.log("La CPU debe cambiar de Pokémon");
+              } else {
+                setCpuForceSwitch(false);
+              }
             }
-
-            // Comprobar si hay un campo 'wait' para la CPU
-            if (request.wait === true) {
-              setCpuWaiting(true);
-            } else {
-              setCpuWaiting(false);
-            }
-
-            // Una vez encontrado y procesado el request, podemos salir
-            return;
           } catch (e) {
             console.error("Error al procesar request:", e, "en línea:", line);
           }
         }
       }
     }
+
+    // Buscar también mensajes de finalización de batalla
+    for (const log of logs) {
+      if (log.includes("|win|") || log.includes("|tie|")) {
+        setBattleState("completed");
+        break;
+      }
+    }
+
+    // Si no se encontró ningún request, mantener el estado actual
+    if (!p1RequestFound && !p2RequestFound) {
+      console.log("No se encontraron nuevos requests en los logs");
+    }
   };
 
   // Enviar un comando a la batalla
   const sendCommand = async (command) => {
-    if (battleState !== "active" || !battleId) {
-      setError("No hay una batalla activa");
+    if (battleState !== "active" || !battleId || isProcessingCommand) {
+      if (isProcessingCommand) {
+        setError("Espera a que se complete el comando anterior");
+      } else {
+        setError("No hay una batalla activa");
+      }
       return;
     }
 
     try {
+      console.log("Enviando comando:", command);
       setError(null);
+      setIsProcessingCommand(true);
+
+      // Enviar el comando al servidor
       const response = await API.post(`/battle/command/${battleId}`, { command });
+      console.log("Respuesta completa:", response);
 
       // Añadir los nuevos logs a los existentes
-      setBattleLogs((prevLogs) => [...prevLogs, ...response.data.logs]);
+      if (response.data.logs && response.data.logs.length > 0) {
+        // Guardar la longitud actual para mostrar solo los nuevos
+        const currentLength = battleLogs.length;
 
-      // Procesar los nuevos logs
-      processLogs(response.data.logs);
+        // Agregar los nuevos logs
+        setBattleLogs((prevLogs) => [...prevLogs, ...response.data.logs]);
+        console.log(`Añadidos ${response.data.logs.length} nuevos logs`);
+
+        // Procesar los nuevos logs
+        processLogs(response.data.logs);
+      } else {
+        console.warn("No se recibieron nuevos logs del servidor");
+
+        // Si necesitamos enviar automáticamente comandos de CPU, lo hacemos aquí
+        if (command.startsWith(">p1") && !playerForceSwitch && !cpuForceSwitch) {
+          // El comando fue del jugador, intentar enviar un comando automático de CPU
+          const cpuCommand = ">p2 move 1";
+          console.log("Intentando enviar comando automático de CPU:", cpuCommand);
+
+          // Añadir mensaje informativo al log
+          setBattleLogs((prevLogs) => [
+            ...prevLogs,
+            `Comando enviado: ${command} (procesando...)`,
+            `Enviando respuesta automática: ${cpuCommand}`,
+          ]);
+
+          // Reintentar enviando ambos comandos juntos
+          try {
+            const combinedResponse = await API.post(`/battle/command/${battleId}`, {
+              command: `${command}\n${cpuCommand}`,
+            });
+
+            if (combinedResponse.data.logs && combinedResponse.data.logs.length > 0) {
+              setBattleLogs((prevLogs) => [...prevLogs, ...combinedResponse.data.logs]);
+              processLogs(combinedResponse.data.logs);
+            } else {
+              // Si sigue sin funcionar, mostrar mensaje de error
+              setBattleLogs((prevLogs) => [
+                ...prevLogs,
+                "No se pudieron procesar los comandos. Intenta con otro comando.",
+              ]);
+            }
+          } catch (err) {
+            console.error("Error al enviar comandos combinados:", err);
+            setBattleLogs((prevLogs) => [...prevLogs, `Error: ${err.message}`]);
+          }
+        } else {
+          // Informar al usuario que el comando se envió pero no generó respuesta
+          setBattleLogs((prevLogs) => [...prevLogs, `Comando enviado: ${command} (Sin respuesta del servidor)`]);
+        }
+      }
 
       // Verificar si la batalla ha terminado
       if (response.data.state === "completed") {
         setBattleState("completed");
       }
+
+      // Actualizar estado de procesamiento
+      setIsProcessingCommand(false);
     } catch (err) {
       console.error("Error al enviar comando:", err);
-      setError("Error al enviar comando. Intenta nuevamente.");
+      setError(`Error al enviar comando: ${err.message}`);
+      setIsProcessingCommand(false);
+
+      // Mensaje de error en los logs
+      setBattleLogs((prevLogs) => [...prevLogs, `Error al enviar comando: ${command}. ${err.message}`]);
     }
   };
 
@@ -148,25 +236,20 @@ const Combat = () => {
     }
   }, [battleLogs]);
 
+  // Verificar si los controles deben estar deshabilitados
+  const areControlsDisabled = cpuForceSwitch || isProcessingCommand;
+
   // Renderizar los botones de movimientos basados en el estado actual
   const renderMoveButtons = () => {
     if (!requestData || !requestData.active || playerForceSwitch) {
-      console.log("No se pueden mostrar movimientos:", {
-        requestData: !!requestData,
-        active: requestData?.active ? true : false,
-        forceSwitch: playerForceSwitch,
-      });
       return null;
     }
 
     const moves = requestData.active[0]?.moves || [];
 
     if (moves.length === 0) {
-      console.log("No hay movimientos disponibles en el REQUEST", requestData);
       return <div>No hay movimientos disponibles</div>;
     }
-
-    console.log("Movimientos disponibles:", moves);
 
     return (
       <div className="control-row">
@@ -174,9 +257,17 @@ const Combat = () => {
           <button
             key={index}
             onClick={() => sendCommand(`>p1 move ${index + 1}`)}
-            disabled={move.disabled}
-            className={move.disabled ? "disabled" : ""}
-            title={move.disabled ? "Movimiento deshabilitado" : move.move}
+            disabled={move.disabled || areControlsDisabled}
+            className={move.disabled || areControlsDisabled ? "disabled" : ""}
+            title={
+              isProcessingCommand
+                ? "Procesando comando anterior..."
+                : areControlsDisabled
+                ? "Debes esperar a que la CPU cambie de Pokémon"
+                : move.disabled
+                ? "Movimiento deshabilitado"
+                : move.move
+            }
           >
             {move.move}
           </button>
@@ -188,22 +279,16 @@ const Combat = () => {
   // Renderizar los botones de cambio basados en el estado actual
   const renderSwitchButtons = () => {
     if (!requestData || !requestData.side || !requestData.side.pokemon) {
-      console.log("No se pueden mostrar Pokémon:", {
-        requestData: !!requestData,
-        side: requestData?.side ? true : false,
-        pokemon: requestData?.side?.pokemon ? true : false,
-      });
       return null;
     }
-
-    console.log("Pokémon disponibles:", requestData.side.pokemon);
 
     return (
       <div className="control-row">
         {requestData.side.pokemon.map((pokemon, index) => {
           const isActive = pokemon.active;
           const isFainted = pokemon.condition.includes("fnt");
-          const isDisabled = isActive || isFainted;
+          // Solo deshabilitar si está activo, debilitado o si la CPU debe cambiar y el jugador no está forzado
+          const isDisabled = isActive || isFainted || (areControlsDisabled && !playerForceSwitch);
 
           // Extraer el nombre del Pokémon de los detalles
           const pokemonName = pokemon.details.split(",")[0];
@@ -216,7 +301,17 @@ const Combat = () => {
               onClick={() => sendCommand(`>p1 switch ${index + 1}`)}
               disabled={isDisabled}
               className={isDisabled ? "disabled" : ""}
-              title={isActive ? "Pokémon activo" : isFainted ? "Pokémon debilitado" : `Cambiar a ${pokemonName}`}
+              title={
+                isProcessingCommand
+                  ? "Procesando comando anterior..."
+                  : areControlsDisabled && !playerForceSwitch
+                  ? "Debes esperar a que la CPU cambie de Pokémon"
+                  : isActive
+                  ? "Pokémon activo"
+                  : isFainted
+                  ? "Pokémon debilitado"
+                  : `Cambiar a ${pokemonName}`
+              }
             >
               {pokemonName} - {condition}
             </button>
@@ -226,29 +321,20 @@ const Combat = () => {
     );
   };
 
-  // Renderizar un log más leíble en la interfaz
-  const renderFormattedLog = (log) => {
-    const lines = log.split("\n");
-    return lines.map((line, index) => {
-      // Formatear las líneas para que sean más legibles
-      if (line.startsWith("|")) {
-        const parts = line.split("|");
-        if (parts.length >= 3) {
-          // Formatear diferentes tipos de mensajes
-          if (parts[1] === "move") {
-            return <div key={index} className="log-move">{`${parts[2]} usó ${parts[3]}`}</div>;
-          } else if (parts[1] === "damage" || parts[1] === "-damage") {
-            return <div key={index} className="log-damage">{`${parts[2]} recibió daño (${parts[3]})`}</div>;
-          } else if (parts[1] === "switch" || parts[1] === "drag") {
-            return <div key={index} className="log-switch">{`${parts[2]} entró al campo`}</div>;
-          } else if (parts[1] === "faint") {
-            return <div key={index} className="log-faint">{`${parts[2]} se debilitó`}</div>;
-          }
-        }
-      }
-      // Para líneas que no se formatean específicamente
-      return <div key={index}>{line}</div>;
-    });
+  // Renderizar los controles para la CPU (para testing)
+  const renderCPUControls = () => {
+    if (!cpuForceSwitch) return null;
+
+    return (
+      <div className="cpu-controls">
+        <h4>Controles de la CPU (Testing)</h4>
+        <div className="control-row">
+          <button onClick={() => sendCommand("p2 switch 2")}>CPU: Cambiar a 2</button>
+          <button onClick={() => sendCommand("p2 switch 3")}>CPU: Cambiar a 3</button>
+          <button onClick={() => sendCommand("p2 switch 4")}>CPU: Cambiar a 4</button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -291,7 +377,13 @@ const Combat = () => {
         <div className="force-switch-message">¡Tu Pokémon se ha debilitado! Debes elegir otro Pokémon.</div>
       )}
 
-      {cpuWaiting && <div className="cpu-waiting-message">La CPU está esperando tu acción.</div>}
+      {cpuForceSwitch && (
+        <div className="cpu-force-switch-message">
+          El Pokémon de la CPU se ha debilitado. Debes realizar la acción para la CPU.
+        </div>
+      )}
+
+      {isProcessingCommand && <div className="processing-message">Procesando comando...</div>}
 
       <div className="battle-area" ref={logContainerRef}>
         {battleLogs.length > 0 ? (
@@ -312,13 +404,17 @@ const Combat = () => {
 
             {/* Mostrar mensaje sobre qué acción se requiere */}
             <div className="action-required">
-              {playerForceSwitch ? "Debes elegir un nuevo Pokémon" : "Elige tu próxima acción"}
+              {playerForceSwitch
+                ? "Debes elegir un nuevo Pokémon"
+                : cpuForceSwitch
+                ? "Debes realizar la acción para la CPU"
+                : "Elige tu próxima acción"}
             </div>
 
             {/* Botones de team preview si estamos en esa fase */}
             {requestData && requestData.teamPreview && (
               <div className="control-row">
-                <button onClick={() => sendCommand(">p1 team 123456")}>Team Preview (123456)</button>
+                <button onClick={() => sendCommand("p1 team 123456")}>Team Preview (123456)</button>
               </div>
             )}
 
@@ -335,15 +431,21 @@ const Combat = () => {
             {renderSwitchButtons()}
           </div>
 
+          {/* Controles de la CPU para testing */}
+          {cpuForceSwitch && renderCPUControls()}
+
           <div className="custom-command-section">
             <input
               type="text"
               value={customCommand}
               onChange={(e) => setCustomCommand(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Comando personalizado (ej: >p1 move 1)"
+              placeholder="Comando personalizado (ej: p1 move 1)"
+              disabled={isProcessingCommand}
             />
-            <button onClick={handleCustomCommand}>Enviar</button>
+            <button onClick={handleCustomCommand} disabled={isProcessingCommand}>
+              Enviar
+            </button>
           </div>
 
           {/* Panel de desarrollo para depuración */}
@@ -351,6 +453,26 @@ const Combat = () => {
             <h4>Panel de Depuración</h4>
             <button onClick={() => console.log("Request Data:", requestData)}>Ver REQUEST en consola</button>
             <button onClick={() => console.log("Battle Logs:", battleLogs)}>Ver LOGS en consola</button>
+            <div className="debug-status">
+              <p>
+                Estado Jugador:
+                <span className={playerForceSwitch ? "status-warning" : "status-normal"}>
+                  {playerForceSwitch ? "Forzado a cambiar" : "Normal"}
+                </span>
+              </p>
+              <p>
+                Estado CPU:
+                <span className={cpuForceSwitch ? "status-waiting" : "status-normal"}>
+                  {cpuForceSwitch ? "Forzado a cambiar" : "Normal"}
+                </span>
+              </p>
+              <p>
+                Procesando:
+                <span className={isProcessingCommand ? "status-waiting" : "status-normal"}>
+                  {isProcessingCommand ? "Sí" : "No"}
+                </span>
+              </p>
+            </div>
           </div>
         </div>
       )}

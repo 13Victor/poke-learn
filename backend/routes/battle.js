@@ -1,6 +1,5 @@
 const express = require("express");
 const { BattleStream, Teams } = require("pokemon-showdown");
-const { RandomPlayerAI } = require("pokemon-showdown/dist/sim/tools/random-player-ai");
 const router = express.Router();
 
 // Almacenar batallas activas
@@ -14,7 +13,7 @@ router.post("/start", (req, res) => {
     // Crear un ID único para la batalla
     const battleId = Date.now().toString();
 
-    //processLogs  Generar equipos aleatorios
+    // Generar equipos aleatorios
     const playerTeam = Teams.pack(Teams.generate(format));
     const aiTeam = Teams.pack(Teams.generate(format));
 
@@ -26,6 +25,7 @@ router.post("/start", (req, res) => {
       aiTeam,
       logs: [],
       state: "setup",
+      lastInputTurn: 0, // Nuevo: rastrear el último turno donde se ingresó un comando
     };
 
     // Guardar en batallas activas
@@ -60,33 +60,57 @@ router.post("/initialize/:battleId", async (req, res) => {
     battle.stream = battleStream;
     battle.state = "active";
     battle.logs = [];
+    battle.turnCount = 0;
+    battle.pendingCommands = []; // Para rastrear comandos pendientes
 
     // Capturar la salida del stream
     (async () => {
-      for await (const chunk of battleStream) {
-        console.log("Mensaje del simulador:", chunk);
-        battle.logs.push(chunk);
+      try {
+        for await (const chunk of battleStream) {
+          console.log("Mensaje del simulador:", chunk);
+          battle.logs.push(chunk);
 
-        // Si la batalla ha terminado, actualizamos el estado
-        if (chunk.includes("|win|") || chunk.includes("|tie|")) {
-          battle.state = "completed";
+          // Detectar el inicio de un nuevo turno
+          if (chunk.includes("|turn|")) {
+            const turnMatch = chunk.match(/\|turn\|(\d+)/);
+            if (turnMatch && turnMatch[1]) {
+              battle.turnCount = parseInt(turnMatch[1], 10);
+              console.log(`Turno ${battle.turnCount} detectado`);
+            }
+          }
+
+          // Si la batalla ha terminado, actualizamos el estado
+          if (chunk.includes("|win|") || chunk.includes("|tie|")) {
+            battle.state = "completed";
+          }
         }
+      } catch (error) {
+        console.error("Error en el stream de batalla:", error);
+        battle.logs.push(`ERROR: ${error.message}`);
       }
     })();
 
-    // Inicializar la batalla
-    battleStream.write(`>start {"formatid":"${battle.format}"}`);
-    battleStream.write(`>player p1 {"name":"Jugador","team":${JSON.stringify(battle.playerTeam)}}`);
-    battleStream.write(`>player p2 {"name":"CPU","team":${JSON.stringify(battle.aiTeam)}}`);
+    // Inicializar la batalla con opciones explícitas
+    console.log("Iniciando batalla...");
+    await battleStream.write(`>start {"formatid":"${battle.format}"}`);
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    // Esperamos un momento para que se procesen los mensajes iniciales
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    console.log("Configurando jugador 1...");
+    await battleStream.write(`>player p1 {"name":"Jugador","team":${JSON.stringify(battle.playerTeam)}}`);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    console.log("Configurando jugador 2...");
+    await battleStream.write(`>player p2 {"name":"CPU","team":${JSON.stringify(battle.aiTeam)}}`);
+
+    // Esperamos más tiempo para que se procesen los mensajes iniciales
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
     res.json({
       success: true,
       battleId,
       logs: battle.logs,
       state: battle.state,
+      turnCount: battle.turnCount,
     });
   } catch (error) {
     console.error("Error al inicializar batalla:", error);
@@ -98,7 +122,9 @@ router.post("/initialize/:battleId", async (req, res) => {
 router.post("/command/:battleId", async (req, res) => {
   try {
     const { battleId } = req.params;
-    const { command } = req.body;
+    let { command } = req.body;
+
+    console.log(`Recibiendo comando para batalla ${battleId}:`, command);
 
     const battle = activeBattles.get(battleId);
 
@@ -112,39 +138,94 @@ router.post("/command/:battleId", async (req, res) => {
 
     // Guardar los logs actuales para encontrar los nuevos después
     const currentLogLength = battle.logs.length;
+    const currentTurn = battle.turnCount || 0;
 
-    // Enviar el comando del jugador
-    battle.stream.write(command);
+    // Normalizar el formato del comando (quitar ">" si existe)
+    if (!command.startsWith(">")) {
+      command = ">" + command;
+    }
 
-    // Esperar a que el comando se procese
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    console.log("Escribiendo comando al stream:", command);
 
-    // Determinar si el CPU necesita tomar una decisión
-    // En una batalla real, habría que analizar los logs para saber si se espera respuesta del CPU
-    // Por simplicidad, enviamos un comando aleatorio para el CPU después de cada comando del jugador
+    try {
+      // Almacenar el comando ejecutado
+      battle.pendingCommands.push(command);
 
-    // Posibles comandos para el CPU (simplificado)
-    const cpuCommands = [">p2 move 1", ">p2 move 2", ">p2 move 3", ">p2 move 4"];
-    const randomCommand = cpuCommands[Math.floor(Math.random() * cpuCommands.length)];
+      // Ejecutar el comando
+      await battle.stream.write(command);
 
-    // Enviar el comando del CPU
-    battle.stream.write(randomCommand);
+      // Esperar para que el comando se procese
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Esperar a que se procese la respuesta del CPU
-    await new Promise((resolve) => setTimeout(resolve, 300));
+      // Obtener los nuevos logs después del comando
+      const newLogs = battle.logs.slice(currentLogLength);
+      console.log(`Se generaron ${newLogs.length} nuevos logs`);
 
-    // Obtener los nuevos logs
-    const newLogs = battle.logs.slice(currentLogLength);
+      // Si no hay nuevos logs pero el comando debería generar acción, reintentamos
+      if (newLogs.length === 0 && (command.includes("move") || command.includes("switch"))) {
+        console.log("No se detectaron logs, ejecutando comandos combinados...");
 
-    res.json({
-      success: true,
-      battleId,
-      logs: newLogs,
-      state: battle.state,
-    });
+        // Detectar si es un comando P1 o P2
+        const isP1Command = command.startsWith("p1");
+
+        // Si es un comando del jugador (p1) y no hay logs nuevos,
+        // podemos necesitar también un comando de la CPU (p2)
+        if (isP1Command) {
+          // Simular un comando de la CPU
+          const cpuCommand = "p2 move 1";
+          console.log("Añadiendo comando de CPU:", cpuCommand);
+
+          // Ejecutar el comando de la CPU después del comando del jugador
+          await battle.stream.write(cpuCommand);
+
+          // Esperar que ambos comandos se procesen
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
+        // Verificar de nuevo los logs después de los comandos combinados
+        const logsAfterBothCommands = battle.logs.slice(currentLogLength);
+        console.log(`Se generaron ${logsAfterBothCommands.length} logs después de comandos combinados`);
+
+        // Enviar la respuesta con todos los nuevos logs
+        return res.json({
+          success: true,
+          battleId,
+          logs: logsAfterBothCommands,
+          state: battle.state,
+          turnCount: battle.turnCount,
+          debug: {
+            commandsExecuted: battle.pendingCommands,
+            initialLogCount: currentLogLength,
+            newLogCount: logsAfterBothCommands.length,
+            commandsGenerated: [...battle.pendingCommands, isP1Command ? "p2 move 1" : null].filter(Boolean),
+          },
+        });
+      }
+
+      // Respuesta normal si hay logs nuevos
+      res.json({
+        success: true,
+        battleId,
+        logs: newLogs,
+        state: battle.state,
+        turnCount: battle.turnCount,
+        debug: {
+          commandExecuted: command,
+          initialLogCount: currentLogLength,
+          newLogCount: newLogs.length,
+        },
+      });
+    } catch (error) {
+      console.error("Error al ejecutar comando:", error);
+      res.status(500).json({
+        success: false,
+        error: "Error al ejecutar comando: " + error.message,
+        debug: { command, error: error.toString() },
+      });
+    }
   } catch (error) {
-    console.error("Error al enviar comando:", error);
-    res.status(500).json({ success: false, error: "Error al enviar comando" });
+    console.error("Error general en /command:", error);
+    res.status(500).json({ success: false, error: "Error al enviar comando: " + error.message });
   }
 });
 
@@ -163,6 +244,8 @@ router.get("/status/:battleId", (req, res) => {
       battleId,
       logs: battle.logs,
       state: battle.state,
+      turnCount: battle.turnCount,
+      pendingCommands: battle.pendingCommands || [],
     });
   } catch (error) {
     console.error("Error al obtener estado de batalla:", error);
