@@ -1,13 +1,15 @@
 // src/components/Combat/Combat.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useBattle } from "../../hooks/useBattle";
-import { BattleLogViewer } from "./LogViewer";
-import { StatusMessages } from "./StatusMessages";
-import { BattleControls } from "./BattleControls";
-import { CPUControls } from "./CPUControls";
-import { CustomCommandInput } from "./CustomCommandInput";
-import { DebugPanel } from "./DebugPanel";
-import "../../styles/Combat.css";
+import { BattleField } from "./BattleField";
+import { StatusMessages } from "../Battle/StatusMessages";
+import { BattleControls } from "../Battle/BattleControls";
+import { CPUControls } from "../Battle/CPUControls";
+import { CustomCommandInput } from "../Battle/CustomCommandInput";
+import { DebugPanel } from "../Battle/DebugPanel";
+import { BattleLogViewer } from "../Battle/LogViewer";
+import "../../styles/Battle/Combat.css";
+import "../../styles/Battle/BattleField.css"; // Importamos los estilos simplificados del campo de batalla
 
 const Combat = () => {
   const {
@@ -25,6 +27,9 @@ const Combat = () => {
     sendCommand,
     setError,
   } = useBattle();
+
+  // Estado para alternar entre la vista de campo de batalla y logs (para debugging)
+  const [showLogs, setShowLogs] = useState(false);
 
   return (
     <div className="combat-container">
@@ -58,6 +63,13 @@ const Combat = () => {
             ? "En curso"
             : "Finalizada"}
         </span>
+
+        {/* Botón para alternar entre vista de campo y logs */}
+        {battleState === "active" && (
+          <button className="toggle-view-button" onClick={() => setShowLogs(!showLogs)}>
+            {showLogs ? "Ver Campo de Batalla" : "Ver Logs (Debug)"}
+          </button>
+        )}
       </div>
 
       <StatusMessages
@@ -67,7 +79,12 @@ const Combat = () => {
         isProcessingCommand={isProcessingCommand}
       />
 
-      <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />
+      {/* Mostrar el campo de batalla o los logs según el estado */}
+      {showLogs ? (
+        <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />
+      ) : (
+        <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />
+      )}
 
       {battleState === "active" && (
         <div className="battle-controls">
