@@ -55,12 +55,22 @@ export function useBattle() {
   const processLogs = (logs) => {
     console.log("Procesando logs:", logs);
 
+    if (!logs || logs.length === 0) {
+      console.warn("No hay logs para procesar");
+      return;
+    }
+
     // Mantener un registro de si encontramos requests para p1 y p2
     let p1RequestFound = false;
     let p2RequestFound = false;
 
     // Recorrer cada log recibido
     for (const log of logs) {
+      // Si el log es un string vacío o no es un string, lo saltamos
+      if (!log || typeof log !== "string") {
+        continue;
+      }
+
       // Dividir por líneas para buscar el request en cualquier parte del mensaje
       const lines = log.split("\n");
 
@@ -75,6 +85,11 @@ export function useBattle() {
             // Extraer el JSON que viene después de |request|
             const requestJson = line.substring(line.indexOf("|request|") + "|request|".length);
             console.log("REQUEST JSON encontrado:", requestJson);
+
+            if (!requestJson || requestJson.trim() === "") {
+              console.warn("REQUEST JSON vacío");
+              continue;
+            }
 
             const request = JSON.parse(requestJson);
             console.log("REQUEST parseado:", request);
@@ -110,7 +125,7 @@ export function useBattle() {
 
     // Buscar también mensajes de finalización de batalla
     for (const log of logs) {
-      if (log.includes("|win|") || log.includes("|tie|")) {
+      if (typeof log === "string" && (log.includes("|win|") || log.includes("|tie|"))) {
         setBattleState("completed");
         break;
       }
@@ -138,60 +153,56 @@ export function useBattle() {
       setError(null);
       setIsProcessingCommand(true);
 
+      // Añadir log de comando enviado para feedback visual inmediato
+      setBattleLogs((prevLogs) => [...prevLogs, `Enviando comando: ${command}`]);
+
       // Enviar el comando al servidor
       const response = await API.post(`/battle/command/${battleId}`, { command });
-      console.log("Respuesta completa:", response);
+      console.log("Respuesta del servidor:", response.data);
 
       // Añadir los nuevos logs a los existentes
       if (response.data.logs && response.data.logs.length > 0) {
-        // Guardar la longitud actual para mostrar solo los nuevos
-        const currentLength = battleLogs.length;
+        console.log(`Añadiendo ${response.data.logs.length} nuevos logs:`, response.data.logs);
 
         // Agregar los nuevos logs
         setBattleLogs((prevLogs) => [...prevLogs, ...response.data.logs]);
-        console.log(`Añadidos ${response.data.logs.length} nuevos logs`);
 
         // Procesar los nuevos logs
         processLogs(response.data.logs);
       } else {
         console.warn("No se recibieron nuevos logs del servidor");
 
-        // Si necesitamos enviar automáticamente comandos de CPU, lo hacemos aquí
-        if (command.startsWith(">p1") && !playerForceSwitch && !cpuForceSwitch) {
-          // El comando fue del jugador, intentar enviar un comando automático de CPU
-          const cpuCommand = ">p2 move 1";
-          console.log("Intentando enviar comando automático de CPU:", cpuCommand);
+        // Si no hay logs, mostramos un mensaje informativo
+        setBattleLogs((prevLogs) => [
+          ...prevLogs,
+          "No se recibió respuesta del servidor. La batalla puede estar esperando más acciones.",
+        ]);
 
-          // Añadir mensaje informativo al log
-          setBattleLogs((prevLogs) => [
-            ...prevLogs,
-            `Comando enviado: ${command} (procesando...)`,
-            `Enviando respuesta automática: ${cpuCommand}`,
-          ]);
+        // Si el comando era del jugador (p1) y no hay respuesta, probablemente necesitamos un comando de CPU
+        if (command.includes("p1") && !playerForceSwitch && !cpuForceSwitch) {
+          console.log("Comando del jugador sin respuesta, probando con comando automático de CPU");
 
-          // Reintentar enviando ambos comandos juntos
+          // Esperar un momento para que el frontend se actualice
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Enviar un comando automático para la CPU
           try {
-            const combinedResponse = await API.post(`/battle/command/${battleId}`, {
-              command: `${command}\n${cpuCommand}`,
-            });
+            const cpuCommand = ">p2 move 1";
+            setBattleLogs((prevLogs) => [...prevLogs, `Enviando comando automático: ${cpuCommand}`]);
 
-            if (combinedResponse.data.logs && combinedResponse.data.logs.length > 0) {
-              setBattleLogs((prevLogs) => [...prevLogs, ...combinedResponse.data.logs]);
-              processLogs(combinedResponse.data.logs);
+            const cpuResponse = await API.post(`/battle/command/${battleId}`, { command: cpuCommand });
+
+            if (cpuResponse.data.logs && cpuResponse.data.logs.length > 0) {
+              setBattleLogs((prevLogs) => [...prevLogs, ...cpuResponse.data.logs]);
+              processLogs(cpuResponse.data.logs);
+              console.log("Comando automático de CPU exitoso");
             } else {
-              // Si sigue sin funcionar, mostrar mensaje de error
-              setBattleLogs((prevLogs) => [
-                ...prevLogs,
-                "No se pudieron procesar los comandos. Intenta con otro comando.",
-              ]);
+              setBattleLogs((prevLogs) => [...prevLogs, "No se recibió respuesta al comando automático de CPU."]);
             }
-          } catch (err) {
-            console.error("Error al enviar comandos combinados:", err);
-            setBattleLogs((prevLogs) => [...prevLogs, `Error: ${err.message}`]);
+          } catch (cpuErr) {
+            console.error("Error al enviar comando automático de CPU:", cpuErr);
+            setBattleLogs((prevLogs) => [...prevLogs, `Error al enviar comando automático de CPU: ${cpuErr.message}`]);
           }
-        } else {
-          // Informar al usuario que el comando se envió pero no generó respuesta
-          setBattleLogs((prevLogs) => [...prevLogs, `Comando enviado: ${command} (Sin respuesta del servidor)`]);
         }
       }
 

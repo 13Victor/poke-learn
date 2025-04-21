@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from "react";
 export function BattleLogViewer({ logs, isLoading }) {
   const logContainerRef = useRef(null);
 
+  console.log("BattleLogViewer logs:", logs); // Debugging line
+
   // Auto-scroll para el log de batalla
   useEffect(() => {
     if (logContainerRef.current) {
