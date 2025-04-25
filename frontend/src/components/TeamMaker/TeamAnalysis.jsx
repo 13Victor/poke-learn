@@ -1,3 +1,6 @@
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css"; // Estilos básicos
+import "tippy.js/animations/scale.css"; // Animación opcional
 import React, { useMemo } from "react";
 import { useTeam } from "../../contexts/TeamContext";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
@@ -34,7 +37,7 @@ const TypeTally = ({ type, defenseMarks, coverageMarks }) => {
         <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" />
       </div>
       <div className="tally__marks-container">
-        <ul className="tally__marks">
+        <ul className="tally__marks tally__marks-defense">
           {Array.from({ length: MAX_MARKS }).map((_, i) => (
             <li
               key={`defense-${i}`}
@@ -44,7 +47,8 @@ const TypeTally = ({ type, defenseMarks, coverageMarks }) => {
             />
           ))}
         </ul>
-        <ul className="tally__marks">
+        <hr className="tally__divider" id="separatorLine" style={{ backgroundColor: `var(--type-${type})` }} />
+        <ul className="tally__marks tally__marks-coverage">
           {Array.from({ length: MAX_MARKS }).map((_, i) => (
             <li key={`coverage-${i}`} className={`tally__mark ${coverageMarks[i] ? "tally__mark_good" : ""}`} />
           ))}
@@ -109,6 +113,22 @@ const TeamAnalysis = () => {
   return (
     <div className="team__type-analysis">
       <h3 className="type-analysis__heading">Type Analysis</h3>
+      <div className="type-analysis__legend">
+        <p>
+          Blue tally marks indicate resistances, immunities, or
+          <span>
+            <Tippy
+              content="Same Type Attack Bonus - A 50% damage boost when a Pokémon uses a move matching its type"
+              animation="scale"
+              delay={[300, 100]}
+              placement="top"
+            >
+              <span className="tooltip-text"> STAB </span>
+            </Tippy>
+          </span>
+          coverage. Red tally marks indicate weakness.
+        </p>
+      </div>
       <div className="type-analysis__grid">
         {TYPE_ORDER.map((type) => (
           <TypeTally

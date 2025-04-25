@@ -274,3 +274,7 @@
   font-size: var(--font-size-xs);
   background-color: var(--white-smoke);
 }
+
+.tooltip-text {
+  text-decoration: underline;
+}
