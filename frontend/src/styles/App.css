@@ -1,13 +1,13 @@
 /* Base element styles */
 body {
   font-family: var(--font-family);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--text);
   background-color: var(--background);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-md);
+  padding: var(--spacing-xl);
 }
 
 h1,
@@ -184,15 +184,6 @@ label {
 .px-lg {
   padding-left: var(--spacing-lg);
   padding-right: var(--spacing-lg);
-}
-
-/* Team container */
-.teamContainer {
-  min-width: 1200px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-xs);
 }
 
 @media (max-width: 768px) {

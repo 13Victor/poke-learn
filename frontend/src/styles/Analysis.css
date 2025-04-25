@@ -6,6 +6,7 @@
   padding-inline: var(--spacing-lg);
   padding-top: var(--spacing-lg);
   width: 100%;
+  grid-area: 2 / 1 / 3 / 2;
 }
 
 .type-analysis__grid {

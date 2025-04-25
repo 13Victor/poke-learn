@@ -20,7 +20,7 @@ const PokeSlot = memo(
     console.log(pokemon);
 
     return (
-      <div className={`pokemonTeamCard flex ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
+      <div className={`pokemonTeamCard ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
         <div className="pokemonImageContainer">
           <Tippy
             content={pokemon.name || `Pokémon ${index + 1}`}
