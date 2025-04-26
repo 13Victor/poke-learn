@@ -115,7 +115,7 @@ const TeamAnalysis = () => {
       <h3 className="type-analysis__heading">Type Analysis</h3>
       <div className="type-analysis__legend">
         <p>
-          Blue tally marks indicate resistances, immunities, or
+          Blue tally marks indicate resistances, immunities, or{" "}
           <span>
             <Tippy
               content="Same Type Attack Bonus - A 50% damage boost when a Pokémon uses a move matching its type"
@@ -123,9 +123,9 @@ const TeamAnalysis = () => {
               delay={[300, 100]}
               placement="top"
             >
-              <span className="tooltip-text"> STAB </span>
+              <span className="tooltip-text">STAB</span>
             </Tippy>
-          </span>
+          </span>{" "}
           coverage. Red tally marks indicate weakness.
         </p>
       </div>

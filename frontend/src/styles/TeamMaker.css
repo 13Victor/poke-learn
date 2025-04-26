@@ -14,8 +14,8 @@
   display: grid;
   grid-template-columns: 950px 1fr;
   grid-template-rows: repeat(2, 1fr);
-  grid-column-gap: var(--spacing-md);
-  grid-row-gap: var(--spacing-md);
+  grid-column-gap: var(--spacing-lg);
+  grid-row-gap: var(--spacing-lg);
   overflow: hidden;
 }
 
@@ -58,7 +58,6 @@
 }
 
 .pokemonTeamCard button {
-  font-size: var(--font-size-xs);
   border: none;
   height: 100%;
   outline: 1px solid var(--silver);
@@ -277,4 +276,8 @@
 
 .tooltip-text {
   text-decoration: underline;
+}
+
+.tippy-content {
+  text-align: center;
 }

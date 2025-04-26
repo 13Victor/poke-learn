@@ -2,6 +2,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
 }
 
 :root {
