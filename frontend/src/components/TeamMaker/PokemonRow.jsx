@@ -38,8 +38,9 @@ const PokemonRow = memo(
                 }
                 placement="top"
                 animation="scale"
-                theme="light-border"
+                theme={`type-tooltip-${type.toLowerCase()} transparent`}
                 delay={[300, 100]}
+                arrow={true} // asegúrate que arrow esté activado
               >
                 <img className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
               </Tippy>

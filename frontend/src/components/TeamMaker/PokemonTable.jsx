@@ -4,7 +4,7 @@ import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 
 // Definir altura de filas constante para todo el componente
-const ROW_HEIGHT = 38;
+const ROW_HEIGHT = 42.5;
 
 // Define tier order for custom sorting
 const TIER_ORDER = {
@@ -92,6 +92,12 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
       if (config.key === "tier") {
         const tierA = TIER_ORDER[a.tier] || 999;
         const tierB = TIER_ORDER[b.tier] || 999;
+
+        // If tiers are the same, sort by name as secondary criterion
+        if (tierA === tierB) {
+          return config.direction === "ascending" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        }
+
         return config.direction === "ascending" ? tierA - tierB : tierB - tierA;
       }
 
@@ -220,8 +226,14 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   // Function to render sort indicator
   const renderSortIndicator = (key) => {
-    if (sortConfig.key !== key) return null;
-    return sortConfig.direction === "ascending" ? " ▲" : " ▼";
+    if (sortConfig.key !== key) {
+      return <i className="fa-solid fa-sort"></i>;
+    }
+    return sortConfig.direction === "ascending" ? (
+      <i className="fa-solid fa-sort-up"></i>
+    ) : (
+      <i className="fa-solid fa-sort-down"></i>
+    );
   };
 
   return (
@@ -241,34 +253,34 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
             <tr>
               <th>#</th>
               <th onClick={() => handleSort("name")} className="sortable-header">
-                Name{renderSortIndicator("name")}
+                Name {renderSortIndicator("name")}
               </th>
               <th onClick={() => handleSort("tier")} className="sortable-header">
-                Tier{renderSortIndicator("tier")}
+                Tier {renderSortIndicator("tier")}
               </th>
               <th onClick={() => handleSort("types")} className="sortable-header">
-                Types{renderSortIndicator("types")}
+                Types {renderSortIndicator("types")}
               </th>
               <th onClick={() => handleSort("abilities")} className="sortable-header">
-                Abilities{renderSortIndicator("abilities")}
+                Abilities {renderSortIndicator("abilities")}
               </th>
               <th onClick={() => handleSort("baseStats.hp")} className="sortable-header">
-                HP{renderSortIndicator("baseStats.hp")}
+                HP {renderSortIndicator("baseStats.hp")}
               </th>
               <th onClick={() => handleSort("baseStats.atk")} className="sortable-header">
-                ATK{renderSortIndicator("baseStats.atk")}
+                ATK {renderSortIndicator("baseStats.atk")}
               </th>
               <th onClick={() => handleSort("baseStats.def")} className="sortable-header">
-                DEF{renderSortIndicator("baseStats.def")}
+                DEF {renderSortIndicator("baseStats.def")}
               </th>
               <th onClick={() => handleSort("baseStats.spa")} className="sortable-header">
-                SPA{renderSortIndicator("baseStats.spa")}
+                SPA {renderSortIndicator("baseStats.spa")}
               </th>
               <th onClick={() => handleSort("baseStats.spd")} className="sortable-header">
-                SPD{renderSortIndicator("baseStats.spd")}
+                SPD {renderSortIndicator("baseStats.spd")}
               </th>
               <th onClick={() => handleSort("baseStats.spe")} className="sortable-header">
-                SPE{renderSortIndicator("baseStats.spe")}
+                SPE {renderSortIndicator("baseStats.spe")}
               </th>
             </tr>
           </thead>

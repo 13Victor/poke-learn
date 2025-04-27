@@ -112,6 +112,6 @@
 
 .tally__divider {
   margin: 0 !important;
-  height: 2px;
+  height: var(--spacing-xs) !important;
   margin-inline: -2px !important;
 }

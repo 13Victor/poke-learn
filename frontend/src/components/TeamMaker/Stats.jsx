@@ -73,44 +73,52 @@ const Stats = ({ pokemon, index }) => {
       >
         <Stat
           label="HP"
+          fullname="Hit Points"
           value={stats.hp}
           baseValue={pokemon?.baseStats?.hp}
           maxValue={maxValues.hp}
           isStatsSelected={isStatsSelected}
         />
         <Stat
-          label="Speed"
-          value={stats.spe}
-          baseValue={pokemon?.baseStats?.spe}
-          maxValue={maxValues.spe}
-          isStatsSelected={isStatsSelected}
-        />
-        <Stat
           label="Atk"
+          fullname="Attack"
           value={stats.atk}
           baseValue={pokemon?.baseStats?.atk}
           maxValue={maxValues.atk}
           isStatsSelected={isStatsSelected}
         />
         <Stat
-          label="Sp. Atk"
-          value={stats.spa}
-          baseValue={pokemon?.baseStats?.spa}
-          maxValue={maxValues.spa}
-          isStatsSelected={isStatsSelected}
-        />
-        <Stat
           label="Def"
+          fullname="Defense"
           value={stats.def}
           baseValue={pokemon?.baseStats?.def}
           maxValue={maxValues.def}
           isStatsSelected={isStatsSelected}
         />
+
         <Stat
-          label="Sp. Def"
+          label="SpA"
+          fullname="Special Attack"
+          value={stats.spa}
+          baseValue={pokemon?.baseStats?.spa}
+          maxValue={maxValues.spa}
+          isStatsSelected={isStatsSelected}
+        />
+
+        <Stat
+          label="Spd"
+          fullname="Special Defense"
           value={stats.spd}
           baseValue={pokemon?.baseStats?.spd}
           maxValue={maxValues.spd}
+          isStatsSelected={isStatsSelected}
+        />
+        <Stat
+          label="Spe"
+          fullname="Speed"
+          value={stats.spe}
+          baseValue={pokemon?.baseStats?.spe}
+          maxValue={maxValues.spe}
           isStatsSelected={isStatsSelected}
         />
       </div>

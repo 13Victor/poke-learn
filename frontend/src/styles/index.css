@@ -34,25 +34,25 @@
   --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
     "Open Sans", "Helvetica Neue", sans-serif;
 
-  --font-size-xs: 0.75rem; /* 12px */
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-md: 1rem; /* 16px */
-  --font-size-lg: 1.125rem; /* 18px */
-  --font-size-xl: 1.25rem; /* 20px */
-  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-xs: 12px; /* 12px */
+  --font-size-sm: 14px; /* 14px */
+  --font-size-md: 16px; /* 16px */
+  --font-size-lg: 18px; /* 18px */
+  --font-size-xl: 20px; /* 20px */
+  --font-size-2xl: 24px; /* 24px */
 
   /* Spacing */
-  --spacing-xs: 0.25rem; /* 4px */
-  --spacing-sm: 0.5rem; /* 8px */
-  --spacing-md: 0.75rem; /* 12px */
-  --spacing-lg: 1rem; /* 16px */
-  --spacing-xl: 1.5rem; /* 24px */
-  --spacing-2xl: 2rem; /* 32px */
+  --spacing-xs: 4px; /* 4px */
+  --spacing-sm: 8px; /* 8px */
+  --spacing-md: 12px; /* 12px */
+  --spacing-lg: 16px; /* 16px */
+  --spacing-xl: 24px; /* 24px */
+  --spacing-2xl: 32px; /* 32px */
 
   /* Border radius */
-  --radius-sm: 0.25rem; /* 4px */
-  --radius-md: 0.5rem; /* 8px */
-  --radius-lg: 0.75rem; /* 12px */
+  --radius-sm: 4px; /* 4px */
+  --radius-md: 8px; /* 8px */
+  --radius-lg: 12px; /* 12px */
   --radius-full: 9999px; /* Rounded full */
 
   /* Shadows */
@@ -65,24 +65,24 @@
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
 
-  --type-normal: #9ea09f;
-  --type-fire: #c8432d;
-  --type-water: #5475ef;
-  --type-electric: #ebc719;
-  --type-grass: #63a02d;
-  --type-ice: #83d3ff;
-  --type-fighting: #e58c12;
-  --type-poison: #8435cb;
-  --type-ground: #825623;
-  --type-flying: #94b4ef;
-  --type-psychic: #d25079;
-  --type-bug: #94a420;
-  --type-rock: #acab83;
-  --type-ghost: #674170;
-  --type-dragon: #5b50e1;
-  --type-dark: #4d433f;
-  --type-steel: #769db9;
-  --type-fairy: #d871ee;
+  --type-normal: #9fa19f;
+  --type-fire: #e62829;
+  --type-water: #2980ef;
+  --type-electric: #fac000;
+  --type-grass: #3fa129;
+  --type-ice: #3fd8ff;
+  --type-fighting: #ff8000;
+  --type-poison: #9141cb;
+  --type-ground: #915121;
+  --type-flying: #81b9ef;
+  --type-psychic: #ef4179;
+  --type-bug: #91a119;
+  --type-rock: #afa981;
+  --type-ghost: #704170;
+  --type-dragon: #5060e1;
+  --type-dark: #50413f;
+  --type-steel: #60a1b8;
+  --type-fairy: #ef70ef;
 
   --type-normal-bs: rgba(144, 153, 161, 0.3);
   --type-fire-bs: rgba(255, 156, 84, 0.3);

@@ -1,7 +1,10 @@
 import React, { memo } from "react";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
+import "tippy.js/animations/scale.css";
 
 // Este componente representa una estadística individual
-const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
+const Stat = memo(({ label, value, baseValue, maxValue, fullname }) => {
   // Calculamos el porcentaje relativo a un valor máximo esperado para una estadística
   const percentage = Math.min(100, (value / maxValue) * 100);
 
@@ -55,8 +58,11 @@ const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
           backgroundColor: statColor,
         }}
       >
-        {label}
+        <Tippy key={label} content={fullname} placement="top" animation="scale" theme="light-border" delay={[300, 100]}>
+          <p>{label}</p>
+        </Tippy>
       </div>
+
       <div
         className="statValue"
         style={{

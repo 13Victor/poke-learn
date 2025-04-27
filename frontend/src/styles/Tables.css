@@ -232,8 +232,15 @@ tr.odd-row:hover {
   cursor: pointer;
   position: relative;
   user-select: none;
+  white-space: nowrap;
 }
 
 .sortable-header:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sortable-header i {
+  margin-left: 5px;
+  color: var(--white);
+  font-size: 14px;
 }
