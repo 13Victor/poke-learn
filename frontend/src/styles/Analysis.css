@@ -83,18 +83,17 @@
   aspect-ratio: 1;
   background-color: var(--white-smoke);
   border-radius: var(--radius-full);
+  border: 1px solid var(--silver);
 }
 
 .tally__mark_good {
   background-color: var(--blue-gray);
+  border: 0;
 }
 
 .tally__mark_bad {
   background-color: var(--red-gray);
-}
-
-.tally__mark:hover {
-  transform: translateY(-4px);
+  border: 0;
 }
 
 .tally__group {

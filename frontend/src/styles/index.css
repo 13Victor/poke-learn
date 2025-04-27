@@ -18,14 +18,14 @@
   /* Primary palette */
   --picton-blue-light: #ccedfeff;
   --picton-blue-normal: rgb(120, 210, 255);
-  --blue-gray: #6ab2dbff;
   --picton-blue: #00a6fbff;
   --steel-blue: #0582caff;
   --lapis-lazuli: #006494ff;
   --prussian-blue: #003554ff;
   --rich-black: #051923ff;
 
-  --red-gray: rgb(219, 106, 106);
+  --red-gray: #db6a6a;
+  --blue-gray: #6ab2dbff;
 
   --background: var(--white-smoke);
   --text: var(--black);
