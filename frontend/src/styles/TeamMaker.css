@@ -12,7 +12,7 @@
 
 .teammaker-container {
   display: grid;
-  grid-template-columns: 950px 1fr;
+  grid-template-columns: 900px 1fr;
   grid-template-rows: repeat(2, 1fr);
   grid-column-gap: var(--spacing-lg);
   grid-row-gap: var(--spacing-lg);

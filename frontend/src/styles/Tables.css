@@ -51,7 +51,6 @@ thead {
 }
 
 th {
-  font-size: var(--font-size-md);
   white-space: nowrap;
   padding: var(--spacing-xs) var(--spacing-sm);
 }
