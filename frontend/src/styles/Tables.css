@@ -225,3 +225,15 @@ tr.odd-row:hover {
   font-weight: 400;
   min-height: 20px;
 }
+
+/* Add this to your existing Tables.css file */
+
+.sortable-header {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.sortable-header:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
