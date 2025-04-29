@@ -330,15 +330,19 @@ export const TeamProvider = ({ children }) => {
 
       // Función para seleccionar slot y cambiar vista en una sola acción
       selectSlot: (slotIndex) => {
+        const isSameSlot = slotIndex === state.selectedSlot;
+
         dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: slotIndex });
         dispatch({
           type: ACTIONS.SET_SELECTED_MOVE,
           payload: { slot: slotIndex, moveIndex: 0 },
         });
+
         dispatch({
           type: ACTIONS.SET_FLOW_STAGE,
           payload: FLOW_STAGES.POKEMON,
         });
+
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "pokemon" });
       },
 

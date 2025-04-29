@@ -32,6 +32,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   const scrollRAF = useRef(null);
   const [processedData, setProcessedData] = useState([]);
   const [isProcessingData, setIsProcessingData] = useState(false);
+  const processedRef = useRef(false); // Nuevo ref para rastrear si los datos han sido procesados
   const [sortConfig, setSortConfig] = useState({ key: "tier", direction: "ascending" }); // Default sort by tier ascending
 
   // Load pokemon data if not already loaded
@@ -47,8 +48,15 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   // Process data only when pokemons change and not during initial loading
   useEffect(() => {
-    if (pokemonsLoaded && pokemons.length > 0 && !isProcessingData) {
+    // Solo procesamos los datos si no se han procesado antes o si los datos de Pokémon han cambiado
+    if (
+      pokemonsLoaded &&
+      pokemons.length > 0 &&
+      !isProcessingData &&
+      (!processedRef.current || processedData.length === 0 || processedData[0]?.id !== pokemons[0]?.id)
+    ) {
       setIsProcessingData(true);
+      processedRef.current = true; // Marcamos que los datos están siendo procesados
 
       // Use setTimeout to prevent UI blocking during processing
       setTimeout(() => {
@@ -63,7 +71,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
         console.log("✅ Pokémon table data processed");
       }, 0);
     }
-  }, [pokemons, pokemonsLoaded, isProcessingData]);
+  }, [pokemons, pokemonsLoaded, isProcessingData, processedData]);
 
   // Search functionality
   const handleSearch = useCallback((e) => {
@@ -219,6 +227,11 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   if (pokemonsError) {
     return <p>❌ Error: {pokemonsError}</p>;
+  }
+
+  // Check if we have processed data
+  if (processedData.length === 0) {
+    return <p>No Pokémon data available</p>;
   }
 
   // Only show visible rows
