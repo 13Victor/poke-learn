@@ -372,3 +372,13 @@
 .tippy-box[data-theme~="type-tooltip-fairy"] > .tippy-arrow::before {
   border-top-color: var(--type-fairy);
 }
+
+/* Cambiar fondo y color de texto */
+.tippy-box {
+  border-radius: var(--radius-full);
+}
+
+/* Reduce el padding vertical */
+.tippy-box .tippy-content {
+  padding-block: 1px;
+}
