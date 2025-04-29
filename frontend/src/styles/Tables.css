@@ -51,8 +51,10 @@ thead {
 }
 
 th {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  padding-block: var(--spacing-xs);
   white-space: nowrap;
-  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 td {
@@ -74,10 +76,8 @@ tr.odd-row:hover {
   overflow-y: auto;
   flex-grow: 1;
   min-height: 0;
-  will-change: transform; /* Optimización de rendimiento */
+  will-change: transform;
   width: 100%;
-  /* Set a default height that will be overridden by flex-grow */
-  height: 300px;
 }
 
 .type-tooltip-content {
@@ -143,12 +143,12 @@ tr.odd-row:hover {
 }
 .pokemon-table th:nth-child(5),
 .pokemon-table td:nth-child(5) {
-  width: 37%;
+  width: 31%;
   text-align: center;
 }
 .pokemon-table th:nth-child(n + 6),
 .pokemon-table td:nth-child(n + 6) {
-  width: 5%;
+  width: 6%;
   text-align: center;
 }
 

@@ -32,7 +32,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   const scrollRAF = useRef(null);
   const [processedData, setProcessedData] = useState([]);
   const [isProcessingData, setIsProcessingData] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
+  const [sortConfig, setSortConfig] = useState({ key: "tier", direction: "ascending" }); // Default sort by tier ascending
 
   // Load pokemon data if not already loaded
   useEffect(() => {
@@ -227,7 +227,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   // Function to render sort indicator
   const renderSortIndicator = (key) => {
     if (sortConfig.key !== key) {
-      return <i className="fa-solid fa-sort"></i>;
+      return null; // Don't show any indicator for unsorted columns
     }
     return sortConfig.direction === "ascending" ? (
       <i className="fa-solid fa-sort-up"></i>

@@ -3,9 +3,31 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 
+// Tier descriptions
+const TIER_DESCRIPTIONS = {
+  OU: "Overused",
+  UU: "Underused",
+  UUBL: "Underused Banlist",
+  RUBL: "Rarely Used Banlist",
+  RU: "Rarely Used",
+  NUBL: "Never Used Banlist",
+  NU: "Never Used",
+  PUBL: "Partially Used Banlist",
+  PU: "Partially Used",
+  ZUBL: "Zero Used Banlist",
+  ZU: "Zero Used",
+  NFE: "Not Fully Evolved",
+  LC: "Little Cup",
+};
+
 const PokemonRow = memo(
   ({ pokemon, onClick, isEven }) => {
     const imageUrl = `/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`;
+
+    // Get tier description or provide default message
+    const getTierDescription = (tier) => {
+      return TIER_DESCRIPTIONS[tier] || `${tier} - No description available`;
+    };
 
     return (
       <tr onClick={() => onClick(pokemon)} className={isEven ? "even-row" : "odd-row"}>
@@ -23,7 +45,15 @@ const PokemonRow = memo(
         <td>{pokemon.name}</td>
         <td>
           <div className="pokemon-tier-cell">
-            <p className="pokemon-tier">{pokemon.tier}</p>
+            <Tippy
+              content={getTierDescription(pokemon.tier)}
+              placement="top"
+              animation="scale"
+              theme="light-border"
+              delay={[300, 100]}
+            >
+              <p className="pokemon-tier">{pokemon.tier}</p>
+            </Tippy>
           </div>
         </td>
         <td>
@@ -40,9 +70,9 @@ const PokemonRow = memo(
                 animation="scale"
                 theme={`type-tooltip-${type.toLowerCase()} transparent`}
                 delay={[300, 100]}
-                arrow={true} // asegúrate que arrow esté activado
+                arrow={true}
               >
-                <img className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
+                <img className="type-icon" src={`/assets/type-icons/${type}2.png`} alt={type} />
               </Tippy>
             ))}
           </div>

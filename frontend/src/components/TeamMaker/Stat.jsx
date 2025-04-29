@@ -50,28 +50,28 @@ const Stat = memo(({ label, value, baseValue, maxValue, fullname }) => {
   const statColor = getGradientColor(percentage);
 
   return (
-    <div className="statContainer">
-      <div
-        className="statLabel"
-        style={{
-          color: "black",
-          backgroundColor: statColor,
-        }}
-      >
-        <Tippy key={label} content={fullname} placement="top" animation="scale" theme="light-border" delay={[300, 100]}>
+    <Tippy content={fullname} placement="top" animation="scale" theme="light-border" delay={[300, 100]}>
+      <div className="statContainer">
+        <div
+          className="statLabel"
+          style={{
+            color: "black",
+            backgroundColor: statColor,
+          }}
+        >
           <p>{label}</p>
-        </Tippy>
-      </div>
+        </div>
 
-      <div
-        className="statValue"
-        style={{
-          color: "black",
-        }}
-      >
-        {value}
+        <div
+          className="statValue"
+          style={{
+            color: "black",
+          }}
+        >
+          {value}
+        </div>
       </div>
-    </div>
+    </Tippy>
   );
 });
 

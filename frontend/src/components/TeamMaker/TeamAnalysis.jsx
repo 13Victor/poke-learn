@@ -34,7 +34,20 @@ const TypeTally = ({ type, defenseMarks, coverageMarks }) => {
   return (
     <div className="tally">
       <div className="tally__type">
-        <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" />
+        <Tippy
+          content={
+            <div className="type-tooltip-content">
+              <img className="type-icon" src={`/assets/type-icons/${upperType}_banner.png`} alt={type} />
+            </div>
+          }
+          placement="top"
+          animation="scale"
+          theme={`type-tooltip-${type.toLowerCase()} transparent`}
+          delay={[300, 100]}
+          arrow={true}
+        >
+          <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" />
+        </Tippy>
       </div>
       <div className="tally__marks-container">
         <ul className="tally__marks tally__marks-defense">
