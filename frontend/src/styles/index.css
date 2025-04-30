@@ -103,4 +103,8 @@
   --type-steel-bs: rgba(90, 142, 161, 0.3);
   --type-fairy-bs: rgba(236, 143, 230, 0.3);
   --type-show-all-bs: rgba(28, 28, 28, 0.3);
+
+  --category-physical: #ea6767;
+  --category-special: #4571f1;
+  --category-status: #959595;
 }

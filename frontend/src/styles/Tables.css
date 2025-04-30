@@ -61,7 +61,6 @@ td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 /* Hover consistente para todas las tablas */
@@ -208,11 +207,28 @@ tr.odd-row:hover {
   height: 100%;
 }
 
-.type-icon {
+.type-icon,
+.category-icon {
   height: 20px;
   object-fit: contain;
 }
 
+.category-icon {
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.category-icon.category-physical {
+  background-color: var(--category-physical);
+}
+
+.category-icon.category-special {
+  background-color: var(--category-special);
+}
+
+.category-icon.category-status {
+  background-color: var(--category-status);
+}
 .pokemon-tier,
 .ability-name {
   display: flex;
@@ -223,6 +239,144 @@ tr.odd-row:hover {
   border-radius: var(--radius-full);
   font-weight: 400;
   min-height: 20px;
+}
+
+/* Estilos específicos para MoveTable */
+.move-table th:nth-child(1),
+.move-table td:nth-child(1) {
+  width: 25%;
+  text-align: left;
+}
+.move-table th:nth-child(2),
+.move-table td:nth-child(2) {
+  width: 15%;
+  text-align: center;
+}
+.move-table th:nth-child(3),
+.move-table td:nth-child(3) {
+  width: 15%;
+  text-align: center;
+}
+.move-table th:nth-child(4),
+.move-table td:nth-child(4),
+.move-table th:nth-child(5),
+.move-table td:nth-child(5),
+.move-table th:nth-child(6),
+.move-table td:nth-child(6) {
+  width: 15%;
+  text-align: center;
+}
+
+/* Estilos específicos para AbilityTable */
+.ability-table th:nth-child(1),
+.ability-table td:nth-child(1) {
+  width: 10%;
+  text-align: center;
+}
+.ability-table th:nth-child(2),
+.ability-table td:nth-child(2) {
+  width: 25%;
+  text-align: left;
+}
+.ability-table th:nth-child(3),
+.ability-table td:nth-child(3) {
+  width: 65%;
+  text-align: left;
+}
+
+/* Estilos específicos para StatsTable */
+.statsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--spacing-md);
+}
+
+.statsTable th,
+.statsTable td {
+  padding: var(--spacing-sm);
+  text-align: center;
+}
+
+.statsTable th:first-child,
+.statsTable td:first-child {
+  text-align: left;
+  width: 15%;
+}
+
+.statsTable th:nth-child(2),
+.statsTable td:nth-child(2) {
+  width: 10%;
+}
+
+.statsTable th:nth-child(3),
+.statsTable td:nth-child(3) {
+  width: 40%;
+}
+
+.statsTable th:nth-child(4),
+.statsTable td:nth-child(4) {
+  width: 15%;
+}
+
+.statsTable th:nth-child(5),
+.statsTable td:nth-child(5) {
+  width: 20%;
+}
+
+.statsTable tr.even-row {
+  background-color: var(--white);
+}
+
+.statsTable tr.odd-row {
+  background-color: var(--white-smoke);
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.input-group input[type="range"] {
+  flex: 3;
+}
+
+.input-group input[type="number"] {
+  flex: 1;
+  width: 60px;
+}
+
+.statsControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.statsInfo {
+  background-color: var(--white-smoke);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-md);
+}
+
+.nature-plus {
+  background-color: rgba(99, 187, 91, 0.1);
+}
+
+.nature-minus {
+  background-color: rgba(255, 156, 84, 0.1);
+}
+
+.ev-error {
+  color: var(--red-gray);
+  font-weight: bold;
+}
+
+.finalStat {
+  font-weight: bold;
 }
 
 /* Add this to your existing Tables.css file */

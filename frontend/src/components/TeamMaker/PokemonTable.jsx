@@ -4,7 +4,7 @@ import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 
 // Definir altura de filas constante para todo el componente
-const ROW_HEIGHT = 42.5;
+const ROW_HEIGHT = 40;
 
 // Define tier order for custom sorting
 const TIER_ORDER = {

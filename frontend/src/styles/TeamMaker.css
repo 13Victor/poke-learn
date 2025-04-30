@@ -84,6 +84,7 @@
 .pokemonImageContainer img {
   position: absolute;
   height: 100%;
+  margin-right: var(--spacing-xs);
   width: 100%;
   object-fit: contain;
 }
@@ -143,7 +144,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-full);
 }
 
 /* Item and Ability Container */

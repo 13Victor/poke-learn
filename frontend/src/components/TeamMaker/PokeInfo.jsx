@@ -15,11 +15,17 @@ const PokeInfo = ({ name, level, types, index }) => {
       <span className="pokemonTypeing flex-center">
         {types.map((type, index) => (
           <Tippy
-            key={index} // ✅ Debe estar aquí, en el elemento padre
-            content={type}
-            animation="scale"
-            delay={[300, 100]}
+            key={index}
+            content={
+              <div className="type-tooltip-content">
+                <img className="type-icon" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
+              </div>
+            }
             placement="top"
+            animation="scale"
+            theme={`type-tooltip-${type.toLowerCase()} transparent`}
+            delay={[300, 100]}
+            arrow={true}
           >
             <img className="small-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
           </Tippy>

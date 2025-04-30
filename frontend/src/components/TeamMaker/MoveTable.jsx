@@ -4,6 +4,9 @@ import MoveRow from "./MoveRow";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 
+// Definir altura de filas constante para todo el componente
+const ROW_HEIGHT = 40;
+
 const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIndex }) => {
   const {
     getMoves,
@@ -179,25 +182,35 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
             </tr>
           </thead>
           <tbody>
-            <tr style={{ height: `${visibleRange.start * 40}px`, padding: 0 }}>
-              <td colSpan="6" style={{ padding: 0 }}></td>
-            </tr>
+            {visibleRange.start > 0 && (
+              <tr className="spacer-row" style={{ height: `${visibleRange.start * ROW_HEIGHT}px` }}>
+                <td colSpan="6"></td>
+              </tr>
+            )}
 
             {visibleMoves.length > 0 ? (
-              visibleMoves.map((move) => <MoveRow key={move.name} move={move} onClick={handleRowClick} />)
+              visibleMoves.map((move, index) => (
+                <MoveRow
+                  key={move.name}
+                  move={move}
+                  onClick={handleRowClick}
+                  isEven={(visibleRange.start + index) % 2 === 0}
+                />
+              ))
             ) : (
               <tr>
                 <td colSpan="6">❌ No moves available</td>
               </tr>
             )}
-            <tr
-              style={{
-                height: `${(pokemonMoves.length - visibleRange.end) * 40}px`,
-                padding: 0,
-              }}
-            >
-              <td colSpan="6" style={{ padding: 0 }}></td>
-            </tr>
+
+            {pokemonMoves.length > visibleRange.end && (
+              <tr
+                className="spacer-row"
+                style={{ height: `${(pokemonMoves.length - visibleRange.end) * ROW_HEIGHT}px` }}
+              >
+                <td colSpan="6"></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

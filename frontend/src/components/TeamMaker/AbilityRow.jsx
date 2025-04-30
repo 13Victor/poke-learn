@@ -1,11 +1,11 @@
 import React from "react";
 
-const AbilityRow = React.memo(({ ability, abilityType, onClick }) => {
+const AbilityRow = React.memo(({ ability, abilityType, onClick, isEven }) => {
   // Determine the label for ability type (0, 1, or H for Hidden)
   const abilityTypeLabel = abilityType === "H" ? "H" : abilityType;
 
   return (
-    <tr onClick={() => onClick(ability, abilityType)}>
+    <tr onClick={() => onClick(ability, abilityType)} className={isEven ? "even-row" : "odd-row"}>
       <td className="ability-type">{abilityTypeLabel}</td>
       <td>{ability[0]}</td>
       <td>{ability[1] || "No description available"}</td>

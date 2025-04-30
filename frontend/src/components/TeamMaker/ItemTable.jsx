@@ -153,7 +153,7 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
         <table>
           <thead>
             <tr>
-              <th>Image</th>
+              <th>#</th>
               <th>Name</th>
               <th>Description</th>
             </tr>
