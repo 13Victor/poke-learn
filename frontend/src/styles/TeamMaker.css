@@ -280,6 +280,7 @@
 
 .tippy-content {
   text-align: center;
+  height: 20px;
 }
 
 .type-tooltip-content {

@@ -55,21 +55,13 @@ const Stat = memo(({ label, value, baseValue, maxValue, fullname }) => {
         <div
           className="statLabel"
           style={{
-            color: "black",
             backgroundColor: statColor,
           }}
         >
           <p>{label}</p>
         </div>
 
-        <div
-          className="statValue"
-          style={{
-            color: "black",
-          }}
-        >
-          {value}
-        </div>
+        <div className="statValue">{value}</div>
       </div>
     </Tippy>
   );

@@ -12,7 +12,7 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
           <Tippy
             content={
               <div className="type-tooltip-content">
-                <img className="type-icon" src={`/assets/type-icons/${move.type}_banner.png`} alt={move.type} />
+                <img className="type-icon" src={`/assets/type-icons/${move.type}_banner.png`} />
               </div>
             }
             placement="top"
@@ -21,16 +21,30 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
             delay={[300, 100]}
             arrow={true}
           >
-            <img className="type-icon" src={`/assets/type-icons/${move.type}2.png`} alt={move.type} />
+            <img className="type-icon" src={`/assets/type-icons/${move.type}2.png`} />
           </Tippy>
         </div>
       </td>
       <td>
-        <img
-          src={`/assets/move-category/${move.category}.png`}
-          title={move.category}
-          className={`category-icon category-${move.category.toLowerCase()}`}
-        />
+        <Tippy
+          content={
+            <div className="category-tooltip-content">
+              <img src={`/assets/move-category/${move.category}.png`} />
+              <p>{move.category}</p>
+            </div>
+          }
+          placement="top"
+          animation="scale"
+          theme={`category-tooltip-${move.category.toLowerCase()}`}
+          delay={[300, 100]}
+          arrow={true}
+        >
+          <img
+            src={`/assets/move-category/${move.category}.png`}
+            title={move.category}
+            className={`category-icon category-${move.category.toLowerCase()}`}
+          />
+        </Tippy>
       </td>
       <td>{move.basePower || "-"}</td>
       <td>{move.accuracy || "-"}</td>
