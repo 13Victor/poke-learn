@@ -197,7 +197,8 @@ tr.odd-row:hover {
 
 .types-cell,
 .pokemon-tier-cell,
-.abilities-cell {
+.abilities-cell,
+.category-cell {
   display: flex;
   flex-direction: row;
   align-items: center;
