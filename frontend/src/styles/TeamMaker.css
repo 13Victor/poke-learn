@@ -280,17 +280,26 @@
 
 .tippy-content {
   text-align: center;
-  height: 20px;
+  min-height: 20px;
 }
 
 .type-tooltip-content {
   padding: 0;
 }
 
-/* ...existing code... */
+.tippy-box {
+  border-radius: var(--radius-full);
+}
 
-/* Type-specific Tippy styles */
-/* Type-specific Tippy styles */
+.tippy-box[data-theme~="not-rounded"] {
+  border-radius: var(--radius-md);
+  line-height: var(--font-size-sm);
+  padding-block: var(--spacing-xs);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
+  text-wrap: balance;
+  max-width: 300px;
+}
+
 .tippy-box[data-theme~="transparent"] {
   background-color: transparent;
   border-radius: var(--radius-full);
@@ -372,11 +381,6 @@
 
 .tippy-box[data-theme~="type-tooltip-fairy"] > .tippy-arrow::before {
   border-top-color: var(--type-fairy);
-}
-
-/* Cambiar fondo y color de texto */
-.tippy-box {
-  border-radius: var(--radius-full);
 }
 
 /* Reduce el padding vertical */

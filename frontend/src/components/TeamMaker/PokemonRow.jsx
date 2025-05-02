@@ -1,7 +1,8 @@
-import React, { memo } from "react";
+import React, { memo, useContext } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 
 // Tier descriptions
 const TIER_DESCRIPTIONS = {
@@ -22,11 +23,36 @@ const TIER_DESCRIPTIONS = {
 
 const PokemonRow = memo(
   ({ pokemon, onClick, isEven }) => {
+    const { abilities } = usePokemonData();
     const imageUrl = `/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`;
 
     // Get tier description or provide default message
     const getTierDescription = (tier) => {
       return TIER_DESCRIPTIONS[tier] || `${tier} - No description available`;
+    };
+
+    // Encuentra la descripción de la habilidad
+    const getAbilityDescription = (abilityName) => {
+      if (!abilities || !abilityName) return "No description available";
+
+      // Buscar en el objeto abilities por nombre de habilidad
+      for (const abilityKey in abilities) {
+        const abilityData = abilities[abilityKey];
+        // Buscar en las entradas de cada ability
+        for (const abilityCategoryKey in abilityData) {
+          // Los valores son [abilityName, abilityDescription]
+          if (abilityCategoryKey === "abilities") {
+            for (const slot in abilityData.abilities) {
+              const [name, description] = abilityData.abilities[slot];
+              if (name === abilityName) {
+                return description || "No description available";
+              }
+            }
+          }
+        }
+      }
+
+      return "No description available";
     };
 
     return (
@@ -80,9 +106,18 @@ const PokemonRow = memo(
         <td>
           <div className="abilities-cell">
             {pokemon.abilities.map((ability, index) => (
-              <span className="ability-name" key={ability}>
-                {ability}
-              </span>
+              <Tippy
+                key={ability}
+                content={getAbilityDescription(ability)}
+                placement="top"
+                animation="scale"
+                theme="not-rounded"
+                delay={[300, 0]}
+              >
+                <span className="ability-name" key={ability}>
+                  {ability}
+                </span>
+              </Tippy>
             ))}
           </div>
         </td>
