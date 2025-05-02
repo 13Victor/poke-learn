@@ -4,9 +4,23 @@ import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 
 const MoveRow = memo(({ move, onClick, isEven }) => {
+  console.log("Move with description:", move.name, move.shortDesc || move.desc);
   return (
     <tr onClick={() => onClick(move)} className={isEven ? "even-row" : "odd-row"}>
-      <td>{move.name}</td>
+      <td>
+        <div className="move-name-cell">
+          <img
+            src={`/assets/mt-sprites/MT_${move.type}.png`}
+            alt={`${move.type} type`}
+            className="move-type-icon"
+            onError={(e) => {
+              console.warn(`Failed to load MT icon for ${move.type}`);
+              e.target.style.display = "none";
+            }}
+          />
+          <span>{move.name}</span>
+        </div>
+      </td>
       <td>
         <div className="types-cell">
           <Tippy
@@ -49,8 +63,9 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
         </div>
       </td>
       <td>{move.basePower || "-"}</td>
-      <td>{move.accuracy || "-"}</td>
+      <td>{move.accuracy === true ? "-" : move.accuracy || "-"}</td>
       <td>{move.pp}</td>
+      <td className="move-description">{move.shortDesc || move.desc || "No description available"}</td>
     </tr>
   );
 });

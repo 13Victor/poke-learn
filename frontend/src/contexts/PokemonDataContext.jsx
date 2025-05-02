@@ -8,10 +8,11 @@ const createResourceTracker = () => {
   const resources = {
     pokemons: { loaded: false, loading: false, data: [], error: null },
     moves: { loaded: false, loading: false, data: {}, error: null },
+    movesDesc: { loaded: false, loading: false, data: {}, error: null }, // Add moves descriptions
     learnsets: { loaded: false, loading: false, data: {}, error: null },
     items: { loaded: false, loading: false, data: {}, error: null },
-    abilities: { loaded: false, loading: false, data: {}, error: null }, // Added abilities
-    types: { loaded: false, loading: false, data: {}, error: null }, // Add types resource
+    abilities: { loaded: false, loading: false, data: {}, error: null },
+    types: { loaded: false, loading: false, data: {}, error: null },
   };
 
   return resources;
@@ -86,8 +87,44 @@ export const PokemonDataProvider = ({ children }) => {
     return resources.pokemons.loaded ? Promise.resolve(resources.pokemons.data) : loadResource("pokemons");
   }, [resources.pokemons.loaded, loadResource]);
 
-  const getMoves = useCallback(() => {
-    return resources.moves.loaded ? Promise.resolve(resources.moves.data) : loadResource("moves");
+  const getMoves = useCallback(async () => {
+    if (resources.moves.loaded) {
+      return Promise.resolve(resources.moves.data);
+    }
+
+    // Load both moves and moves descriptions in parallel
+    try {
+      const [movesData, movesDescData] = await Promise.all([loadResource("moves"), loadResource("moves-desc")]);
+
+      // Process moves to include descriptions
+      const enhancedMoves = { ...movesData };
+
+      // Add descriptions from movesDesc to the moves
+      Object.keys(enhancedMoves).forEach((moveId) => {
+        const moveDescData = movesDescData[moveId] || {};
+        enhancedMoves[moveId] = {
+          ...enhancedMoves[moveId],
+          shortDesc: moveDescData.shortDesc || enhancedMoves[moveId].shortDesc || "",
+          desc: moveDescData.desc || enhancedMoves[moveId].desc || "",
+        };
+      });
+
+      // Update the moves resource with the enhanced data
+      setResources((prev) => ({
+        ...prev,
+        moves: {
+          loading: false,
+          loaded: true,
+          data: enhancedMoves,
+          error: null,
+        },
+      }));
+
+      return enhancedMoves;
+    } catch (error) {
+      console.error("Error loading moves with descriptions:", error);
+      throw error;
+    }
   }, [resources.moves.loaded, loadResource]);
 
   const getLearnsets = useCallback(() => {
@@ -109,6 +146,10 @@ export const PokemonDataProvider = ({ children }) => {
     return resources.types.loaded ? Promise.resolve(resources.types.data) : loadResource("types");
   }, [resources.types.loaded, loadResource]);
 
+  const getMovesDesc = useCallback(() => {
+    return resources.movesDesc.loaded ? Promise.resolve(resources.movesDesc.data) : loadResource("moves-desc");
+  }, [resources.movesDesc.loaded, loadResource]);
+
   // Preload all data on mount
   useEffect(() => {
     const preloadAllData = async () => {
@@ -116,6 +157,7 @@ export const PokemonDataProvider = ({ children }) => {
       if (
         resources.pokemons.loaded &&
         resources.moves.loaded &&
+        resources.movesDesc.loaded &&
         resources.learnsets.loaded &&
         resources.items.loaded &&
         resources.abilities.loaded &&
@@ -131,6 +173,7 @@ export const PokemonDataProvider = ({ children }) => {
         setResources((prev) => ({
           pokemons: { ...prev.pokemons, loading: true },
           moves: { ...prev.moves, loading: true },
+          movesDesc: { ...prev.movesDesc, loading: true },
           learnsets: { ...prev.learnsets, loading: true },
           items: { ...prev.items, loading: true },
           abilities: { ...prev.abilities, loading: true },
@@ -145,6 +188,9 @@ export const PokemonDataProvider = ({ children }) => {
             r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
           ),
           fetch("http://localhost:5000/data/moves").then((r) =>
+            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
+          ),
+          fetch("http://localhost:5000/data/moves-desc").then((r) =>
             r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
           ),
           fetch("http://localhost:5000/data/learnsets").then((r) =>
@@ -205,12 +251,31 @@ export const PokemonDataProvider = ({ children }) => {
           console.error("❌ Failed to load moves data:", results[1].reason);
         }
 
-        // Learnsets data
+        // Moves descriptions data
         if (results[2].status === "fulfilled") {
-          newResources.learnsets = {
+          newResources.movesDesc = {
             loaded: true,
             loading: false,
             data: results[2].value,
+            error: null,
+          };
+          console.log(`✅ Successfully loaded move descriptions`);
+        } else {
+          newResources.movesDesc = {
+            loaded: false,
+            loading: false,
+            data: {},
+            error: results[2].reason,
+          };
+          console.error("❌ Failed to load move descriptions data:", results[2].reason);
+        }
+
+        // Learnsets data
+        if (results[3].status === "fulfilled") {
+          newResources.learnsets = {
+            loaded: true,
+            loading: false,
+            data: results[3].value,
             error: null,
           };
           console.log(`✅ Successfully loaded learnsets`);
@@ -219,17 +284,17 @@ export const PokemonDataProvider = ({ children }) => {
             loaded: false,
             loading: false,
             data: {},
-            error: results[2].reason,
+            error: results[3].reason,
           };
-          console.error("❌ Failed to load learnsets data:", results[2].reason);
+          console.error("❌ Failed to load learnsets data:", results[3].reason);
         }
 
-        // Items data (now combined)
-        if (results[3].status === "fulfilled") {
+        // Items data
+        if (results[4].status === "fulfilled") {
           newResources.items = {
             loaded: true,
             loading: false,
-            data: results[3].value,
+            data: results[4].value,
             error: null,
           };
           console.log(`✅ Successfully loaded items with descriptions`);
@@ -238,17 +303,17 @@ export const PokemonDataProvider = ({ children }) => {
             loaded: false,
             loading: false,
             data: {},
-            error: results[3].reason,
+            error: results[4].reason,
           };
-          console.error("❌ Failed to load items data:", results[3].reason);
+          console.error("❌ Failed to load items data:", results[4].reason);
         }
 
         // Abilities data
-        if (results[4].status === "fulfilled") {
+        if (results[5].status === "fulfilled") {
           newResources.abilities = {
             loaded: true,
             loading: false,
-            data: results[4].value,
+            data: results[5].value,
             error: null,
           };
           console.log(`✅ Successfully loaded abilities`);
@@ -257,17 +322,17 @@ export const PokemonDataProvider = ({ children }) => {
             loaded: false,
             loading: false,
             data: {},
-            error: results[4].reason,
+            error: results[5].reason,
           };
-          console.error("❌ Failed to load abilities data:", results[4].reason);
+          console.error("❌ Failed to load abilities data:", results[5].reason);
         }
 
         // Types data
-        if (results[5].status === "fulfilled") {
+        if (results[6].status === "fulfilled") {
           newResources.types = {
             loaded: true,
             loading: false,
-            data: results[5].value,
+            data: results[6].value,
             error: null,
           };
           console.log(`✅ Successfully loaded types`);
@@ -276,9 +341,9 @@ export const PokemonDataProvider = ({ children }) => {
             loaded: false,
             loading: false,
             data: {},
-            error: results[5].reason,
+            error: results[6].reason,
           };
-          console.error("❌ Failed to load types data:", results[5].reason);
+          console.error("❌ Failed to load types data:", results[6].reason);
         }
 
         setResources(newResources);
@@ -296,11 +361,8 @@ export const PokemonDataProvider = ({ children }) => {
         setResources((prev) => ({
           pokemons: { ...prev.pokemons, loading: false, error: error.message },
           moves: { ...prev.moves, loading: false, error: error.message },
-          learnsets: {
-            ...prev.learnsets,
-            loading: false,
-            error: error.message,
-          },
+          movesDesc: { ...prev.movesDesc, loading: false, error: error.message },
+          learnsets: { ...prev.learnsets, loading: false, error: error.message },
           items: { ...prev.items, loading: false, error: error.message },
           abilities: { ...prev.abilities, loading: false, error: error.message },
           types: { ...prev.types, loading: false, error: error.message },
@@ -321,6 +383,10 @@ export const PokemonDataProvider = ({ children }) => {
     movesLoading: resources.moves.loading,
     movesError: resources.moves.error,
 
+    movesDescLoaded: resources.movesDesc.loaded,
+    movesDescLoading: resources.movesDesc.loading,
+    movesDescError: resources.movesDesc.error,
+
     learnsetsLoaded: resources.learnsets.loaded,
     learnsetsLoading: resources.learnsets.loading,
     learnsetsError: resources.learnsets.error,
@@ -340,6 +406,7 @@ export const PokemonDataProvider = ({ children }) => {
     // Data getters with loading mechanisms
     getPokemons,
     getMoves,
+    getMovesDesc,
     getLearnsets,
     getItems,
     getAbilities,
@@ -348,6 +415,7 @@ export const PokemonDataProvider = ({ children }) => {
     // Direct data access if already loaded
     pokemons: resources.pokemons.data,
     moves: resources.moves.data,
+    movesDesc: resources.movesDesc.data,
     learnsets: resources.learnsets.data,
     items: resources.items.data,
     abilities: resources.abilities.data,
@@ -357,6 +425,7 @@ export const PokemonDataProvider = ({ children }) => {
     isLoading:
       resources.pokemons.loading ||
       resources.moves.loading ||
+      resources.movesDesc.loading ||
       resources.learnsets.loading ||
       resources.items.loading ||
       resources.abilities.loading ||
@@ -366,6 +435,7 @@ export const PokemonDataProvider = ({ children }) => {
     isAllDataLoaded:
       resources.pokemons.loaded &&
       resources.moves.loaded &&
+      resources.movesDesc.loaded &&
       resources.learnsets.loaded &&
       resources.items.loaded &&
       resources.abilities.loaded &&

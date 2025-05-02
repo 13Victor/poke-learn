@@ -243,32 +243,6 @@ tr.odd-row:hover {
   min-height: 20px;
 }
 
-/* Estilos específicos para MoveTable */
-.move-table th:nth-child(1),
-.move-table td:nth-child(1) {
-  width: 25%;
-  text-align: left;
-}
-.move-table th:nth-child(2),
-.move-table td:nth-child(2) {
-  width: 15%;
-  text-align: center;
-}
-.move-table th:nth-child(3),
-.move-table td:nth-child(3) {
-  width: 15%;
-  text-align: center;
-}
-.move-table th:nth-child(4),
-.move-table td:nth-child(4),
-.move-table th:nth-child(5),
-.move-table td:nth-child(5),
-.move-table th:nth-child(6),
-.move-table td:nth-child(6) {
-  width: 15%;
-  text-align: center;
-}
-
 /* Estilos específicos para AbilityTable */
 .ability-table th:nth-child(1),
 .ability-table td:nth-child(1) {

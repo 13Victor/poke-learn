@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState, useEffect, useRef } from "react"
 import MoveRow from "./MoveRow";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
+import "../../styles/MoveTable.css";
 
 // Definir altura de filas constante para todo el componente
 const ROW_HEIGHT = 40;
@@ -25,6 +26,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
   const tableRef = useRef(null);
   const [pokemonMoves, setPokemonMoves] = useState([]);
   const [isProcessingMoves, setIsProcessingMoves] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Added search term state
 
   // Load necessary data if not already loaded
   useEffect(() => {
@@ -102,8 +104,33 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     if (tableRef.current) {
       tableRef.current.scrollTop = 0;
       setVisibleRange({ start: 0, end: 50 });
+      setSearchTerm(""); // Reset search when pokemon changes
     }
   }, [selectedPokemon?.id]);
+
+  // Handle search functionality
+  const handleSearch = useCallback((e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+    setVisibleRange({ start: 0, end: 50 });
+
+    if (tableRef.current) {
+      tableRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  // Filter moves based on search term
+  const filteredMoves = useMemo(() => {
+    if (!searchTerm) return pokemonMoves;
+
+    return pokemonMoves.filter(
+      (move) =>
+        move.name.toLowerCase().includes(searchTerm) ||
+        move.type.toLowerCase().includes(searchTerm) ||
+        move.category?.toLowerCase().includes(searchTerm) ||
+        (move.shortDesc && move.shortDesc.toLowerCase().includes(searchTerm)) ||
+        (move.desc && move.desc.toLowerCase().includes(searchTerm))
+    );
+  }, [pokemonMoves, searchTerm]);
 
   // Handle row click with explicit slot and move index tracking
   const handleRowClick = useCallback(
@@ -118,16 +145,16 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     if (!tableRef.current) return;
 
     requestAnimationFrame(() => {
-      const { scrollTop, clientHeight, scrollHeight } = tableRef.current;
-      const rowHeight = 40;
+      const { scrollTop, clientHeight } = tableRef.current;
+      const rowHeight = ROW_HEIGHT;
 
       const start = Math.max(0, Math.floor(scrollTop / rowHeight) - 15);
       const visibleRows = Math.ceil(clientHeight / rowHeight) + 30;
-      const end = Math.min(pokemonMoves.length, start + visibleRows);
+      const end = Math.min(filteredMoves.length, start + visibleRows);
 
       setVisibleRange({ start, end });
     });
-  }, [pokemonMoves.length]);
+  }, [filteredMoves.length]);
 
   // Set up scroll listener
   useEffect(() => {
@@ -161,13 +188,23 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
   }
 
   // Only show visible rows
-  const visibleMoves = pokemonMoves.slice(visibleRange.start, visibleRange.end);
+  const visibleMoves = filteredMoves.slice(visibleRange.start, visibleRange.end);
 
   return (
     <div className="table-container move-table">
       <h2>
         Available moves for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1}, Move {selectedMoveIndex + 1})
       </h2>
+
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search moves by name, type, or description..."
+          value={searchTerm}
+          onChange={handleSearch}
+          className="search-input"
+        />
+      </div>
 
       <div ref={tableRef} className="table-wrapper">
         <table>
@@ -179,12 +216,13 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
               <th>Power</th>
               <th>Accuracy</th>
               <th>PP</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             {visibleRange.start > 0 && (
               <tr className="spacer-row" style={{ height: `${visibleRange.start * ROW_HEIGHT}px` }}>
-                <td colSpan="6"></td>
+                <td colSpan="7"></td>
               </tr>
             )}
 
@@ -199,16 +237,16 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
               ))
             ) : (
               <tr>
-                <td colSpan="6">❌ No moves available</td>
+                <td colSpan="7">❌ No moves available</td>
               </tr>
             )}
 
-            {pokemonMoves.length > visibleRange.end && (
+            {filteredMoves.length > visibleRange.end && (
               <tr
                 className="spacer-row"
-                style={{ height: `${(pokemonMoves.length - visibleRange.end) * ROW_HEIGHT}px` }}
+                style={{ height: `${(filteredMoves.length - visibleRange.end) * ROW_HEIGHT}px` }}
               >
-                <td colSpan="6"></td>
+                <td colSpan="7"></td>
               </tr>
             )}
           </tbody>

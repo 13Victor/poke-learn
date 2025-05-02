@@ -124,9 +124,11 @@ const processPokemonAbilities = () => {
   return result;
 };
 
-// Process moves with filtering
+// Process moves with descriptions and filtering
 const processFilteredMoves = () => {
   const moves = data.moves.Moves;
+  // Check if movesDesc exists before trying to access MovesText
+  const movesDesc = data.movesDesc && data.movesDesc.MovesText ? data.movesDesc.MovesText : {};
   const bannedMoves = ["batonpass", "lastrespects", "shedtail"];
   const filteredMoves = {};
 
@@ -136,10 +138,49 @@ const processFilteredMoves = () => {
       continue;
     }
 
-    filteredMoves[moveId] = moves[moveId];
+    const moveData = moves[moveId];
+    const moveDescData = movesDesc[moveId] || {};
+
+    // Create a new move object with descriptions properly included
+    filteredMoves[moveId] = {
+      ...moveData,
+      id: moveId,
+
+      // Use description from MovesText if available, otherwise use from the original move data
+      shortDesc: moveDescData.shortDesc || moveData.shortDesc || "",
+      desc: moveDescData.desc || moveData.desc || "",
+    };
+
+    // Debug log to check if descriptions are being included
+    if (!filteredMoves[moveId].shortDesc && !filteredMoves[moveId].desc) {
+      console.debug(`Move ${moveId} has no description`);
+    }
   }
 
+  console.log(`Processed ${Object.keys(filteredMoves).length} moves with descriptions`);
   return filteredMoves;
+};
+
+// Add a dedicated endpoint for move descriptions
+router.get("/moves-desc", (req, res) => {
+  if (!data.movesDesc || !data.movesDesc.MovesText) {
+    console.warn("Warning: Move descriptions data not found!");
+    return res.json({});
+  }
+
+  // Send the move descriptions directly
+  res.json(data.movesDesc.MovesText);
+});
+
+// Process move descriptions separately for the specific endpoint
+const processMoveDescriptions = () => {
+  // Make sure data.movesDesc and MovesText exist
+  if (!data.movesDesc || !data.movesDesc.MovesText) {
+    console.warn("Warning: Move descriptions data not found!");
+    return {};
+  }
+
+  return data.movesDesc.MovesText;
 };
 
 // Nueva ruta para devolver los Pokémon ya filtrados
@@ -164,6 +205,12 @@ router.get("/abilities", (req, res) => {
 router.get("/moves", (req, res) => {
   const filteredMoves = processFilteredMoves();
   res.json(filteredMoves);
+});
+
+// Dedicated endpoint for move descriptions
+router.get("/moves-desc", (req, res) => {
+  const moveDescriptions = processMoveDescriptions();
+  res.json(moveDescriptions);
 });
 
 // Rutas originales mantenidas por compatibilidad, pero con filtrado añadido
