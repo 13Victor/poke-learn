@@ -30,7 +30,7 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
           <Tippy
             content={
               <div className="type-tooltip-content">
-                <img className="type-icon" src={`/assets/type-icons/${move.type}_banner.png`} />
+                <img className="type-icon-banner" src={`/assets/type-icons/${move.type}_banner.png`} />
               </div>
             }
             placement="top"

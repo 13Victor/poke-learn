@@ -139,6 +139,7 @@
 }
 
 .small-icon {
+  border-radius: var(--radius-sm);
   max-height: 20px;
   display: flex;
   align-items: center;

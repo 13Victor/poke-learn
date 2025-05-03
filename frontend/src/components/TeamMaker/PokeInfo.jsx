@@ -18,7 +18,7 @@ const PokeInfo = ({ name, level, types, index }) => {
             key={index}
             content={
               <div className="type-tooltip-content">
-                <img className="type-icon" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
+                <img className="type-icon-banner" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
               </div>
             }
             placement="top"

@@ -203,13 +203,18 @@ tr.odd-row:hover {
   height: 100%;
 }
 
-.type-icon,
-.category-icon {
+.type-icon {
+  height: 24px;
+  object-fit: contain;
+}
+
+.type-icon-banner {
   height: 20px;
   object-fit: contain;
 }
 
 .category-icon {
+  height: 20px;
   padding: 2px var(--spacing-sm);
   border-radius: var(--radius-sm);
 }
