@@ -151,7 +151,7 @@
 .item-abilityContainer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .item-abilityContainer button {

@@ -134,7 +134,7 @@ tr.odd-row:hover {
 /* Estilos comunes para todas las imágenes en la columna # */
 .pokemon-image,
 .move-type-icon,
-.item-sprite,
+.item-image,
 .item-placeholder {
   width: 32px;
   height: 32px;
