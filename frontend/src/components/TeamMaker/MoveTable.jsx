@@ -210,6 +210,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
         <table>
           <thead>
             <tr>
+              <th>#</th>
               <th>Name</th>
               <th>Type</th>
               <th>Category</th>
@@ -222,7 +223,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
           <tbody>
             {visibleRange.start > 0 && (
               <tr className="spacer-row" style={{ height: `${visibleRange.start * ROW_HEIGHT}px` }}>
-                <td colSpan="7"></td>
+                <td colSpan="8"></td>
               </tr>
             )}
 
@@ -237,7 +238,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
               ))
             ) : (
               <tr>
-                <td colSpan="7">❌ No moves available</td>
+                <td colSpan="8">❌ No moves available</td>
               </tr>
             )}
 
@@ -246,7 +247,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
                 className="spacer-row"
                 style={{ height: `${(filteredMoves.length - visibleRange.end) * ROW_HEIGHT}px` }}
               >
-                <td colSpan="7"></td>
+                <td colSpan="8"></td>
               </tr>
             )}
           </tbody>

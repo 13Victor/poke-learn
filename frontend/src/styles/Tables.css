@@ -120,12 +120,40 @@ tr.odd-row:hover {
   }
 }
 
-/* Estilos específicos para PokemonTable */
+/* Estilos comunes para todas las tablas - Primera columna # */
 .pokemon-table th:nth-child(1),
-.pokemon-table td:nth-child(1) {
+.pokemon-table td:nth-child(1),
+.move-table th:nth-child(1),
+.move-table td:nth-child(1),
+.item-table th:nth-child(1),
+.item-table td:nth-child(1) {
   width: 5%;
   text-align: center;
 }
+
+/* Estilos comunes para todas las imágenes en la columna # */
+.pokemon-image,
+.move-type-icon,
+.item-sprite,
+.item-placeholder {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Contenedor de iconos común para todas las tablas */
+.move-icon-container,
+.item-sprite-container,
+.pokemon-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Estilos específicos para PokemonTable - columnas restantes */
 .pokemon-table th:nth-child(2),
 .pokemon-table td:nth-child(2) {
   width: 11%;
@@ -137,62 +165,29 @@ tr.odd-row:hover {
 }
 .pokemon-table th:nth-child(4),
 .pokemon-table td:nth-child(4) {
-  width: 9%;
+  width: 8%;
   text-align: center;
 }
 .pokemon-table th:nth-child(5),
 .pokemon-table td:nth-child(5) {
-  width: 31%;
+  width: auto;
   text-align: center;
 }
 .pokemon-table th:nth-child(n + 6),
 .pokemon-table td:nth-child(n + 6) {
-  width: 6%;
+  width: 5%;
   text-align: center;
 }
 
-/* Estilos específicos para ItemTable */
-.item-table th:nth-child(1),
-.item-table td:nth-child(1) {
-  width: 6%;
-  text-align: center;
-}
+/* Estilos específicos para ItemTable - columnas restantes */
 .item-table th:nth-child(2),
 .item-table td:nth-child(2) {
   width: 19%;
 }
 .item-table th:nth-child(3),
 .item-table td:nth-child(3) {
-  width: 75%;
+  width: 76%;
   text-align: left;
-}
-
-/* Imágenes y sprites */
-.pokemon-image {
-  width: 34.5px;
-  height: 34.5px;
-  padding-bottom: 2px;
-  aspect-ratio: 1 / 1;
-  display: block;
-  object-fit: contain;
-  margin: 0 auto;
-}
-
-.item-sprite-container {
-  display: flex;
-  justify-content: center;
-}
-
-.item-sprite {
-  width: 24px;
-  height: 24px;
-}
-
-.item-placeholder {
-  width: 24px;
-  height: 24px;
-  background-color: var(--silver-light);
-  border-radius: var(--radius-sm);
 }
 
 .types-cell,
@@ -369,7 +364,7 @@ tr.odd-row:hover {
 }
 
 .sortable-header i {
-  margin-left: 5px;
+  margin-left: 1px;
   color: var(--white);
   font-size: 14px;
 }

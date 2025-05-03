@@ -10,62 +10,56 @@
 }
 
 .move-table table {
-  min-width: 800px; /* Ensures the table doesn't get too compressed */
   width: 100%;
   table-layout: fixed;
 }
 
-/* Column widths for move table */
-.move-table th:nth-child(1),
-.move-table td:nth-child(1) {
-  width: 15%;
-  text-align: left;
-  padding-left: var(--spacing-sm);
-}
-
+/* Second column - Move name */
 .move-table th:nth-child(2),
 .move-table td:nth-child(2) {
+  width: 15%;
+  text-align: left;
+}
+
+/* Type column */
+.move-table th:nth-child(3),
+.move-table td:nth-child(3) {
   width: 8%;
   text-align: center;
 }
 
-.move-table th:nth-child(3),
-.move-table td:nth-child(3) {
-  width: 10%;
+/* Category column */
+.move-table th:nth-child(4),
+.move-table td:nth-child(4) {
+  width: 8%;
   text-align: center;
 }
 
-.move-table th:nth-child(4),
-.move-table td:nth-child(4),
+/* Power, Accuracy, PP columns */
 .move-table th:nth-child(5),
 .move-table td:nth-child(5),
 .move-table th:nth-child(6),
-.move-table td:nth-child(6) {
+.move-table td:nth-child(6),
+.move-table th:nth-child(7),
+.move-table td:nth-child(7) {
   width: 7%;
   text-align: center;
 }
 
-.move-table th:nth-child(7),
-.move-table td:nth-child(7) {
-  width: 30%;
+/* Description column */
+.move-table th:nth-child(8),
+.move-table td:nth-child(8) {
+  width: auto;
   text-align: left;
-  padding-left: var(--spacing-sm);
-  padding-right: var(--spacing-sm);
 }
 
 .move-name-cell {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  padding: var(--spacing-xs);
 }
 
-.move-type-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
+/* Move type icon styles are now in Tables.css */
 
 .move-description {
   white-space: normal !important;

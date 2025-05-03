@@ -23,8 +23,8 @@ const ItemRow = memo(({ item, onClick, isEven }) => {
             <div
               className="item-sprite"
               style={{
-                width: "24px",
-                height: "24px",
+                width: "32px",
+                height: "32px",
                 backgroundImage: 'url("/assets/items.png")',
                 backgroundPosition: getSpritePosition(item.spritenum),
                 backgroundRepeat: "no-repeat",

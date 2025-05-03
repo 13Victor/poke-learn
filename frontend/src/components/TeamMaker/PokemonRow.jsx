@@ -58,15 +58,17 @@ const PokemonRow = memo(
     return (
       <tr onClick={() => onClick(pokemon)} className={isEven ? "even-row" : "odd-row"}>
         <td>
-          <img
-            className="pokemon-image"
-            src={imageUrl}
-            alt={pokemon.name}
-            onError={(e) => {
-              e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
-              console.warn(`Failed to load image for ${pokemon.name}`);
-            }}
-          />
+          <div className="pokemon-icon-container">
+            <img
+              className="pokemon-image"
+              src={imageUrl}
+              alt={pokemon.name}
+              onError={(e) => {
+                e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                console.warn(`Failed to load image for ${pokemon.name}`);
+              }}
+            />
+          </div>
         </td>
         <td>{pokemon.name}</td>
         <td>

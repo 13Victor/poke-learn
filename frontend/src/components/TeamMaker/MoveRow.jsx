@@ -8,7 +8,7 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
   return (
     <tr onClick={() => onClick(move)} className={isEven ? "even-row" : "odd-row"}>
       <td>
-        <div className="move-name-cell">
+        <div className="move-icon-container">
           <img
             src={`/assets/mt-sprites/MT_${move.type}.png`}
             alt={`${move.type} type`}
@@ -18,6 +18,10 @@ const MoveRow = memo(({ move, onClick, isEven }) => {
               e.target.style.display = "none";
             }}
           />
+        </div>
+      </td>
+      <td>
+        <div className="move-name-cell">
           <span>{move.name}</span>
         </div>
       </td>
