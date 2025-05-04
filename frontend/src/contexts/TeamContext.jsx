@@ -365,7 +365,7 @@ export const TeamProvider = ({ children }) => {
         // Establecer el movimiento seleccionado
         dispatch({
           type: ACTIONS.SET_MOVE,
-          payload: { slotIndex, moveIndex, moveName: move.name },
+          payload: { slotIndex, moveIndex, moveName: move },
         });
 
         // Determinar la etapa actual del flujo basado en el moveIndex

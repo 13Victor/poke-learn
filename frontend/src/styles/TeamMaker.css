@@ -209,9 +209,14 @@
   gap: var(--spacing-xs);
   height: 100%;
 }
+.moveInput:has(img) {
+  outline: var(--eerie-black) 1px solid;
+}
 
 .moveInput {
+  position: relative;
   width: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
@@ -393,4 +398,13 @@
 /* Reduce el padding vertical */
 .tippy-box .tippy-content {
   padding-block: 1px;
+}
+
+.move-type-icon-small {
+  position: absolute;
+  height: 45px;
+  left: -10px;
+  padding-right: 10px;
+  bottom: -13px;
+  transform: rotate(-15deg);
 }

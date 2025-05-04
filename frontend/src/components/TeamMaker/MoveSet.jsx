@@ -4,22 +4,30 @@ import MoveButton from "./MoveButton";
 
 const MoveSet = memo(
   ({ pokemon, moves, slotIndex }) => {
-    const { selectedMove, setSelectedMove, setViewMode, viewMode, setSelectedSlot, setFlowStage, FLOW_STAGES } =
-      useTeam();
+    const {
+      selectedMove,
+      setSelectedMove,
+      setViewMode,
+      viewMode,
+      setSelectedSlot,
+      setFlowStage,
+      FLOW_STAGES,
+      movesData,
+    } = useTeam();
 
     const handleMoveClick = React.useCallback(
       (moveIndex, event) => {
-        event.stopPropagation(); // Evitar propagación
+        event.stopPropagation(); // Prevent propagation
 
-        // Si no hay un Pokémon seleccionado, redirigir a selección de Pokémon
+        // If no Pokemon is selected, redirect to Pokemon selection
         if (!pokemon.name) {
           setViewMode("pokemon");
           setFlowStage(FLOW_STAGES.POKEMON);
         } else {
-          // Si hay Pokémon, configurar para selección de movimiento
+          // If there's a Pokemon, configure for move selection
           setViewMode("moves");
 
-          // Establecer la etapa del flujo según el índice del movimiento
+          // Set the flow stage according to the move index
           const flowStage = [FLOW_STAGES.MOVE_1, FLOW_STAGES.MOVE_2, FLOW_STAGES.MOVE_3, FLOW_STAGES.MOVE_4][moveIndex];
 
           setFlowStage(flowStage);
@@ -27,14 +35,30 @@ const MoveSet = memo(
 
         setSelectedSlot(slotIndex);
         setSelectedMove({ slot: slotIndex, moveIndex });
-        console.log(`🎯 Seleccionado movimiento ${moveIndex + 1} del slot ${slotIndex}`);
+        console.log(`🎯 Selected move ${moveIndex + 1} of slot ${slotIndex}`);
       },
       [pokemon.name, setViewMode, setSelectedSlot, setSelectedMove, slotIndex, setFlowStage, FLOW_STAGES]
     );
 
+    // Convert move string names to move objects if available in movesData
+    const moveObjects = moves.map((move) => {
+      // If we already have an object, return it
+      if (typeof move === "object" && move !== null) {
+        return move;
+      }
+
+      // If we have a string and it exists in movesData, return the full object
+      if (typeof move === "string" && move && movesData && movesData[move]) {
+        return movesData[move];
+      }
+
+      // Otherwise return the original string or an empty string if it's null/undefined
+      return move || "";
+    });
+
     return (
       <div className="moveInputsContainer">
-        {moves.map((move, index) => (
+        {moveObjects.map((move, index) => (
           <MoveButton
             key={index}
             move={move}
@@ -54,10 +78,10 @@ const MoveSet = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Verificar si el nombre del Pokémon cambió
+    // Check if Pokemon name changed
     if (prevProps.pokemon.name !== nextProps.pokemon.name) return false;
 
-    // Verificar si algún movimiento cambió
+    // Check if any move changed
     const prevMoves = prevProps.moves || [];
     const nextMoves = nextProps.moves || [];
 
