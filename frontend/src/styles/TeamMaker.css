@@ -140,7 +140,7 @@
 
 .small-icon {
   border-radius: var(--radius-sm);
-  max-height: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,11 +162,19 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+  height: 20px;
 }
 
 .item-sprite {
   font-size: var(--font-size-xl);
   color: var(--silver);
+  height: var(--item-slot-size);
+  width: var(--item-slot-size);
+  position: absolute;
+}
+
+.item-button {
+  margin-left: calc(var(--item-slot-size) + var(--spacing-xs));
 }
 
 .item-button,
