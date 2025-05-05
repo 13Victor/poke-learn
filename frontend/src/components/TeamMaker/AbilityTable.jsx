@@ -30,10 +30,6 @@ const AbilityTable = ({ onAbilitySelect, selectedPokemon, selectedSlot }) => {
 
   return (
     <div className="table-container ability-table">
-      <h2>
-        Select an ability for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1})
-      </h2>
-
       <div className="table-wrapper">
         <table>
           <thead>

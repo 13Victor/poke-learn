@@ -13,7 +13,9 @@ const MoveButton = memo(
         onClick={onClick}
         style={{
           background: `linear-gradient(to right, var(--type-${moveTypeLower}) 8%, transparent 30%)`,
-          backgroundColor: moveTypeLower ? `var(--type-${moveTypeLower}-bs)` : "var(--white-smoke)",
+          backgroundColor: moveType ? `var(--type-${moveTypeLower}-bs)` : "var(--white-smoke)",
+          textTransform: moveType ? "Uppercase" : "none",
+          fontWeight: moveType ? "600" : "400",
         }}
       >
         {moveType && (

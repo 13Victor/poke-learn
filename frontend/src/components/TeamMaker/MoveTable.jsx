@@ -199,10 +199,6 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
 
   return (
     <div className="table-container move-table">
-      <h2>
-        Available moves for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1}, Move {selectedMoveIndex + 1})
-      </h2>
-
       <div className="search-container">
         <input
           type="text"
