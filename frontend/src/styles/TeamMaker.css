@@ -195,9 +195,9 @@
 /* Separator Line */
 #separatorLine {
   border-radius: var(--radius-full);
-  height: 1px;
+  min-height: 1px;
   border: none;
-  margin-block: 6px;
+  margin-block: var(--spacing-xs);
   background-color: var(--silver);
 }
 
@@ -207,6 +207,13 @@
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-xs);
   height: 100%;
+}
+
+.moveInput p {
+  z-index: 9999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .moveInput {
@@ -264,6 +271,7 @@
 
 /* Stat Label */
 .statLabel {
+  line-height: 1;
   width: 60%;
   display: flex;
   align-items: center;
@@ -397,5 +405,5 @@
 .move-type-icon-small {
   position: absolute;
   height: 20px;
-  left: 2px;
+  left: var(--spacing-xs);
 }

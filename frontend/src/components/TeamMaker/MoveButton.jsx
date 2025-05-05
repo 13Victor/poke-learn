@@ -12,10 +12,10 @@ const MoveButton = memo(
         className={`moveInput ${isSelected ? "selected-move" : ""}`}
         onClick={onClick}
         style={{
-          background: `linear-gradient(to right, var(--type-${moveTypeLower}) 8%, transparent 30%)`,
-          backgroundColor: moveType ? `var(--type-${moveTypeLower}-bs)` : "var(--white-smoke)",
+          backgroundColor: moveType ? `var(--type-${moveTypeLower})` : `var(--white-smoke)`,
           textTransform: moveType ? "Uppercase" : "none",
           fontWeight: moveType ? "600" : "400",
+          color: moveType ? "var(--white)" : "var(--black)",
         }}
       >
         {moveType && (
@@ -25,7 +25,7 @@ const MoveButton = memo(
             className="move-type-icon-small"
           />
         )}
-        {moveName || `Move ${index + 1}`}
+        <p>{moveName || `Move ${index + 1}`}</p>
       </button>
     );
   },
