@@ -53,7 +53,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     loadRequiredData();
   }, [selectedPokemon, movesLoaded, movesLoading, learnsetsLoaded, learnsetsLoading, getMoves, getLearnsets]);
 
-  // Obtener los movimientos que ya están asignados al Pokémon actual
+  // Obtener todos los movimientos asignados al Pokémon actual, no solo en el índice que se está editando
   const assignedMoves = useMemo(() => {
     if (!selectedPokemon || selectedSlot === undefined) return new Set();
 
@@ -61,9 +61,16 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
     const pokemonInTeam = pokemons[selectedSlot];
     if (!pokemonInTeam || !pokemonInTeam.moveset) return new Set();
 
-    // Crear un Set con los movimientos ya asignados (excepto el que se está editando actualmente)
-    return new Set(pokemonInTeam.moveset.filter((move, index) => move && index !== selectedMoveIndex));
-  }, [pokemons, selectedSlot, selectedMoveIndex, selectedPokemon]);
+    // Crear un Set con TODOS los movimientos ya asignados (incluyendo strings y objetos)
+    return new Set(
+      pokemonInTeam.moveset
+        .filter((move) => move) // Filtramos solo los movimientos que existen (no vacíos)
+        .map((move) => {
+          // Si es un objeto, extraemos el nombre, si es un string lo usamos directamente
+          return typeof move === "object" ? move.name : move;
+        })
+    );
+  }, [pokemons, selectedSlot, selectedPokemon]);
 
   // Process move data when we have all required data
   useEffect(() => {
