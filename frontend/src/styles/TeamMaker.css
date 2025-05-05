@@ -258,9 +258,8 @@
   height: 100%;
   overflow: hidden;
   border-radius: var(--radius-full);
-  background-color: var(--silver);
+  background-color: var(--white-smoke);
   transition: transform var(--transition-fast);
-  outline: 1px solid var(--silver);
 }
 
 /* Stat Label */
@@ -281,7 +280,6 @@
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-xs);
-  background-color: var(--white-smoke);
 }
 
 .tooltip-text {
