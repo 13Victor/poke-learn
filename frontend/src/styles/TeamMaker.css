@@ -60,7 +60,6 @@
 .pokemonTeamCard button {
   border: none;
   height: 100%;
-  outline: 1px solid var(--silver);
 }
 
 .selected-slot {
@@ -208,9 +207,6 @@
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-xs);
   height: 100%;
-}
-.moveInput:has(img) {
-  outline: var(--eerie-black) 1px solid;
 }
 
 .moveInput {
@@ -402,9 +398,6 @@
 
 .move-type-icon-small {
   position: absolute;
-  height: 45px;
-  left: -10px;
-  padding-right: 10px;
-  bottom: -13px;
-  transform: rotate(-15deg);
+  height: 20px;
+  left: 2px;
 }

@@ -12,12 +12,13 @@ const MoveButton = memo(
         className={`moveInput ${isSelected ? "selected-move" : ""}`}
         onClick={onClick}
         style={{
-          background: `linear-gradient(75deg, var(--type-${moveTypeLower}) 10%, var(--type-${moveTypeLower}-bs) 35%)`,
+          background: `linear-gradient(to right, var(--type-${moveTypeLower}) 8%, transparent 30%)`,
+          backgroundColor: moveTypeLower ? `var(--type-${moveTypeLower}-bs)` : "var(--white-smoke)",
         }}
       >
         {moveType && (
           <img
-            src={`/assets/type-icons/${moveType}_icon.png`}
+            src={`/assets/type-icons/${moveType}_icon2.png`}
             alt={`${moveType} type`}
             className="move-type-icon-small"
           />
