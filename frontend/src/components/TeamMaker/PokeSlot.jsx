@@ -7,6 +7,7 @@ import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 import { useTeam } from "../../contexts/TeamContext";
+import TypeBackgroundPokeball from "./TypeBackgroundPokeball";
 
 // Componente para mostrar un slot del equipo
 const PokeSlot = memo(
@@ -16,8 +17,6 @@ const PokeSlot = memo(
     const handleSelect = () => {
       selectSlot(index);
     };
-
-    console.log(pokemon);
 
     return (
       <div className={`pokemonTeamCard ${isSelected ? "selected-slot" : ""}`} onClick={handleSelect}>
@@ -29,7 +28,12 @@ const PokeSlot = memo(
             placement="top"
             offset={[0, -15]}
           >
-            <img src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`} alt={pokemon.name} />
+            <div className="pokemon-image-wrapper">
+              <TypeBackgroundPokeball types={pokemon.types} />
+
+              {/* The Pokémon image */}
+              <img src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`} alt={pokemon.name} />
+            </div>
           </Tippy>
         </div>
         <div className="pokemonDataContainer">
