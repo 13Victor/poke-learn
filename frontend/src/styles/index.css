@@ -103,6 +103,26 @@
   --type-steel-bs: rgba(96, 161, 184, 0.3);
   --type-fairy-bs: rgba(239, 112, 239, 0.3);
 
+  /* Tipos Pokémon oscurecidos para hover */
+  --type-normal-dark: #757775;
+  --type-fire-dark: #ba2021;
+  --type-water-dark: #1f66c0;
+  --type-electric-dark: #c89800;
+  --type-grass-dark: #2f7a1f;
+  --type-ice-dark: #28accc;
+  --type-fighting-dark: #cc6600;
+  --type-poison-dark: #7433a2;
+  --type-ground-dark: #734119;
+  --type-flying-dark: #6794bf;
+  --type-psychic-dark: #bf3360;
+  --type-bug-dark: #737f14;
+  --type-rock-dark: #8c8767;
+  --type-ghost-dark: #573159;
+  --type-dragon-dark: #404cb4;
+  --type-dark-dark: #3d322f;
+  --type-steel-dark: #4c8093;
+  --type-fairy-dark: #bf59bf;
+
   --category-physical: #ea6767;
   --category-special: #4571f1;
   --category-status: #959595;

@@ -225,7 +225,66 @@
   transition: all var(--transition-fast);
 }
 
-.moveInput:hover,
+.moveInput:hover .move-type-icon-small {
+  transform: scale(0.75);
+  transition: all var(--transition-fast);
+}
+
+.moveInput[style*="--type-normal"]:hover {
+  background-color: var(--type-normal-dark) !important;
+}
+.moveInput[style*="--type-water"]:hover {
+  background-color: var(--type-water-dark) !important;
+}
+.moveInput[style*="--type-fire"]:hover {
+  background-color: var(--type-fire-dark) !important;
+}
+.moveInput[style*="--type-grass"]:hover {
+  background-color: var(--type-grass-dark) !important;
+}
+.moveInput[style*="--type-electric"]:hover {
+  background-color: var(--type-electric-dark) !important;
+}
+.moveInput[style*="--type-ice"]:hover {
+  background-color: var(--type-ice-dark) !important;
+}
+.moveInput[style*="--type-fighting"]:hover {
+  background-color: var(--type-fighting-dark) !important;
+}
+.moveInput[style*="--type-poison"]:hover {
+  background-color: var(--type-poison-dark) !important;
+}
+.moveInput[style*="--type-ground"]:hover {
+  background-color: var(--type-ground-dark) !important;
+}
+.moveInput[style*="--type-flying"]:hover {
+  background-color: var(--type-flying-dark) !important;
+}
+.moveInput[style*="--type-psychic"]:hover {
+  background-color: var(--type-psychic-dark) !important;
+}
+.moveInput[style*="--type-bug"]:hover {
+  background-color: var(--type-bug-dark) !important;
+}
+.moveInput[style*="--type-rock"]:hover {
+  background-color: var(--type-rock-dark) !important;
+}
+.moveInput[style*="--type-ghost"]:hover {
+  background-color: var(--type-ghost-dark) !important;
+}
+.moveInput[style*="--type-dragon"]:hover {
+  background-color: var(--type-dragon-dark) !important;
+}
+.moveInput[style*="--type-dark"]:hover {
+  background-color: var(--type-dark-dark) !important;
+}
+.moveInput[style*="--type-steel"]:hover {
+  background-color: var(--type-steel-dark) !important;
+}
+.moveInput[style*="--type-fairy"]:hover {
+  background-color: var(--type-fairy-dark) !important;
+}
+
 .pokemonStatsContainer:hover .statValue {
   background-color: var(--picton-blue-light);
 }
