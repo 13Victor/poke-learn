@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useMemo } from "react";
+import React, { createContext, useContext, useReducer, useMemo, useRef } from "react";
 
 // Definir acciones para el reducer
 const ACTIONS = {
@@ -211,6 +211,11 @@ const TeamContext = createContext();
 
 export const TeamProvider = ({ children }) => {
   const [state, dispatch] = useReducer(teamReducer, initialState);
+  // Add a ref to track the latest selectedSlot
+  const selectedSlotRef = useRef(state.selectedSlot);
+
+  // Update ref whenever selectedSlot changes
+  selectedSlotRef.current = state.selectedSlot;
 
   // Función auxiliar para avanzar al siguiente paso del flujo
   const advanceFlow = (currentStage, slotIndex) => {
@@ -331,7 +336,7 @@ export const TeamProvider = ({ children }) => {
       // Función para seleccionar slot y cambiar vista en una sola acción
       selectSlot: (slotIndex) => {
         const isSameSlot = slotIndex === state.selectedSlot;
-
+        console.log("Selecting slot index:", slotIndex);
         dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: slotIndex });
         dispatch({
           type: ACTIONS.SET_SELECTED_MOVE,
@@ -347,7 +352,10 @@ export const TeamProvider = ({ children }) => {
       },
 
       // Función para seleccionar Pokémon y avanzar al flujo de ítems
-      selectPokemon: (slotIndex, pokemon) => {
+      selectPokemon: (pokemon) => {
+        // Use the ref to get the latest selectedSlot
+        const slotIndex = selectedSlotRef.current;
+        console.log("Selecting Pokemon for slot index:", slotIndex);
         dispatch({
           type: ACTIONS.SET_POKEMON,
           payload: { slotIndex, pokemon },
@@ -359,7 +367,8 @@ export const TeamProvider = ({ children }) => {
 
       // Método para manejar la selección de movimientos y la actualización del índice
       selectMove: (move) => {
-        const slotIndex = state.selectedSlot;
+        // Use the ref to get the latest selectedSlot
+        const slotIndex = selectedSlotRef.current;
         const moveIndex = state.selectedMove.moveIndex;
 
         // Establecer el movimiento seleccionado
@@ -393,7 +402,8 @@ export const TeamProvider = ({ children }) => {
 
       // Método para manejar la selección de items y avanzar al flujo de habilidades
       selectItem: (item) => {
-        const slotIndex = state.selectedSlot;
+        // Use the ref to get the latest selectedSlot
+        const slotIndex = selectedSlotRef.current;
 
         // Establecer el item seleccionado
         dispatch({
@@ -410,7 +420,8 @@ export const TeamProvider = ({ children }) => {
       },
 
       selectAbility: (ability, abilityType) => {
-        const slotIndex = state.selectedSlot;
+        // Use the ref to get the latest selectedSlot
+        const slotIndex = selectedSlotRef.current;
 
         // Establecer la habilidad seleccionada
         dispatch({
@@ -433,7 +444,7 @@ export const TeamProvider = ({ children }) => {
 
       // Método para avanzar manualmente al siguiente paso en el flujo
       advanceToNextStep: () => {
-        advanceFlow(state.flowStage, state.selectedSlot);
+        advanceFlow(state.flowStage, selectedSlotRef.current);
       },
 
       setPokemonStats: (slotIndex, evs, ivs, nature, stats) => {
@@ -451,7 +462,7 @@ export const TeamProvider = ({ children }) => {
       },
 
       advanceFromStats: () => {
-        advanceFlow(FLOW_STAGES.STATS, state.selectedSlot);
+        advanceFlow(FLOW_STAGES.STATS, selectedSlotRef.current);
       },
 
       updateTeamAnalysis: (analysis) => {
@@ -461,7 +472,7 @@ export const TeamProvider = ({ children }) => {
         });
       },
     }),
-    [state.selectedSlot, state.selectedMove.moveIndex, state.flowStage]
+    [state.selectedMove.moveIndex, state.flowStage] // Removed state.selectedSlot dependency since we're using the ref
   );
 
   const value = {

@@ -21,7 +21,7 @@ const TableView = memo(() => {
   const handlePokemonSelect = useCallback(
     (pokemon) => {
       console.log("🔹 Selecting Pokémon:", pokemon.name);
-      selectPokemon(selectedSlot, pokemon);
+      selectPokemon(pokemon);
     },
     [selectPokemon, selectedSlot]
   );
