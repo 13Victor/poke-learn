@@ -1,5 +1,6 @@
 import React, { memo, useContext } from "react";
 import Tippy from "@tippyjs/react";
+import tippy from "tippy.js"; // Importamos la API imperativa
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
@@ -70,7 +71,37 @@ const PokemonRow = memo(
             />
           </div>
         </td>
-        <td>{pokemon.name}</td>
+        <td>
+          {/* Usamos una referencia para verificar si hay overflow */}
+          <span
+            className="pokemon-name-cell"
+            ref={(el) => {
+              if (el) {
+                // Determinamos si hay overflow
+                const hasOverflow = el.offsetWidth < el.scrollWidth;
+
+                // Si hay un componente Tippy previo, lo eliminamos
+                if (el._tippy) {
+                  el._tippy.destroy();
+                }
+
+                // Solo creamos el Tippy si hay overflow
+                if (hasOverflow) {
+                  // Usa tippy (en minúsculas) en lugar de Tippy
+                  tippy(el, {
+                    content: pokemon.name,
+                    placement: "top",
+                    animation: "scale",
+                    theme: "light-border",
+                    delay: [300, 100],
+                  });
+                }
+              }
+            }}
+          >
+            {pokemon.name}
+          </span>
+        </td>
         <td>
           <div className="pokemon-tier-cell">
             <Tippy
