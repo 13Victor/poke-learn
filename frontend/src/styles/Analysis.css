@@ -83,7 +83,6 @@
   aspect-ratio: 1;
   background-color: var(--white-smoke);
   border-radius: var(--radius-full);
-  border: 1px solid var(--silver);
 }
 
 .tally__mark_good {
