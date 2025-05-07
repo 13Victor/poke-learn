@@ -113,3 +113,27 @@
   height: var(--spacing-xs) !important;
   margin-inline: -2px !important;
 }
+
+/* Add these styles to your Analysis.css file */
+
+/* Enhanced tally mark hover effects */
+.tally__mark {
+  transition: all var(--transition-fast);
+}
+
+.tally__mark:hover {
+  transform: scale(1.1);
+}
+
+.tally__mark_good:hover {
+  box-shadow: 0 0 4px var(--blue-gray);
+}
+
+.tally__mark_bad:hover {
+  box-shadow: 0 0 4px var(--red-gray);
+}
+
+/* Make the transition smoother for the pokemonTeamCard */
+.pokemonTeamCard {
+  transition: all var(--transition-fast);
+}

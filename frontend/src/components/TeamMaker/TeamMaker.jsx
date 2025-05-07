@@ -6,6 +6,7 @@ import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/TeamMaker.css";
 import SaveTeamButton from "./SaveTeamButton";
 import TeamAnalysis from "./TeamAnalysis";
+import { HighlightProvider } from "./TeamAnalysis";
 
 const TeamMaker = memo(() => {
   const { isAllDataLoaded, isLoading } = usePokemonData();
@@ -19,15 +20,17 @@ const TeamMaker = memo(() => {
         <p>Build your perfect team!</p>
         <SaveTeamButton />
       </div>
-      <div className="teammaker-container">
-        <TeamContainer />
+      <HighlightProvider>
+        <div className="teammaker-container">
+          <TeamContainer />
 
-        <div className="table-section">
-          {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
+          <div className="table-section">
+            {isLoading && !isAllDataLoaded ? <LoadingIndicator label="data" /> : <TableView />}
+          </div>
+
+          <TeamAnalysis />
         </div>
-
-        <TeamAnalysis />
-      </div>
+      </HighlightProvider>
     </div>
   );
 });
