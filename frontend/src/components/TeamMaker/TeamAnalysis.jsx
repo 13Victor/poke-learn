@@ -1,4 +1,4 @@
-// TeamAnalysis.jsx - Enhanced Version
+// TeamAnalysis.jsx - With red drop shadow for types with more weaknesses than resistances
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
@@ -57,25 +57,28 @@ const TYPE_ORDER = [
   "fairy",
 ];
 
-const TypeTally = ({ type, defenseMarks, coverageMarks, pokemonData }) => {
+const TypeTally = ({ type, defenseData, coverageData }) => {
   const upperType = type.charAt(0).toUpperCase() + type.slice(1);
   const { setHighlightedPokemonIds, setHighlightType, setHighlightTypeValue } = useHighlight();
 
+  // Calculate if there are more weaknesses than resistances
+  const resistances = defenseData.filter((mark) => mark.type === "resistant").length;
+  const weaknesses = defenseData.filter((mark) => mark.type === "weak").length;
+  const hasMoreWeaknessesThanResistances = weaknesses > resistances;
+
   // Handle hover on defense marks
-  const handleDefenseMarkHover = (index) => {
-    const markValue = defenseMarks[index];
-    if (markValue) {
-      setHighlightedPokemonIds([pokemonData.defense[type][index].pokemonId]);
+  const handleDefenseMarkHover = (markData) => {
+    if (markData) {
+      setHighlightedPokemonIds([markData.pokemonId]);
       setHighlightType("defense");
       setHighlightTypeValue(type);
     }
   };
 
   // Handle hover on coverage marks
-  const handleCoverageMarkHover = (index) => {
-    const markValue = coverageMarks[index];
-    if (markValue) {
-      setHighlightedPokemonIds([pokemonData.coverage[type][index].pokemonId]);
+  const handleCoverageMarkHover = (markData) => {
+    if (markData) {
+      setHighlightedPokemonIds([markData.pokemonId]);
       setHighlightType("coverage");
       setHighlightTypeValue(type);
     }
@@ -87,6 +90,14 @@ const TypeTally = ({ type, defenseMarks, coverageMarks, pokemonData }) => {
     setHighlightType(null);
     setHighlightTypeValue(null);
   };
+
+  // Style for the type icon when there are more weaknesses than resistances
+  const typeIconStyle = hasMoreWeaknessesThanResistances
+    ? {
+        filter: "drop-shadow(0 0 4px var(--red-gray))",
+        transition: "all var(--transition-normal)",
+      }
+    : {};
 
   return (
     <div className="tally">
@@ -103,22 +114,21 @@ const TypeTally = ({ type, defenseMarks, coverageMarks, pokemonData }) => {
           delay={[300, 100]}
           arrow={true}
         >
-          <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" />
+          <img src={`/assets/type-icons/${upperType}2.png`} alt={type} className="type-icon" style={typeIconStyle} />
         </Tippy>
       </div>
       <div className="tally__marks-container">
         <ul className="tally__marks tally__marks-defense">
           {Array.from({ length: MAX_MARKS }).map((_, i) => {
-            const markData = pokemonData.defense[type][i];
-            const markValue = defenseMarks[i];
+            const markData = i < defenseData.length ? defenseData[i] : null;
 
             return (
               <li
                 key={`defense-${i}`}
                 className={`tally__mark ${
-                  markValue ? `tally__mark_${markValue === "resistant" ? "good" : "bad"}` : ""
+                  markData ? `tally__mark_${markData.type === "resistant" ? "good" : "bad"}` : ""
                 }`}
-                onMouseEnter={() => handleDefenseMarkHover(i)}
+                onMouseEnter={() => handleDefenseMarkHover(markData)}
                 onMouseLeave={handleMouseLeave}
               />
             );
@@ -127,16 +137,14 @@ const TypeTally = ({ type, defenseMarks, coverageMarks, pokemonData }) => {
         <hr className="tally__divider" id="separatorLine" style={{ backgroundColor: `var(--type-${type})` }} />
         <ul className="tally__marks tally__marks-coverage">
           {Array.from({ length: MAX_MARKS }).map((_, i) => {
-            const markData = pokemonData.coverage[type][i];
-            const markValue = coverageMarks[i];
+            const markData = i < coverageData.length ? coverageData[i] : null;
 
             return (
               <li
                 key={`coverage-${i}`}
-                className={`tally__mark ${markValue ? "tally__mark_good" : ""}`}
-                onMouseEnter={() => handleCoverageMarkHover(i)}
+                className={`tally__mark ${markData ? "tally__mark_good" : ""}`}
+                onMouseEnter={() => handleCoverageMarkHover(markData)}
                 onMouseLeave={handleMouseLeave}
-                title={markData ? `${markData.pokemonName} - Effective against ${upperType}` : ""}
               />
             );
           })}
@@ -151,28 +159,18 @@ const TeamAnalysis = () => {
   const { types } = usePokemonData();
 
   const analysis = useMemo(() => {
-    // Create objects to store both marks and pokemon data for each type
-    const defenseMarksWithData = TYPE_ORDER.reduce((acc, type) => {
+    // Objeto para almacenar los datos ordenados
+    const defenseSortedData = TYPE_ORDER.reduce((acc, type) => {
       acc[type] = [];
       return acc;
     }, {});
 
-    const coverageMarksWithData = TYPE_ORDER.reduce((acc, type) => {
+    const coverageSortedData = TYPE_ORDER.reduce((acc, type) => {
       acc[type] = [];
       return acc;
     }, {});
 
-    // Simple marks arrays for rendering
-    const defenseMarks = TYPE_ORDER.reduce((acc, type) => {
-      acc[type] = [];
-      return acc;
-    }, {});
-
-    const coverageMarks = TYPE_ORDER.reduce((acc, type) => {
-      acc[type] = [];
-      return acc;
-    }, {});
-
+    // Recopilar todos los datos de tipos para cada Pokémon
     pokemons.forEach((pokemon, pokemonIndex) => {
       if (!pokemon.name || !pokemon.types) return;
 
@@ -184,18 +182,20 @@ const TeamAnalysis = () => {
         });
 
         if (totalEffectiveness < 1) {
-          defenseMarks[attackingType].push("resistant");
-          defenseMarksWithData[attackingType].push({
+          // Resistencia (azul)
+          defenseSortedData[attackingType].push({
             pokemonId: pokemonIndex,
             pokemonName: pokemon.name,
             effectiveness: totalEffectiveness,
+            type: "resistant", // "good" - azul
           });
         } else if (totalEffectiveness > 1) {
-          defenseMarks[attackingType].push("weak");
-          defenseMarksWithData[attackingType].push({
+          // Debilidad (rojo)
+          defenseSortedData[attackingType].push({
             pokemonId: pokemonIndex,
             pokemonName: pokemon.name,
             effectiveness: totalEffectiveness,
+            type: "weak", // "bad" - rojo
           });
         }
       });
@@ -209,22 +209,30 @@ const TeamAnalysis = () => {
           }
         });
         if (isEffective) {
-          coverageMarks[defenderType].push(true);
-          coverageMarksWithData[defenderType].push({
+          coverageSortedData[defenderType].push({
             pokemonId: pokemonIndex,
             pokemonName: pokemon.name,
+            type: "effective", // Para cobertura, siempre es "good"
           });
         }
       });
     });
 
+    // Ordenar las marcas: primero azules (resistentes), luego rojas (débiles)
+    Object.keys(defenseSortedData).forEach((type) => {
+      defenseSortedData[type].sort((a, b) => {
+        // Si uno es resistente y el otro débil, el resistente va primero
+        if (a.type === "resistant" && b.type === "weak") return -1;
+        if (a.type === "weak" && b.type === "resistant") return 1;
+
+        // Si ambos son del mismo tipo, mantener el orden original
+        return 0;
+      });
+    });
+
     return {
-      defense: defenseMarks,
-      coverage: coverageMarks,
-      pokemonData: {
-        defense: defenseMarksWithData,
-        coverage: coverageMarksWithData,
-      },
+      defenseData: defenseSortedData,
+      coverageData: coverageSortedData,
     };
   }, [pokemons, types]);
 
@@ -247,15 +255,15 @@ const TeamAnalysis = () => {
           coverage. Red tally marks indicate weakness.
         </p>
         <p>Hover over a tally mark to highlight the Pokémon it corresponds to.</p>
+        <p>Type icons with red drop shadows indicate types where your team has more weaknesses than resistances.</p>
       </div>
       <div className="type-analysis__grid">
         {TYPE_ORDER.map((type) => (
           <TypeTally
             key={type}
             type={type}
-            defenseMarks={analysis.defense[type]}
-            coverageMarks={analysis.coverage[type]}
-            pokemonData={analysis.pokemonData}
+            defenseData={analysis.defenseData[type]}
+            coverageData={analysis.coverageData[type]}
           />
         ))}
       </div>
