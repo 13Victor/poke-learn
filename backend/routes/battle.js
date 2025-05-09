@@ -1,12 +1,22 @@
+/**
+ * Rutas para sistema de batallas Pokémon
+ */
 const express = require("express");
 const { BattleStream, Teams } = require("pokemon-showdown");
+const { formatResponse } = require("../utils/helpers");
+const { errorMessages } = require("../utils/messages");
+const { verifyToken } = require("../middlewares/authMiddleware");
+
 const router = express.Router();
 
 // Almacenar batallas activas
 const activeBattles = new Map();
 
-// Endpoint para iniciar una nueva batalla
-router.post("/start", (req, res) => {
+/**
+ * @route POST /battle/start
+ * @desc Iniciar una nueva batalla
+ */
+router.post("/start", verifyToken, async (req, res) => {
   try {
     const { format = "gen7randombattle" } = req.body;
 
@@ -31,26 +41,29 @@ router.post("/start", (req, res) => {
     // Guardar en batallas activas
     activeBattles.set(battleId, battleSetup);
 
-    res.json({
-      success: true,
-      battleId,
-      message: "Batalla creada correctamente",
-      format,
-    });
+    res.json(
+      formatResponse(true, "Batalla creada correctamente", {
+        battleId,
+        format,
+      })
+    );
   } catch (error) {
     console.error("Error al iniciar batalla:", error);
-    res.status(500).json({ success: false, error: "Error al iniciar batalla" });
+    res.status(500).json(formatResponse(false, "Error al iniciar batalla: " + error.message));
   }
 });
 
-// Endpoint para iniciar la batalla y recibir el estado inicial
-router.post("/initialize/:battleId", async (req, res) => {
+/**
+ * @route POST /battle/initialize/:battleId
+ * @desc Iniciar la batalla y recibir el estado inicial
+ */
+router.post("/initialize/:battleId", verifyToken, async (req, res) => {
   try {
     const { battleId } = req.params;
     const battle = activeBattles.get(battleId);
 
     if (!battle) {
-      return res.status(404).json({ success: false, error: "Batalla no encontrada" });
+      return res.status(404).json(formatResponse(false, "Batalla no encontrada"));
     }
 
     // Crear stream de batalla
@@ -106,21 +119,25 @@ router.post("/initialize/:battleId", async (req, res) => {
     // Esperamos más tiempo para que se procesen los mensajes iniciales
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    res.json({
-      success: true,
-      battleId,
-      logs: battle.logs,
-      state: battle.state,
-      turnCount: battle.turnCount,
-    });
+    res.json(
+      formatResponse(true, "Batalla inicializada correctamente", {
+        battleId,
+        logs: battle.logs,
+        state: battle.state,
+        turnCount: battle.turnCount,
+      })
+    );
   } catch (error) {
     console.error("Error al inicializar batalla:", error);
-    res.status(500).json({ success: false, error: "Error al inicializar batalla" });
+    res.status(500).json(formatResponse(false, "Error al inicializar batalla: " + error.message));
   }
 });
 
-// Endpoint para enviar un comando a la batalla
-router.post("/command/:battleId", async (req, res) => {
+/**
+ * @route POST /battle/command/:battleId
+ * @desc Enviar un comando a la batalla
+ */
+router.post("/command/:battleId", verifyToken, async (req, res) => {
   try {
     const { battleId } = req.params;
     let { command } = req.body;
@@ -130,11 +147,11 @@ router.post("/command/:battleId", async (req, res) => {
     const battle = activeBattles.get(battleId);
 
     if (!battle || !battle.stream) {
-      return res.status(404).json({ success: false, error: "Batalla no encontrada" });
+      return res.status(404).json(formatResponse(false, "Batalla no encontrada"));
     }
 
     if (battle.state !== "active") {
-      return res.status(400).json({ success: false, error: "La batalla no está activa" });
+      return res.status(400).json(formatResponse(false, "La batalla no está activa"));
     }
 
     // Guardar los logs actuales para encontrar los nuevos después
@@ -196,18 +213,19 @@ router.post("/command/:battleId", async (req, res) => {
             allNewLogs.push("Comando ejecutado, pero no generó respuesta del simulador.");
           }
 
-          return res.json({
-            success: true,
-            battleId,
-            logs: allNewLogs,
-            state: battle.state,
-            turnCount: battle.turnCount,
-            debug: {
-              commandsExecuted: battle.pendingCommands,
-              initialLogCount: preCommandLogLength,
-              newLogCount: allNewLogs.length,
-            },
-          });
+          return res.json(
+            formatResponse(true, "Comando ejecutado", {
+              battleId,
+              logs: allNewLogs,
+              state: battle.state,
+              turnCount: battle.turnCount,
+              debug: {
+                commandsExecuted: battle.pendingCommands,
+                initialLogCount: preCommandLogLength,
+                newLogCount: allNewLogs.length,
+              },
+            })
+          );
         }
       }
 
@@ -218,58 +236,66 @@ router.post("/command/:battleId", async (req, res) => {
       }
 
       // Respuesta normal
-      res.json({
-        success: true,
-        battleId,
-        logs: newLogs,
-        state: battle.state,
-        turnCount: battle.turnCount,
-        debug: {
-          commandExecuted: command,
-          initialLogCount: preCommandLogLength,
-          newLogCount: newLogs.length,
-        },
-      });
+      res.json(
+        formatResponse(true, "Comando ejecutado", {
+          battleId,
+          logs: newLogs,
+          state: battle.state,
+          turnCount: battle.turnCount,
+          debug: {
+            commandExecuted: command,
+            initialLogCount: preCommandLogLength,
+            newLogCount: newLogs.length,
+          },
+        })
+      );
     } catch (error) {
       console.error("Error al ejecutar comando:", error);
-      res.status(500).json({
-        success: false,
-        error: "Error al ejecutar comando: " + error.message,
-        debug: { command, error: error.toString() },
-      });
+      res.status(500).json(
+        formatResponse(false, "Error al ejecutar comando: " + error.message, {
+          debug: { command, error: error.toString() },
+        })
+      );
     }
   } catch (error) {
     console.error("Error general en /command:", error);
-    res.status(500).json({ success: false, error: "Error al enviar comando: " + error.message });
+    res.status(500).json(formatResponse(false, "Error al enviar comando: " + error.message));
   }
 });
 
-// Endpoint para obtener el estado actual de la batalla
-router.get("/status/:battleId", (req, res) => {
+/**
+ * @route GET /battle/status/:battleId
+ * @desc Obtener el estado actual de la batalla
+ */
+router.get("/status/:battleId", verifyToken, async (req, res) => {
   try {
     const { battleId } = req.params;
     const battle = activeBattles.get(battleId);
 
     if (!battle) {
-      return res.status(404).json({ success: false, error: "Batalla no encontrada" });
+      return res.status(404).json(formatResponse(false, "Batalla no encontrada"));
     }
 
-    res.json({
-      success: true,
-      battleId,
-      logs: battle.logs,
-      state: battle.state,
-      turnCount: battle.turnCount,
-      pendingCommands: battle.pendingCommands || [],
-    });
+    res.json(
+      formatResponse(true, "Estado de batalla recuperado", {
+        battleId,
+        logs: battle.logs,
+        state: battle.state,
+        turnCount: battle.turnCount,
+        pendingCommands: battle.pendingCommands || [],
+      })
+    );
   } catch (error) {
     console.error("Error al obtener estado de batalla:", error);
-    res.status(500).json({ success: false, error: "Error al obtener estado de batalla" });
+    res.status(500).json(formatResponse(false, "Error al obtener estado de batalla: " + error.message));
   }
 });
 
-// Endpoint para finalizar una batalla
-router.post("/end/:battleId", (req, res) => {
+/**
+ * @route POST /battle/end/:battleId
+ * @desc Finalizar una batalla
+ */
+router.post("/end/:battleId", verifyToken, async (req, res) => {
   try {
     const { battleId } = req.params;
 
@@ -286,21 +312,31 @@ router.post("/end/:battleId", (req, res) => {
       }
 
       activeBattles.delete(battleId);
-      res.json({ success: true, message: "Batalla finalizada correctamente" });
+      res.json(formatResponse(true, "Batalla finalizada correctamente"));
     } else {
-      res.status(404).json({ success: false, error: "Batalla no encontrada" });
+      res.status(404).json(formatResponse(false, "Batalla no encontrada"));
     }
   } catch (error) {
     console.error("Error al finalizar batalla:", error);
-    res.status(500).json({ success: false, error: "Error al finalizar batalla" });
+    res.status(500).json(formatResponse(false, "Error al finalizar batalla: " + error.message));
   }
 });
 
-// Endpoint para listar formatos disponibles
-router.get("/formats", (req, res) => {
-  res.json({
-    formats: ["gen7randombattle", "gen8randombattle", "gen9randombattle"],
-  });
+/**
+ * @route GET /battle/formats
+ * @desc Listar formatos disponibles
+ */
+router.get("/formats", async (req, res) => {
+  try {
+    res.json(
+      formatResponse(true, "Formatos disponibles", {
+        formats: ["gen7randombattle", "gen8randombattle", "gen9randombattle"],
+      })
+    );
+  } catch (error) {
+    console.error("Error al obtener formatos:", error);
+    res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
+  }
 });
 
 module.exports = router;

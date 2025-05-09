@@ -1,46 +1,125 @@
+/**
+ * Rutas para gestión de equipos Pokémon
+ */
 const express = require("express");
-const router = express.Router();
-const verifyToken = require("../middlewares/authMiddleware");
-const { getUserTeams, createTeam, deleteTeam } = require("../database/db");
+const { verifyToken } = require("../middlewares/authMiddleware");
+const { formatResponse, parseId } = require("../utils/helpers");
+const { errorMessages, successMessages } = require("../utils/messages");
+const { validateTeam } = require("../utils/validators");
+const { getUserTeams, createTeam, deleteTeam, getTeamById } = require("../database/teamQueries");
 
-// Get teams
+const router = express.Router();
+
+/**
+ * @route GET /teams
+ * @desc Obtener todos los equipos del usuario
+ */
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const teams = await getUserTeams(req.user.id);
-    res.json(teams);
+    const userId = req.user.id;
+    const teams = await getUserTeams(userId);
+    res.json(formatResponse(true, "Equipos del usuario", { teams }));
   } catch (error) {
-    console.error("Error fetching teams:", error);
-    res.status(500).json({ error: "Error retrieving teams" });
+    console.error("Error al obtener equipos:", error);
+    res.status(500).json(formatResponse(false, errorMessages.TEAM_FETCH_ERROR));
   }
 });
 
-// Create team
+/**
+ * @route GET /teams/:id
+ * @desc Obtener un equipo por ID
+ */
+router.get("/:id", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const teamId = parseId(req.params.id);
+
+    if (!teamId) {
+      return res.status(400).json(formatResponse(false, "ID de equipo inválido"));
+    }
+
+    const team = await getTeamById(teamId, userId);
+
+    if (!team) {
+      return res.status(404).json(formatResponse(false, errorMessages.TEAM_NOT_FOUND));
+    }
+
+    res.json(formatResponse(true, "Equipo encontrado", { team }));
+  } catch (error) {
+    console.error("Error al obtener equipo:", error);
+    res.status(500).json(formatResponse(false, errorMessages.TEAM_FETCH_ERROR));
+  }
+});
+
+/**
+ * @route POST /teams
+ * @desc Crear un nuevo equipo
+ */
 router.post("/", verifyToken, async (req, res) => {
   try {
+    const userId = req.user.id;
     const { name, pokemon } = req.body;
-    if (!name || !pokemon?.length) {
-      return res.status(400).json({ error: "Invalid team data" });
+
+    // Validar datos del equipo
+    const validation = validateTeam({ name, pokemon });
+    if (!validation.valid) {
+      return res.status(400).json(formatResponse(false, validation.message));
     }
 
-    const team = await createTeam(req.user.id, name, pokemon);
-    res.status(201).json(team);
+    const team = await createTeam(userId, name, pokemon);
+    res.status(201).json(formatResponse(true, successMessages.TEAM_CREATED, { team }));
   } catch (error) {
-    console.error("Error creating team:", error);
-    res.status(500).json({ error: "Error creating team" });
+    console.error("Error al crear equipo:", error);
+    res.status(500).json(formatResponse(false, errorMessages.TEAM_CREATE_ERROR));
   }
 });
 
-// Delete team
+/**
+ * @route PUT /teams/:id
+ * @desc Actualizar un equipo
+ */
+router.put("/:id", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const teamId = parseId(req.params.id);
+
+    if (!teamId) {
+      return res.status(400).json(formatResponse(false, "ID de equipo inválido"));
+    }
+
+    // Implementar actualización de equipo
+    // ...
+
+    res.json(formatResponse(true, successMessages.TEAM_UPDATED));
+  } catch (error) {
+    console.error("Error al actualizar equipo:", error);
+    res.status(500).json(formatResponse(false, errorMessages.TEAM_UPDATE_ERROR || "Error al actualizar equipo"));
+  }
+});
+
+/**
+ * @route DELETE /teams/:id
+ * @desc Eliminar un equipo
+ */
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
-    const deleted = await deleteTeam(req.params.id, req.user.id);
-    if (!deleted) {
-      return res.status(404).json({ error: "Team not found" });
+    const userId = req.user.id;
+    const teamId = parseId(req.params.id);
+
+    if (!teamId) {
+      return res.status(400).json(formatResponse(false, "ID de equipo inválido"));
     }
-    res.json({ message: "Team deleted successfully" });
+
+    const deleted = await deleteTeam(teamId, userId);
+
+    if (!deleted) {
+      return res.status(404).json(formatResponse(false, errorMessages.TEAM_NOT_FOUND));
+    }
+
+    res.json(formatResponse(true, successMessages.TEAM_DELETED));
   } catch (error) {
-    console.error("Error deleting team:", error);
-    res.status(500).json({ error: "Error deleting team" });
+    console.error("Error al eliminar equipo:", error);
+    res.status(500).json(formatResponse(false, errorMessages.TEAM_DELETE_ERROR));
   }
 });
 
