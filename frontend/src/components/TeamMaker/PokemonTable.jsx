@@ -37,9 +37,20 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   // Load pokemon data if not already loaded
   useEffect(() => {
+    // Load pokemon data if not already loaded
     const loadData = async () => {
       if (!pokemonsLoaded && !pokemonsLoading) {
-        await getPokemons();
+        console.log("🔄 Intentando cargar datos de Pokémon...");
+        try {
+          await getPokemons();
+          console.log("✅ Datos de Pokémon cargados correctamente");
+        } catch (error) {
+          console.error("❌ Error al cargar datos de Pokémon:", error);
+        }
+      } else if (pokemonsLoaded) {
+        console.log("✅ Datos de Pokémon ya cargados");
+      } else if (pokemonsLoading) {
+        console.log("⏳ Cargando datos de Pokémon...");
       }
     };
 
@@ -48,6 +59,13 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   // Process data only when pokemons change and not during initial loading
   useEffect(() => {
+    console.log("Estado de processedData:", {
+      pokemonsLoaded,
+      length: pokemons.length,
+      isProcessing: isProcessingData,
+      processed: processedRef.current,
+      processedDataLength: processedData.length,
+    });
     // Solo procesamos los datos si no se han procesado antes o si los datos de Pokémon han cambiado
     if (
       pokemonsLoaded &&

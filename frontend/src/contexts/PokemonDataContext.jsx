@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
 
 // Create context
 const PokemonDataContext = createContext(null);
@@ -41,18 +41,40 @@ export const PokemonDataProvider = ({ children }) => {
 
       const startTime = performance.now();
 
-      return fetch(`http://localhost:5000/data/${resourceName === "pokemons" ? "availablePokemons" : resourceName}`)
+      // Obtener el token de localStorage
+      const token = localStorage.getItem("token");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Añadir el token a las cabeceras si existe
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      return fetch(`http://localhost:5000/data/${resourceName === "pokemons" ? "availablePokemons" : resourceName}`, {
+        headers,
+      })
         .then((res) => {
           if (!res.ok) {
             throw new Error(`Failed to load ${resourceName}: ${res.status}`);
           }
           return res.json();
         })
-        .then((data) => {
+        .then((responseObj) => {
           const endTime = performance.now();
+
+          // Check if the response follows the expected format
+          if (!responseObj.success) {
+            throw new Error(responseObj.message || `Error loading ${resourceName}`);
+          }
+
+          // Extract the actual data from the response
+          const data = responseObj.data;
+
           console.log(`✅ ${resourceName} loaded in ${(endTime - startTime).toFixed(2)}ms`);
 
-          // Update resource state
+          // Update resource state with the extracted data
           setResources((prev) => ({
             ...prev,
             [resourceName]: {
@@ -182,29 +204,35 @@ export const PokemonDataProvider = ({ children }) => {
 
         const startTime = performance.now();
 
+        const token = localStorage.getItem("token");
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        // Añadir el token a las cabeceras si existe
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const processResponse = async (response) => {
+          if (!response.ok) {
+            throw new Error(`Failed with status: ${response.status}`);
+          }
+          const responseObj = await response.json();
+          if (!responseObj.success) {
+            throw new Error(responseObj.message || "API returned error");
+          }
+          return responseObj.data;
+        };
         // Cargar datos en paralelo
         const results = await Promise.allSettled([
-          fetch("http://localhost:5000/data/availablePokemons").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/moves").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/moves-desc").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/learnsets").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/items").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/abilities").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
-          fetch("http://localhost:5000/data/types").then((r) =>
-            r.ok ? r.json() : Promise.reject(`Failed with status: ${r.status}`)
-          ),
+          fetch("http://localhost:5000/data/availablePokemons", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/moves", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/moves-desc", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/learnsets", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/items", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/abilities", { headers }).then(processResponse),
+          fetch("http://localhost:5000/data/types", { headers }).then(processResponse),
         ]);
 
         const endTime = performance.now();
@@ -367,6 +395,9 @@ export const PokemonDataProvider = ({ children }) => {
           abilities: { ...prev.abilities, loading: false, error: error.message },
           types: { ...prev.types, loading: false, error: error.message },
         }));
+
+        console.error("Response status:", error.response?.status);
+        console.error("Response data:", error.response?.data);
       }
     };
 
