@@ -1,30 +1,46 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { useAuth } from "./AuthContext";
+import apiService from "../services/apiService";
 
 // Create context
 const PokemonDataContext = createContext(null);
 
+// Constantes para definir los recursos disponibles
+const RESOURCE_KEYS = ["pokemons", "moves", "movesDesc", "learnsets", "items", "abilities", "types"];
+
 // Utility for tracking loaded resources
 const createResourceTracker = () => {
-  const resources = {
-    pokemons: { loaded: false, loading: false, data: [], error: null },
-    moves: { loaded: false, loading: false, data: {}, error: null },
-    movesDesc: { loaded: false, loading: false, data: {}, error: null }, // Add moves descriptions
-    learnsets: { loaded: false, loading: false, data: {}, error: null },
-    items: { loaded: false, loading: false, data: {}, error: null },
-    abilities: { loaded: false, loading: false, data: {}, error: null },
-    types: { loaded: false, loading: false, data: {}, error: null },
-  };
-
+  const resources = {};
+  RESOURCE_KEYS.forEach((key) => {
+    resources[key] = {
+      loaded: false,
+      loading: false,
+      data: key === "pokemons" ? [] : {},
+      error: null,
+    };
+  });
   return resources;
 };
 
 export const PokemonDataProvider = ({ children }) => {
+  // Obtener estado de autenticación
+  const { isAuthenticated, loading: authLoading } = useAuth();
+
   // Track resource loading state for each data type
   const [resources, setResources] = useState(createResourceTracker());
 
+  // Referencias para controlar el estado de carga
+  const dataLoadingRef = useRef(false);
+  const dataLoadedRef = useRef(false);
+
   // A single function to load a specific resource
   const loadResource = useCallback(
-    (resourceName, url) => {
+    async (resourceName) => {
+      // Si no está autenticado, no cargar datos
+      if (!isAuthenticated) {
+        return Promise.resolve(resourceName === "pokemons" ? [] : {});
+      }
+
       // Skip if already loaded or loading
       if (resources[resourceName].loaded || resources[resourceName].loading) {
         return Promise.resolve(resources[resourceName].data);
@@ -41,82 +57,107 @@ export const PokemonDataProvider = ({ children }) => {
 
       const startTime = performance.now();
 
-      // Obtener el token de localStorage
-      const token = localStorage.getItem("token");
-      const headers = {
-        "Content-Type": "application/json",
-      };
+      try {
+        let data;
 
-      // Añadir el token a las cabeceras si existe
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+        // Usar el método adecuado según el tipo de recurso
+        switch (resourceName) {
+          case "pokemons":
+            data = await apiService.getAvailablePokemons();
+            break;
+          case "moves":
+            data = await apiService.getMoves();
+            break;
+          case "movesDesc":
+            data = await apiService.getMovesDesc();
+            break;
+          case "learnsets":
+            data = await apiService.getLearnsets();
+            break;
+          case "items":
+            data = await apiService.getItems();
+            break;
+          case "abilities":
+            data = await apiService.getAbilities();
+            break;
+          case "types":
+            data = await apiService.getTypes();
+            break;
+          default:
+            throw new Error(`Tipo de recurso desconocido: ${resourceName}`);
+        }
+
+        if (!data.success) {
+          throw new Error(data.message || `Error cargando ${resourceName}`);
+        }
+
+        const endTime = performance.now();
+        console.log(`✅ ${resourceName} loaded in ${(endTime - startTime).toFixed(2)}ms`);
+
+        // Actualizar el estado del recurso con los datos extraídos
+        setResources((prev) => ({
+          ...prev,
+          [resourceName]: {
+            loading: false,
+            loaded: true,
+            data: data.data,
+            error: null,
+          },
+        }));
+
+        return data.data;
+      } catch (error) {
+        console.error(`❌ Error loading ${resourceName}:`, error);
+        const defaultValue = resourceName === "pokemons" ? [] : {};
+
+        setResources((prev) => ({
+          ...prev,
+          [resourceName]: {
+            loading: false,
+            loaded: false,
+            data: defaultValue,
+            error: error.message,
+          },
+        }));
+        return defaultValue;
       }
-
-      return fetch(`http://localhost:5000/data/${resourceName === "pokemons" ? "availablePokemons" : resourceName}`, {
-        headers,
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`Failed to load ${resourceName}: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((responseObj) => {
-          const endTime = performance.now();
-
-          // Check if the response follows the expected format
-          if (!responseObj.success) {
-            throw new Error(responseObj.message || `Error loading ${resourceName}`);
-          }
-
-          // Extract the actual data from the response
-          const data = responseObj.data;
-
-          console.log(`✅ ${resourceName} loaded in ${(endTime - startTime).toFixed(2)}ms`);
-
-          // Update resource state with the extracted data
-          setResources((prev) => ({
-            ...prev,
-            [resourceName]: {
-              loading: false,
-              loaded: true,
-              data: data,
-              error: null,
-            },
-          }));
-
-          return data;
-        })
-        .catch((error) => {
-          console.error(`❌ Error loading ${resourceName}:`, error);
-          setResources((prev) => ({
-            ...prev,
-            [resourceName]: {
-              loading: false,
-              loaded: false,
-              data: ["pokemons"].includes(resourceName) ? [] : {},
-              error: error.message,
-            },
-          }));
-          return ["pokemons"].includes(resourceName) ? [] : {};
-        });
     },
-    [resources]
+    [resources, isAuthenticated]
   );
 
-  // Exposed methods for components to request data
-  const getPokemons = useCallback(() => {
-    return resources.pokemons.loaded ? Promise.resolve(resources.pokemons.data) : loadResource("pokemons");
-  }, [resources.pokemons.loaded, loadResource]);
+  // Generic getter function creator
+  const createResourceGetter = (resourceName) => {
+    return useCallback(() => {
+      if (!isAuthenticated) {
+        return Promise.resolve(resourceName === "pokemons" ? [] : {});
+      }
 
+      return resources[resourceName].loaded
+        ? Promise.resolve(resources[resourceName].data)
+        : loadResource(resourceName);
+    }, [resources[resourceName].loaded, isAuthenticated]);
+  };
+
+  // Specific getters for each resource
+  const getPokemons = createResourceGetter("pokemons");
+  const getLearnsets = createResourceGetter("learnsets");
+  const getItems = createResourceGetter("items");
+  const getAbilities = createResourceGetter("abilities");
+  const getTypes = createResourceGetter("types");
+  const getMovesDesc = createResourceGetter("movesDesc");
+
+  // Special case for moves which requires combining with descriptions
   const getMoves = useCallback(async () => {
+    if (!isAuthenticated) {
+      return Promise.resolve({});
+    }
+
     if (resources.moves.loaded) {
       return Promise.resolve(resources.moves.data);
     }
 
-    // Load both moves and moves descriptions in parallel
     try {
-      const [movesData, movesDescData] = await Promise.all([loadResource("moves"), loadResource("moves-desc")]);
+      const [movesData, movesDescData] = await Promise.all([loadResource("moves"), loadResource("movesDesc")]);
 
       // Process moves to include descriptions
       const enhancedMoves = { ...movesData };
@@ -147,44 +188,41 @@ export const PokemonDataProvider = ({ children }) => {
       console.error("Error loading moves with descriptions:", error);
       throw error;
     }
-  }, [resources.moves.loaded, loadResource]);
+  }, [resources.moves.loaded, loadResource, isAuthenticated]);
 
-  const getLearnsets = useCallback(() => {
-    return resources.learnsets.loaded ? Promise.resolve(resources.learnsets.data) : loadResource("learnsets");
-  }, [resources.learnsets.loaded, loadResource]);
+  const areAllResourcesLoaded = useCallback(() => {
+    return RESOURCE_KEYS.every((key) => resources[key].loaded);
+  }, [resources]);
 
-  // Simplified items method (now a single endpoint)
-  const getItems = useCallback(() => {
-    return resources.items.loaded ? Promise.resolve(resources.items.data) : loadResource("items");
-  }, [resources.items.loaded, loadResource]);
-
-  // Added abilities method
-  const getAbilities = useCallback(() => {
-    return resources.abilities.loaded ? Promise.resolve(resources.abilities.data) : loadResource("abilities");
-  }, [resources.abilities.loaded, loadResource]);
-
-  // Add getTypes method
-  const getTypes = useCallback(() => {
-    return resources.types.loaded ? Promise.resolve(resources.types.data) : loadResource("types");
-  }, [resources.types.loaded, loadResource]);
-
-  const getMovesDesc = useCallback(() => {
-    return resources.movesDesc.loaded ? Promise.resolve(resources.movesDesc.data) : loadResource("moves-desc");
-  }, [resources.movesDesc.loaded, loadResource]);
-
-  // Preload all data on mount
+  // Preload all data on mount, but only if authenticated
   useEffect(() => {
+    // No cargar si estamos en proceso de autenticación
+    if (authLoading) {
+      return;
+    }
+
+    // No cargar si no está autenticado
+    if (!isAuthenticated) {
+      // Si el usuario cierra sesión, resetear los datos
+      if (dataLoadedRef.current) {
+        setResources(createResourceTracker());
+        dataLoadedRef.current = false;
+      }
+      return;
+    }
+
+    // No cargar si ya está cargando o ya cargó
+    if (dataLoadingRef.current || dataLoadedRef.current) {
+      return;
+    }
+
+    // Marcar como cargando
+    dataLoadingRef.current = true;
+
     const preloadAllData = async () => {
-      // Si ya están cargados todos los datos, no hacer nada
-      if (
-        resources.pokemons.loaded &&
-        resources.moves.loaded &&
-        resources.movesDesc.loaded &&
-        resources.learnsets.loaded &&
-        resources.items.loaded &&
-        resources.abilities.loaded &&
-        resources.types.loaded
-      ) {
+      if (areAllResourcesLoaded()) {
+        dataLoadedRef.current = true;
+        dataLoadingRef.current = false;
         return;
       }
 
@@ -192,48 +230,29 @@ export const PokemonDataProvider = ({ children }) => {
 
       try {
         // Indicar que estamos cargando todos los datos
-        setResources((prev) => ({
-          pokemons: { ...prev.pokemons, loading: true },
-          moves: { ...prev.moves, loading: true },
-          movesDesc: { ...prev.movesDesc, loading: true },
-          learnsets: { ...prev.learnsets, loading: true },
-          items: { ...prev.items, loading: true },
-          abilities: { ...prev.abilities, loading: true },
-          types: { ...prev.types, loading: true },
-        }));
+        setResources((prev) => {
+          const newState = { ...prev };
+          RESOURCE_KEYS.forEach((key) => {
+            newState[key] = { ...prev[key], loading: true };
+          });
+          return newState;
+        });
 
         const startTime = performance.now();
 
-        const token = localStorage.getItem("token");
-        const headers = {
-          "Content-Type": "application/json",
-        };
+        // Preparar las promesas para cargar los datos
+        const promises = [
+          apiService.getAvailablePokemons(),
+          apiService.getMoves(),
+          apiService.getMovesDesc(),
+          apiService.getLearnsets(),
+          apiService.getItems(),
+          apiService.getAbilities(),
+          apiService.getTypes(),
+        ];
 
-        // Añadir el token a las cabeceras si existe
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const processResponse = async (response) => {
-          if (!response.ok) {
-            throw new Error(`Failed with status: ${response.status}`);
-          }
-          const responseObj = await response.json();
-          if (!responseObj.success) {
-            throw new Error(responseObj.message || "API returned error");
-          }
-          return responseObj.data;
-        };
         // Cargar datos en paralelo
-        const results = await Promise.allSettled([
-          fetch("http://localhost:5000/data/availablePokemons", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/moves", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/moves-desc", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/learnsets", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/items", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/abilities", { headers }).then(processResponse),
-          fetch("http://localhost:5000/data/types", { headers }).then(processResponse),
-        ]);
+        const results = await Promise.allSettled(promises);
 
         const endTime = performance.now();
         console.log(`⏱️ Data fetch attempts completed in ${(endTime - startTime).toFixed(2)}ms`);
@@ -241,142 +260,39 @@ export const PokemonDataProvider = ({ children }) => {
         // Procesar resultados
         const newResources = { ...resources };
 
-        // Pokémon data
-        if (results[0].status === "fulfilled") {
-          newResources.pokemons = {
-            loaded: true,
-            loading: false,
-            data: results[0].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded ${results[0].value.length} Pokémon`);
-        } else {
-          newResources.pokemons = {
-            loaded: false,
-            loading: false,
-            data: [],
-            error: results[0].reason,
-          };
-          console.error("❌ Failed to load Pokémon data:", results[0].reason);
-        }
+        // Procesar cada resultado
+        RESOURCE_KEYS.forEach((key, index) => {
+          const result = results[index];
+          const defaultValue = key === "pokemons" ? [] : {};
 
-        // Moves data
-        if (results[1].status === "fulfilled") {
-          newResources.moves = {
-            loaded: true,
-            loading: false,
-            data: results[1].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded moves`);
-        } else {
-          newResources.moves = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[1].reason,
-          };
-          console.error("❌ Failed to load moves data:", results[1].reason);
-        }
+          if (result.status === "fulfilled" && result.value.success) {
+            newResources[key] = {
+              loaded: true,
+              loading: false,
+              data: result.value.data,
+              error: null,
+            };
 
-        // Moves descriptions data
-        if (results[2].status === "fulfilled") {
-          newResources.movesDesc = {
-            loaded: true,
-            loading: false,
-            data: results[2].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded move descriptions`);
-        } else {
-          newResources.movesDesc = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[2].reason,
-          };
-          console.error("❌ Failed to load move descriptions data:", results[2].reason);
-        }
-
-        // Learnsets data
-        if (results[3].status === "fulfilled") {
-          newResources.learnsets = {
-            loaded: true,
-            loading: false,
-            data: results[3].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded learnsets`);
-        } else {
-          newResources.learnsets = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[3].reason,
-          };
-          console.error("❌ Failed to load learnsets data:", results[3].reason);
-        }
-
-        // Items data
-        if (results[4].status === "fulfilled") {
-          newResources.items = {
-            loaded: true,
-            loading: false,
-            data: results[4].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded items with descriptions`);
-        } else {
-          newResources.items = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[4].reason,
-          };
-          console.error("❌ Failed to load items data:", results[4].reason);
-        }
-
-        // Abilities data
-        if (results[5].status === "fulfilled") {
-          newResources.abilities = {
-            loaded: true,
-            loading: false,
-            data: results[5].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded abilities`);
-        } else {
-          newResources.abilities = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[5].reason,
-          };
-          console.error("❌ Failed to load abilities data:", results[5].reason);
-        }
-
-        // Types data
-        if (results[6].status === "fulfilled") {
-          newResources.types = {
-            loaded: true,
-            loading: false,
-            data: results[6].value,
-            error: null,
-          };
-          console.log(`✅ Successfully loaded types`);
-        } else {
-          newResources.types = {
-            loaded: false,
-            loading: false,
-            data: {},
-            error: results[6].reason,
-          };
-          console.error("❌ Failed to load types data:", results[6].reason);
-        }
+            const logMessage =
+              key === "pokemons"
+                ? `✅ Successfully loaded ${result.value.data.length} Pokémon`
+                : `✅ Successfully loaded ${key}`;
+            console.log(logMessage);
+          } else {
+            newResources[key] = {
+              loaded: false,
+              loading: false,
+              data: defaultValue,
+              error: result.reason ? result.reason.message : "Error en la respuesta del servidor",
+            };
+            console.error(`❌ Failed to load ${key} data:`, result.reason);
+          }
+        });
 
         setResources(newResources);
+        dataLoadedRef.current = true;
 
-        const allSuccess = results.every((r) => r.status === "fulfilled");
+        const allSuccess = results.every((r) => r.status === "fulfilled" && r.value.success);
         if (allSuccess) {
           console.log("✅ All data preloaded successfully");
         } else {
@@ -386,94 +302,50 @@ export const PokemonDataProvider = ({ children }) => {
         console.error("❌ Unexpected error during data preloading:", error);
 
         // Actualizar estado para reflejar el error
-        setResources((prev) => ({
-          pokemons: { ...prev.pokemons, loading: false, error: error.message },
-          moves: { ...prev.moves, loading: false, error: error.message },
-          movesDesc: { ...prev.movesDesc, loading: false, error: error.message },
-          learnsets: { ...prev.learnsets, loading: false, error: error.message },
-          items: { ...prev.items, loading: false, error: error.message },
-          abilities: { ...prev.abilities, loading: false, error: error.message },
-          types: { ...prev.types, loading: false, error: error.message },
-        }));
-
-        console.error("Response status:", error.response?.status);
-        console.error("Response data:", error.response?.data);
+        setResources((prev) => {
+          const newState = { ...prev };
+          RESOURCE_KEYS.forEach((key) => {
+            newState[key] = { ...prev[key], loading: false, error: error.message };
+          });
+          return newState;
+        });
+      } finally {
+        dataLoadingRef.current = false;
       }
     };
 
     preloadAllData();
-  }, []); // Sin dependencias - solo se ejecuta una vez al montar
+  }, [isAuthenticated, authLoading, areAllResourcesLoaded]);
 
-  const value = {
-    // Resource states
-    pokemonsLoaded: resources.pokemons.loaded,
-    pokemonsLoading: resources.pokemons.loading,
-    pokemonsError: resources.pokemons.error,
+  // Construir de forma dinámica el objeto value para el contexto
+  const buildContextValue = () => {
+    // Datos básicos con getters
+    const value = {
+      getPokemons,
+      getMoves,
+      getMovesDesc,
+      getLearnsets,
+      getItems,
+      getAbilities,
+      getTypes,
 
-    movesLoaded: resources.moves.loaded,
-    movesLoading: resources.moves.loading,
-    movesError: resources.moves.error,
+      // Acceso directo a datos
+      isLoading: RESOURCE_KEYS.some((key) => resources[key].loading) || dataLoadingRef.current,
+      isAllDataLoaded: areAllResourcesLoaded(),
+    };
 
-    movesDescLoaded: resources.movesDesc.loaded,
-    movesDescLoading: resources.movesDesc.loading,
-    movesDescError: resources.movesDesc.error,
+    // Agregar estados de carga y datos para cada recurso
+    RESOURCE_KEYS.forEach((key) => {
+      value[`${key}Loaded`] = resources[key].loaded;
+      value[`${key}Loading`] = resources[key].loading;
+      value[`${key}Error`] = resources[key].error;
+      value[key] = resources[key].data;
+    });
 
-    learnsetsLoaded: resources.learnsets.loaded,
-    learnsetsLoading: resources.learnsets.loading,
-    learnsetsError: resources.learnsets.error,
-
-    itemsLoaded: resources.items.loaded,
-    itemsLoading: resources.items.loading,
-    itemsError: resources.items.error,
-
-    abilitiesLoaded: resources.abilities.loaded,
-    abilitiesLoading: resources.abilities.loading,
-    abilitiesError: resources.abilities.error,
-
-    typesLoaded: resources.types.loaded,
-    typesLoading: resources.types.loading,
-    typesError: resources.types.error,
-
-    // Data getters with loading mechanisms
-    getPokemons,
-    getMoves,
-    getMovesDesc,
-    getLearnsets,
-    getItems,
-    getAbilities,
-    getTypes,
-
-    // Direct data access if already loaded
-    pokemons: resources.pokemons.data,
-    moves: resources.moves.data,
-    movesDesc: resources.movesDesc.data,
-    learnsets: resources.learnsets.data,
-    items: resources.items.data,
-    abilities: resources.abilities.data,
-    types: resources.types.data,
-
-    // La propiedad isLoading
-    isLoading:
-      resources.pokemons.loading ||
-      resources.moves.loading ||
-      resources.movesDesc.loading ||
-      resources.learnsets.loading ||
-      resources.items.loading ||
-      resources.abilities.loading ||
-      resources.types.loading,
-
-    // Helper to check if all data is loaded
-    isAllDataLoaded:
-      resources.pokemons.loaded &&
-      resources.moves.loaded &&
-      resources.movesDesc.loaded &&
-      resources.learnsets.loaded &&
-      resources.items.loaded &&
-      resources.abilities.loaded &&
-      resources.types.loaded,
+    return value;
   };
 
-  return <PokemonDataContext.Provider value={value}>{children}</PokemonDataContext.Provider>;
+  return <PokemonDataContext.Provider value={buildContextValue()}>{children}</PokemonDataContext.Provider>;
 };
 
 // Custom hook to use the context

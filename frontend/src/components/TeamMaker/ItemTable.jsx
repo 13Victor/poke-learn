@@ -38,7 +38,6 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
         }));
 
         setProcessedItems(itemsArray);
-        console.log(`✅ ${itemsArray.length} items processed`);
       } catch (error) {
         console.error(`❌ Error processing items:`, error);
       } finally {

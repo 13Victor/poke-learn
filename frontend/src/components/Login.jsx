@@ -1,17 +1,25 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { signInWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase.config";
+import { useAuth } from "../contexts/AuthContext";
+import apiService from "../services/apiService";
+import GoogleButton from "react-google-button"; // Puedes instalar este paquete o crear tu propio botón
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [debugInfo, setDebugInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
+  const { setError, error } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Obtener la ubicación anterior si existe
+  const from = location.state?.from?.pathname || "/user";
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -37,7 +45,7 @@ function Login() {
         return;
       }
 
-      // Obtener token de Firebase para mayor seguridad
+      // Obtener token de Firebase
       const idToken = await user.getIdToken();
 
       // 3. Preparar información de usuario para enviar al backend
@@ -52,48 +60,14 @@ function Login() {
       console.log("Enviando información de usuario al backend...");
 
       // 4. Autenticar en backend con información y token
-      const response = await fetch("http://localhost:5000/auth/login-firebase", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_info: userInfo,
-          firebase_token: idToken,
-        }),
-      });
+      const response = await apiService.loginWithFirebase(userInfo, idToken);
 
-      const data = await response.json();
-      console.log("Respuesta del backend:", data);
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error del servidor");
+      if (!response.success) {
+        throw new Error(response.message || "Error del servidor");
       }
-
-      // IMPORTANTE: Extraer el token de la estructura correcta
-      let tokenToStore = null;
-
-      // Verificar todas las posibles ubicaciones del token
-      if (data.data && data.data.token) {
-        tokenToStore = data.data.token;
-        console.log("Token encontrado en data.data.token");
-      } else if (data.token) {
-        tokenToStore = data.token;
-        console.log("Token encontrado en data.token");
-      }
-
-      if (!tokenToStore) {
-        console.error("No se encontró token en la respuesta:", data);
-        throw new Error("No se recibió token del servidor");
-      }
-
-      console.log("Token a guardar:", tokenToStore.substring(0, 15) + "...");
-
-      // LIMPIAR localStorage antes de guardar
-      localStorage.clear();
 
       // Guardar token
-      localStorage.setItem("token", tokenToStore);
+      localStorage.setItem("token", response.data.token);
 
       // Verificación inmediata
       const storedToken = localStorage.getItem("token");
@@ -105,7 +79,9 @@ function Login() {
       );
 
       setSuccess("Login exitoso. Redirigiendo...");
-      setTimeout(() => navigate("/user"), 2000);
+
+      // Redirigir a la página anterior o a /user por defecto
+      setTimeout(() => navigate(from, { replace: true }), 2000);
     } catch (error) {
       console.error("Error completo:", error);
 
@@ -126,28 +102,115 @@ function Login() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setError("");
+    setSuccess("");
+    setDebugInfo("");
+    setGoogleLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      // Configurar para mostrar la pantalla de selección de cuenta cada vez
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      // Iniciar sesión con Google
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Obtener el token de ID de Google
+      const idToken = await user.getIdToken();
+
+      // Preparar información del usuario
+      const userInfo = {
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified, // Gmail siempre estará verificado
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      };
+
+      console.log("Inicio de sesión con Google exitoso:", userInfo.email);
+
+      // Autenticar en el backend
+      const response = await apiService.loginWithFirebase(userInfo, idToken);
+
+      if (!response.success) {
+        throw new Error(response.message || "Error del servidor");
+      }
+
+      // Guardar token
+      localStorage.setItem("token", response.data.token);
+
+      setSuccess("Inicio de sesión con Google exitoso. Redirigiendo...");
+      setTimeout(() => navigate(from, { replace: true }), 1500);
+    } catch (error) {
+      console.error("Error en inicio de sesión con Google:", error);
+
+      // Si el usuario canceló el popup, no mostrar error
+      if (error.code === "auth/popup-closed-by-user") {
+        setDebugInfo("Ventana de autenticación cerrada por el usuario");
+      }
+      // Si ya existe una cuenta con el mismo email pero otro método
+      else if (error.code === "auth/account-exists-with-different-credential") {
+        setError("Ya existe una cuenta con este email. Intenta otro método de inicio de sesión.");
+      }
+      // Otros errores
+      else {
+        setError(`Error al iniciar sesión con Google: ${error.message || "Error desconocido"}`);
+        setDebugInfo(`Código de error: ${error.code || "N/A"}`);
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <>
-      <div>
+      <div className="login-container">
         <h3>Login</h3>
+
+        {/* Formulario de login tradicional */}
         <form onSubmit={handleSubmit} className="login-form">
           <input
             type="text"
             placeholder="Email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || googleLoading}
           />
           <input
             type="password"
             placeholder="Contraseña"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || googleLoading}
           />
-          <input type="submit" value={isLoading ? "Procesando..." : "Login"} disabled={isLoading} />
+          <input
+            type="submit"
+            value={isLoading ? "Procesando..." : "Login"}
+            disabled={isLoading || googleLoading}
+            className="login-button"
+          />
         </form>
-        <div className="debug-tools" style={{ marginTop: "15px" }}>
+
+        {/* Separador entre métodos de login */}
+        <div className="login-separator">
+          <span>O</span>
+        </div>
+
+        {/* Botón de login con Google */}
+        <div className="google-login-container">
+          {/* Si usas react-google-button */}
+          <GoogleButton
+            onClick={handleGoogleLogin}
+            disabled={isLoading || googleLoading}
+            label={googleLoading ? "Procesando..." : "Iniciar sesión con Google"}
+            type="light" // o "dark" para tema oscuro
+          />
+        </div>
+
+        {/* Herramientas de debug */}
+        <div className="debug-tools">
           <button
             type="button"
             onClick={() => {
@@ -155,7 +218,6 @@ function Login() {
               console.log("localStorage limpiado");
               alert("localStorage limpiado. Intenta iniciar sesión de nuevo.");
             }}
-            style={{ padding: "5px 10px", background: "#f0f0f0", marginRight: "10px" }}
           >
             Limpiar localStorage
           </button>
@@ -166,20 +228,24 @@ function Login() {
               console.log("Token actual:", token);
               alert(token ? `Token encontrado: ${token.substring(0, 20)}...` : "No hay token");
             }}
-            style={{ padding: "5px 10px", background: "#f0f0f0" }}
           >
             Verificar token
           </button>
         </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        {success && <p style={{ color: "green" }}>{success}</p>}
+
+        {/* Mensajes de estado */}
+        {error && <p className="error-message">{error}</p>}
+        {success && <p className="success-message">{success}</p>}
         {debugInfo && (
-          <p style={{ color: "blue", fontSize: "0.8em" }}>
+          <p className="debug-info">
             <strong>Debug:</strong> {debugInfo}
           </p>
         )}
       </div>
-      <Link to="/auth/register">Ir a Register</Link>
+
+      <div className="register-link">
+        ¿No tienes una cuenta? <Link to="/auth/register">Regístrate</Link>
+      </div>
     </>
   );
 }

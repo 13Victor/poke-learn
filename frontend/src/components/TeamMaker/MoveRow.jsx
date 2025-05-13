@@ -4,7 +4,6 @@ import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
 
 const MoveRow = memo(({ move, onClick, isEven }) => {
-  console.log("Move with description:", move.name, move.shortDesc || move.desc);
   return (
     <tr onClick={() => onClick(move)} className={isEven ? "even-row" : "odd-row"}>
       <td>

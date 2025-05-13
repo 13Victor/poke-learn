@@ -1,105 +1,80 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase.config";
+import { useAuth } from "../contexts/AuthContext";
+import apiService from "../services/apiService";
 
 function User() {
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
+  const { currentUser, isAuthenticated, logout, error: authError, setError } = useAuth();
+  const [error, setLocalError] = useState("");
   const navigate = useNavigate();
 
-  const getToken = () => {
-    const token = localStorage.getItem("token");
-    console.log(
-      "Token recuperado de localStorage:",
-      token ? `${token.substring(0, 15)}... (longitud: ${token.length})` : "No existe o es undefined"
-    );
+  // Referencia para controlar si el componente está montado
+  const isMounted = useRef(true);
 
-    // Si no hay token, borrar localStorage y redirigir
-    if (!token) {
-      console.log("No se encontró token, limpiando localStorage");
-      localStorage.clear();
-      return null;
-    }
-
-    return token;
-  };
-
-  const removeToken = async () => {
-    try {
-      // Cerrar sesión en Firebase
-      if (typeof auth !== "undefined" && auth.currentUser) {
-        await auth.signOut();
-      }
-    } catch (error) {
-      console.error("Error al cerrar sesión en Firebase:", error);
-    } finally {
-      // Siempre eliminar el token local
-      localStorage.removeItem("token");
-      navigate("/auth/login");
-    }
-  };
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    const checkAndFetchUser = async () => {
-      setLoading(true);
+    const fetchUserData = async () => {
+      // No realizar la llamada si no estamos autenticados o si ya tenemos el error de auth
+      if (!isAuthenticated || authError) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const token = getToken();
+        // Obtener datos adicionales del usuario si es necesario
+        const response = await apiService.getUserProfile();
 
-        if (!token) {
-          throw new Error("No autorizado. Inicia sesión.");
-        }
+        // Verificar si el componente sigue montado antes de actualizar el estado
+        if (isMounted.current) {
+          setLoading(false);
 
-        console.log("Enviando solicitud a /auth/check con token");
-
-        // Verificar si el token es válido primero
-        const checkResponse = await fetch("http://localhost:5000/auth/check", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        console.log("Respuesta de /auth/check recibida. Status:", checkResponse.status);
-
-        const checkData = await checkResponse.json();
-        console.log("Datos de respuesta:", checkData);
-
-        if (!checkResponse.ok) {
-          // Si el token no es válido, limpiar y redirigir a login
-          console.error("Error en verificación de token:", checkData);
-          localStorage.removeItem("token");
-          throw new Error(checkData.message || "Sesión expirada. Por favor, inicia sesión nuevamente.");
-        }
-
-        if (checkData.success && checkData.data && checkData.data.user) {
-          // Si tenemos el usuario directamente de /auth/check, lo usamos
-          setUser(checkData.data.user);
-        } else {
-          throw new Error("Formato de respuesta inválido");
+          if (!response.success) {
+            throw new Error(response.message);
+          }
         }
       } catch (error) {
-        console.error("Error general:", error);
-        setError(error.message);
+        console.error("Error al obtener datos del usuario:", error);
 
-        // Si hay un error de autorización, redirigir al login
-        if (
-          error.message.includes("autorizado") ||
-          error.message.includes("sesión") ||
-          error.message.includes("token") ||
-          error.message.includes("expirada")
-        ) {
-          setTimeout(() => navigate("/auth/login"), 2000);
+        // Solo actualizar estados si el componente sigue montado
+        if (isMounted.current) {
+          setLocalError(error.message);
+          setLoading(false);
+
+          // Si hay un error de autorización, redirigir al login después de un tiempo
+          if (
+            error.message.includes("autorizado") ||
+            error.message.includes("sesión") ||
+            error.message.includes("token") ||
+            error.message.includes("expirada")
+          ) {
+            // Usar un setTimeout para dar tiempo a otros efectos a ejecutarse
+            setTimeout(() => {
+              if (isMounted.current) {
+                navigate("/auth/login");
+              }
+            }, 2000);
+          }
         }
-      } finally {
-        setLoading(false);
       }
     };
 
-    checkAndFetchUser();
-  }, [navigate]);
+    fetchUserData();
+  }, [isAuthenticated, navigate, setError, authError]);
+
+  const handleLogout = async () => {
+    // Marcar el componente como no montado antes del logout
+    // para evitar actualizar estados después de la navegación
+    isMounted.current = false;
+    await logout();
+  };
+
   if (loading) {
     return <div className="loading">Cargando información de usuario...</div>;
   }
@@ -107,31 +82,33 @@ function User() {
   return (
     <div>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {user ? (
+      {authError && <p style={{ color: "red" }}>{authError}</p>}
+      {currentUser ? (
         <div className="user-profile">
-          <h2>¡Bienvenido, {user.user_name}!</h2>
+          <h2>¡Bienvenido, {currentUser.user_name}!</h2>
           <div className="user-details">
             <p>
-              <strong>ID:</strong> {user.id}
+              <strong>ID:</strong> {currentUser.id}
             </p>
             <p>
-              <strong>Email:</strong> {user.email}
+              <strong>Email:</strong> {currentUser.email}
             </p>
             <p>
-              <strong>Nombre de Usuario:</strong> {user.user_name}
+              <strong>Nombre de Usuario:</strong> {currentUser.user_name}
             </p>
             <div className="profile-image">
               <img
-                src={`http://localhost:5000/uploads/profile_pictures/${user.profile_picture}`}
+                src={`http://localhost:5000/uploads/profile_pictures/${currentUser.profile_picture}`}
                 width={100}
                 alt="Imagen de perfil"
               />
             </div>
           </div>
           <div className="actions">
-            <button className="logout-button" onClick={removeToken}>
+            <button className="logout-button" onClick={handleLogout}>
               Cerrar Sesión
             </button>
+            <button onClick={() => navigate("/teammaker")}>Ir al creador de equipos</button>
           </div>
         </div>
       ) : (
