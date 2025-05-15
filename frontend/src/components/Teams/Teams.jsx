@@ -25,7 +25,8 @@ const Teams = () => {
         throw new Error(response.message || "Error al obtener equipos");
       }
 
-      setTeams(response.data);
+      // Fix: Access the teams array inside the data object
+      setTeams(response.data.teams);
       setLoading(false);
     } catch (err) {
       console.error("Error al obtener equipos:", err);

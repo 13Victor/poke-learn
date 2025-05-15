@@ -1,7 +1,8 @@
 .teammaker-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2 * var(--spacing-xl));
+  height: 100vh;
+  padding: var(--spacing-xl);
 }
 
 .teammaker-page > .teammaker-header {
