@@ -38,7 +38,6 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
         }));
 
         setProcessedItems(itemsArray);
-        console.log(`✅ ${itemsArray.length} items processed`);
       } catch (error) {
         console.error(`❌ Error processing items:`, error);
       } finally {
@@ -135,10 +134,6 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
 
   return (
     <div className="table-container item-table">
-      <h2>
-        Select an item for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1})
-      </h2>
-
       <div className="search-container">
         <input
           type="text"
@@ -153,7 +148,7 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
         <table>
           <thead>
             <tr>
-              <th>Image</th>
+              <th>#</th>
               <th>Name</th>
               <th>Description</th>
             </tr>

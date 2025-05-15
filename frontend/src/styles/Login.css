@@ -1,0 +1,256 @@
+/* Estilos generales */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.login-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+.login-container {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: var(--background);
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Logo y encabezado */
+.logo-container {
+  text-align: center;
+}
+
+.pokemon-logo {
+  height: auto;
+}
+
+.logo-container h2 {
+  font-weight: 500;
+}
+
+.subtitle {
+  color: var(--battleship-gray);
+}
+
+/* Formulario */
+.login-form {
+  margin-top: var(--spacing-xl);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--lapis-lazuli);
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.2);
+}
+
+/* Opciones del formulario */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+}
+
+.remember-me input {
+  margin-right: var(--spacing-xs);
+}
+
+.forgot-password {
+  color: var(--lapis-lazuli);
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* Botón de login */
+.login-button {
+  width: 100%;
+  padding: var(--spacing-sm);
+  background-color: var(--lapis-lazuli);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.login-button:hover {
+  background-color: var(--prussian-blue);
+}
+
+.login-button:disabled {
+  background-color: var(--picton-blue);
+  cursor: not-allowed;
+}
+
+/* Separador */
+.login-separator {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  color: var(--battleship-gray);
+}
+
+.login-separator::before,
+.login-separator::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.login-separator span {
+  padding: 0 0.75rem;
+}
+
+/* Botón de Google */
+.google-login-container {
+  display: flex;
+  justify-content: center;
+}
+
+/* Mensajes */
+.error-message {
+  color: var(--lapis-lazuli);
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(229, 62, 62, 0.1);
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+.success-message {
+  color: #38a169;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(56, 161, 105, 0.1);
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+.debug-info {
+  color: #718096;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* Enlace de registro */
+.register-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.register-link a {
+  color: var(--lapis-lazuli);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Contenedor de fondo */
+.background-container {
+  width: 50%;
+  position: relative;
+  background-color: var(--lapis-lazuli);
+  display: none;
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.background-text {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 2.5rem;
+  z-index: 2;
+  color: white;
+  max-width: 400px;
+}
+
+.background-text h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.background-text p {
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .background-container {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-container {
+    width: 100%;
+    padding: 2rem 1rem;
+  }
+
+  .form-container {
+    max-width: 100%;
+  }
+}

@@ -6,20 +6,45 @@
   padding-inline: var(--spacing-lg);
   padding-top: var(--spacing-lg);
   width: 100%;
+  grid-area: 2 / 1 / 3 / 2;
+}
+
+.type-analysis__heading {
+  margin-bottom: var(--spacing-md);
+}
+
+.type-analysis__legend {
+  margin-bottom: var(--spacing-md);
+  font-size: 0.9rem;
+  color: var(--gray-dark);
+}
+
+.type-analysis__empty-cell {
+  height: 32px; /* Match the height of the type icon */
+}
+
+.type-analysis__label {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-dark);
+  margin-bottom: var(--spacing-xs);
 }
 
 .type-analysis__grid {
   display: grid;
   height: 100%;
-  gap: var(--spacing-sm);
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Un poco más para acomodar márgenes */
+  grid-template-columns: repeat(6, 1fr);
+  grid-column-gap: var(--spacing-2xl);
   list-style: none;
+  flex: 1;
 }
 
 .tally {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
   width: 100%;
 }
 
@@ -33,10 +58,13 @@
 .tally__type .type-icon {
   width: 100%;
   height: auto;
+  transition: all var(--transition-normal);
 }
 
 .tally__marks {
   display: flex;
+  justify-content: space-between;
+  margin-left: var(--spacing-xs) !important;
   gap: var(--spacing-xs);
   margin: 0;
   padding: 0;
@@ -44,7 +72,11 @@
 }
 
 .tally__marks-defense {
-  margin-bottom: 2px;
+  margin-bottom: 0;
+}
+
+.tally__marks-coverage {
+  margin-top: 0;
 }
 
 .tally__mark {
@@ -56,14 +88,12 @@
 
 .tally__mark_good {
   background-color: var(--blue-gray);
+  border: 0;
 }
 
 .tally__mark_bad {
   background-color: var(--red-gray);
-}
-
-.tally__mark:hover {
-  transform: translateY(-4px);
+  border: 0;
 }
 
 .tally__group {
@@ -76,4 +106,25 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  width: 100%;
+}
+
+.tally__divider {
+  margin: 0 !important;
+  height: var(--spacing-xs) !important;
+  margin-inline: -2px !important;
+}
+
+/* Enhanced tally mark hover effects */
+.tally__mark {
+  transition: all var(--transition-fast);
+}
+
+.tally__mark:hover {
+  transform: scale(1.1);
+}
+
+/* Make the transition smoother for the pokemonTeamCard */
+.pokemonTeamCard {
+  transition: all var(--transition-fast);
 }

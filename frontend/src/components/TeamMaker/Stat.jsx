@@ -1,7 +1,10 @@
 import React, { memo } from "react";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
+import "tippy.js/animations/scale.css";
 
 // Este componente representa una estadística individual
-const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
+const Stat = memo(({ label, value, baseValue, maxValue, fullname }) => {
   // Calculamos el porcentaje relativo a un valor máximo esperado para una estadística
   const percentage = Math.min(100, (value / maxValue) * 100);
 
@@ -28,44 +31,41 @@ const Stat = memo(({ label, value, baseValue, maxValue = 150 }) => {
         const range = colors[i + 1].percent - colors[i].percent;
         const adjustedPercent = (percent - colors[i].percent) / range;
 
-        // Interpolar entre los dos colores
         const r = Math.round(colorLow.r + adjustedPercent * (colorHigh.r - colorLow.r));
         const g = Math.round(colorLow.g + adjustedPercent * (colorHigh.g - colorLow.g));
         const b = Math.round(colorLow.b + adjustedPercent * (colorHigh.b - colorLow.b));
 
-        return `rgb(${r}, ${g}, ${b})`;
+        const alpha = 0.65;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
       }
     }
 
-    // Si es mayor que el último umbral, devolver el color más alto
-    return `rgb(${colors[colors.length - 1].color.r}, ${colors[colors.length - 1].color.g}, ${
-      colors[colors.length - 1].color.b
-    })`;
+    // Si es mayor que el último umbral, devolver el color más alto con transparencia
+    const lastColor = colors[colors.length - 1].color;
+    const alpha = 0.65;
+    return `rgba(${lastColor.r}, ${lastColor.g}, ${lastColor.b}, ${alpha})`;
   };
 
   // Obtenemos el color basado en el porcentaje
   const statColor = getGradientColor(percentage);
 
   return (
-    <div className="statContainer">
-      <div
-        className="statLabel"
-        style={{
-          color: "black",
-          backgroundColor: statColor,
-        }}
-      >
-        {label}
+    <Tippy content={fullname} placement="top" animation="scale" theme="light-border" delay={[300, 100]}>
+      <div className="statContainer">
+        <div
+          className="statLabel"
+          style={{
+            backgroundColor: statColor,
+          }}
+        >
+          <p>{label}</p>
+        </div>
+
+        <div className="statValue" style={{ outline: value ? "none" : "1px solid var(--silver)" }}>
+          {value}
+        </div>
       </div>
-      <div
-        className="statValue"
-        style={{
-          color: "black",
-        }}
-      >
-        {value}
-      </div>
-    </div>
+    </Tippy>
   );
 });
 

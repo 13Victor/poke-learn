@@ -37,30 +37,25 @@ const ItemAbility = memo(
       }
     };
 
-    // Función para calcular la posición del sprite
-    const getSpritePosition = (spritenum) => {
-      // Asumiendo que la cuadrícula es de X ítems por fila
-      const itemsPerRow = 16;
+    // Get the item key from the item name or use a fallback
+    const getItemKey = () => {
+      // This assumes that the item variable holds the name, and that
+      // you have some way to convert the name to a key
+      // You might need to adjust this logic based on your actual data structure
+      if (!item) return null;
 
-      // Calcular fila y columna
-      const row = Math.floor(spritenum / itemsPerRow);
-      const col = spritenum % itemsPerRow;
-
-      // Retornar posición como string CSS para background-position
-      return `-${col * 24}px -${row * 24}px`;
+      // Convert item name to key format (lowercase, no spaces)
+      // This is an example - modify according to your actual key format
+      return item.toLowerCase().replace(/\s+/g, "");
     };
+
+    const itemKey = getItemKey();
 
     return (
       <div className="item-abilityContainer">
         <div className="itemContainer">
-          {itemSpriteNum !== null && itemSpriteNum !== undefined ? (
-            <div
-              className="item-sprite small-icon"
-              style={{
-                backgroundImage: 'url("/assets/items.png")',
-                backgroundPosition: getSpritePosition(itemSpriteNum),
-              }}
-            />
+          {item ? (
+            <img src={`/assets/items/${itemKey}.webp`} alt={item} className="item-sprite small-icon" />
           ) : (
             <i className="fa-solid fa-cube item-sprite small-icon"></i>
           )}

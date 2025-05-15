@@ -9,6 +9,7 @@ CREATE TABLE `user` (
     `email` VARCHAR(255) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
     `profile_picture` VARCHAR(255) DEFAULT NULL,
+    `firebase_uid` VARCHAR(128) NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_login` DATETIME
 );

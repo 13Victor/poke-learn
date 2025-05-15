@@ -29,13 +29,9 @@ const AbilityTable = ({ onAbilitySelect, selectedPokemon, selectedSlot }) => {
   }
 
   return (
-    <div>
-      <h2>
-        Select an ability for {selectedPokemon?.name || "???"} (Slot {selectedSlot + 1})
-      </h2>
-
-      <div className="table-container">
-        <table border="1" className="pokemon-table">
+    <div className="table-container ability-table">
+      <div className="table-wrapper">
+        <table>
           <thead>
             <tr>
               <th>Type</th>
@@ -44,8 +40,14 @@ const AbilityTable = ({ onAbilitySelect, selectedPokemon, selectedSlot }) => {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(pokemonAbilities).map(([abilityType, ability]) => (
-              <AbilityRow key={abilityType} ability={ability} abilityType={abilityType} onClick={handleRowClick} />
+            {Object.entries(pokemonAbilities).map(([abilityType, ability], index) => (
+              <AbilityRow
+                key={abilityType}
+                ability={ability}
+                abilityType={abilityType}
+                onClick={handleRowClick}
+                isEven={index % 2 === 0}
+              />
             ))}
           </tbody>
         </table>

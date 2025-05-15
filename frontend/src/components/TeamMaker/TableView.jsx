@@ -21,7 +21,7 @@ const TableView = memo(() => {
   const handlePokemonSelect = useCallback(
     (pokemon) => {
       console.log("🔹 Selecting Pokémon:", pokemon.name);
-      selectPokemon(selectedSlot, pokemon);
+      selectPokemon(pokemon);
     },
     [selectPokemon, selectedSlot]
   );
@@ -54,40 +54,48 @@ const TableView = memo(() => {
   );
 
   // Determinar qué tabla mostrar basado en el viewMode
-  if (viewMode === "pokemon") {
-    return <PokemonTable onPokemonSelect={handlePokemonSelect} />;
-  }
+  const renderTable = () => {
+    switch (viewMode) {
+      case "pokemon":
+        return <PokemonTable onPokemonSelect={handlePokemonSelect} key="pokemon-table" />;
+      case "moves":
+        if (!selectedPokemon?.name) return null;
+        return (
+          <MoveTable
+            onMoveSelect={handleMoveSelect}
+            selectedPokemon={selectedPokemon}
+            selectedSlot={selectedSlot}
+            selectedMoveIndex={selectedMove.moveIndex}
+            key="move-table"
+          />
+        );
+      case "items":
+        return (
+          <ItemTable
+            onItemSelect={handleItemSelect}
+            selectedPokemon={selectedPokemon}
+            selectedSlot={selectedSlot}
+            key="item-table"
+          />
+        );
+      case "abilities":
+        return (
+          <AbilityTable
+            onAbilitySelect={handleAbilitySelect}
+            selectedPokemon={selectedPokemon}
+            selectedSlot={selectedSlot}
+            key="ability-table"
+          />
+        );
+      case "stats":
+        if (!selectedPokemon?.name) return null;
+        return <StatsTable selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} key="stats-table" />;
+      default:
+        return null;
+    }
+  };
 
-  if (viewMode === "moves" && selectedPokemon?.name) {
-    return (
-      <MoveTable
-        onMoveSelect={handleMoveSelect}
-        selectedPokemon={selectedPokemon}
-        selectedSlot={selectedSlot}
-        selectedMoveIndex={selectedMove.moveIndex}
-      />
-    );
-  }
-
-  if (viewMode === "items") {
-    return <ItemTable onItemSelect={handleItemSelect} selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} />;
-  }
-
-  if (viewMode === "abilities") {
-    return (
-      <AbilityTable
-        onAbilitySelect={handleAbilitySelect}
-        selectedPokemon={selectedPokemon}
-        selectedSlot={selectedSlot}
-      />
-    );
-  }
-
-  if (viewMode === "stats" && selectedPokemon?.name) {
-    return <StatsTable selectedPokemon={selectedPokemon} selectedSlot={selectedSlot} />;
-  }
-
-  return null;
+  return renderTable();
 });
 
 export default TableView;

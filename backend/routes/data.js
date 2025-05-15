@@ -1,7 +1,17 @@
+/**
+ * Rutas para acceso a datos del juego
+ */
 const express = require("express");
+const { formatResponse } = require("../utils/helpers");
 const router = express.Router();
+
+// Cargar los datos
 const data = require("../data/dataLoader");
 
+/**
+ * Procesa el Pokédex para filtrar y dar formato a los datos
+ * @returns {Array} - Pokémon filtrados y formateados
+ */
 const processPokedex = () => {
   const bannedTiers = ["Uber", "AG", "Illegal", "Unknown"];
 
@@ -50,23 +60,26 @@ const processPokedex = () => {
   });
 };
 
-// Process items to combine data and descriptions, with filtering
+/**
+ * Procesa los items para combinar datos y descripciones, con filtrado
+ * @returns {Object} - Items procesados
+ */
 const processItems = () => {
   const items = data.items.Items;
   const itemDescriptions = data.itemsDesc.ItemsText;
   const filteredItems = {};
 
-  // Filter out unwanted items
+  // Filtrar items no deseados
   for (const itemId in items) {
     const item = items[itemId];
     const isNonstandard = item.isNonstandard || "";
 
-    // Skip items with unwanted isNonstandard values or specific banned items
+    // Omitir items con valores isNonstandard no deseados o items específicos prohibidos
     if (["Past", "CAP", "Unobtainable"].includes(isNonstandard) || itemId === "kingsrock" || itemId === "razorfang") {
       continue;
     }
 
-    // Add description data to the item
+    // Añadir datos de descripción al item
     const itemWithDesc = { ...item };
     if (itemDescriptions[itemId]) {
       itemWithDesc.shortDesc = itemDescriptions[itemId].shortDesc || "";
@@ -76,7 +89,7 @@ const processItems = () => {
       itemWithDesc.desc = "";
     }
 
-    // Add the key as a property so it's easier to work with on the frontend
+    // Añadir la clave como propiedad para facilitar su uso en el frontend
     itemWithDesc.key = itemId;
 
     filteredItems[itemId] = itemWithDesc;
@@ -85,7 +98,10 @@ const processItems = () => {
   return filteredItems;
 };
 
-// Process abilities with descriptions and filtering out banned abilities
+/**
+ * Procesa las habilidades con descripciones y filtra las prohibidas
+ * @returns {Object} - Habilidades procesadas
+ */
 const processPokemonAbilities = () => {
   const pokemonData = data.pokedex.Pokedex;
   const abilitiesDesc = data.abilitiesDesc.AbilitiesText;
@@ -103,7 +119,7 @@ const processPokemonAbilities = () => {
     for (const abilitySlot in abilities) {
       const abilityName = abilities[abilitySlot];
 
-      // Skip banned abilities
+      // Omitir habilidades prohibidas
       if (bannedAbilities.includes(abilityName.toLowerCase().replace(/\s|-/g, ""))) {
         continue;
       }
@@ -124,57 +140,205 @@ const processPokemonAbilities = () => {
   return result;
 };
 
-// Process moves with filtering
+/**
+ * Procesa los movimientos con descripciones y filtrado
+ * @returns {Object} - Movimientos procesados
+ */
 const processFilteredMoves = () => {
   const moves = data.moves.Moves;
+  // Verificar si movesDesc existe antes de intentar acceder a MovesText
+  const movesDesc = data.movesDesc && data.movesDesc.MovesText ? data.movesDesc.MovesText : {};
   const bannedMoves = ["batonpass", "lastrespects", "shedtail"];
   const filteredMoves = {};
 
   for (const moveId in moves) {
-    // Skip banned moves
+    // Omitir movimientos prohibidos
     if (bannedMoves.includes(moveId)) {
       continue;
     }
 
-    filteredMoves[moveId] = moves[moveId];
+    const moveData = moves[moveId];
+    const moveDescData = movesDesc[moveId] || {};
+
+    // Crear un nuevo objeto de movimiento con descripciones correctamente incluidas
+    filteredMoves[moveId] = {
+      ...moveData,
+      id: moveId,
+
+      // Usar descripción de MovesText si está disponible, de lo contrario usar la del movimiento original
+      shortDesc: moveDescData.shortDesc || moveData.shortDesc || "",
+      desc: moveDescData.desc || moveData.desc || "",
+    };
   }
 
+  console.log(`Procesados ${Object.keys(filteredMoves).length} movimientos con descripciones`);
   return filteredMoves;
 };
 
-// Nueva ruta para devolver los Pokémon ya filtrados
-router.get("/availablePokemons", (req, res) => {
-  const filteredPokedex = processPokedex();
-  res.json(filteredPokedex);
+/**
+ * Procesa las descripciones de movimientos por separado
+ * @returns {Object} - Descripciones de movimientos
+ */
+const processMoveDescriptions = () => {
+  // Asegurarse de que data.movesDesc y MovesText existen
+  if (!data.movesDesc || !data.movesDesc.MovesText) {
+    console.warn("Advertencia: Datos de descripciones de movimientos no encontrados!");
+    return {};
+  }
+
+  return data.movesDesc.MovesText;
+};
+
+/**
+ * @route GET /data/availablePokemons
+ * @desc Obtener Pokémon disponibles filtrados
+ */
+router.get("/availablePokemons", async (req, res) => {
+  try {
+    const filteredPokedex = processPokedex();
+    res.json(formatResponse(true, "Pokémon disponibles", filteredPokedex));
+  } catch (error) {
+    console.error("Error al procesar Pokémon disponibles:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar Pokémon disponibles"));
+  }
 });
 
-// Nueva ruta optimizada para items que combina datos y descripciones
-router.get("/items", (req, res) => {
-  const processedItems = processItems();
-  res.json(processedItems);
+/**
+ * @route GET /data/items
+ * @desc Obtener items con descripciones
+ */
+router.get("/items", async (req, res) => {
+  try {
+    const processedItems = processItems();
+    res.json(formatResponse(true, "Items disponibles", processedItems));
+  } catch (error) {
+    console.error("Error al procesar items:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar items"));
+  }
 });
 
-// Nuevo endpoint para habilidades con descripciones (filtrado)
-router.get("/abilities", (req, res) => {
-  const abilitiesWithDesc = processPokemonAbilities();
-  res.json(abilitiesWithDesc);
+/**
+ * @route GET /data/abilities
+ * @desc Obtener habilidades con descripciones
+ */
+router.get("/abilities", async (req, res) => {
+  try {
+    const abilitiesWithDesc = processPokemonAbilities();
+    res.json(formatResponse(true, "Habilidades disponibles", abilitiesWithDesc));
+  } catch (error) {
+    console.error("Error al procesar habilidades:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar habilidades"));
+  }
 });
 
-// Ruta de moves ahora con filtrado
-router.get("/moves", (req, res) => {
-  const filteredMoves = processFilteredMoves();
-  res.json(filteredMoves);
+/**
+ * @route GET /data/moves
+ * @desc Obtener movimientos filtrados
+ */
+router.get("/moves", async (req, res) => {
+  try {
+    const filteredMoves = processFilteredMoves();
+    res.json(formatResponse(true, "Movimientos disponibles", filteredMoves));
+  } catch (error) {
+    console.error("Error al procesar movimientos:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar movimientos"));
+  }
 });
 
-// Rutas originales mantenidas por compatibilidad, pero con filtrado añadido
-router.get("/pokedex", (req, res) => res.json(data.moves));
-router.get("/abilities-raw", (req, res) => res.json(data.abilities.Abilities));
-router.get("/abilities-desc", (req, res) => res.json(data.abilitiesDesc.AbilitiesText));
-router.get("/items-raw", (req, res) => res.json(data.items.Items));
-router.get("/items-desc", (req, res) => res.json(data.itemsDesc.ItemsText));
-router.get("/formats", (req, res) => res.json(data.formats));
-router.get("/formats-data", (req, res) => res.json(data.formatsData));
-router.get("/learnsets", (req, res) => res.json(data.learnsets.Learnsets));
-router.get("/types", (req, res) => res.json(data.types));
+/**
+ * @route GET /data/moves-desc
+ * @desc Obtener descripciones de movimientos
+ */
+router.get("/moves-desc", async (req, res) => {
+  try {
+    const moveDescriptions = processMoveDescriptions();
+    res.json(formatResponse(true, "Descripciones de movimientos", moveDescriptions));
+  } catch (error) {
+    console.error("Error al procesar descripciones de movimientos:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar descripciones de movimientos"));
+  }
+});
+
+// Rutas originales mantenidas por compatibilidad, pero con formato consistente
+router.get("/pokedex", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos del Pokédex", data.moves));
+  } catch (error) {
+    console.error("Error al obtener datos del Pokédex:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos del Pokédex"));
+  }
+});
+
+router.get("/abilities-raw", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos de habilidades", data.abilities.Abilities));
+  } catch (error) {
+    console.error("Error al obtener datos de habilidades:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos de habilidades"));
+  }
+});
+
+router.get("/abilities-desc", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Descripciones de habilidades", data.abilitiesDesc.AbilitiesText));
+  } catch (error) {
+    console.error("Error al obtener descripciones de habilidades:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener descripciones de habilidades"));
+  }
+});
+
+router.get("/items-raw", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos de items", data.items.Items));
+  } catch (error) {
+    console.error("Error al obtener datos de items:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos de items"));
+  }
+});
+
+router.get("/items-desc", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Descripciones de items", data.itemsDesc.ItemsText));
+  } catch (error) {
+    console.error("Error al obtener descripciones de items:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener descripciones de items"));
+  }
+});
+
+router.get("/formats", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Formatos disponibles", data.formats));
+  } catch (error) {
+    console.error("Error al obtener formatos disponibles:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener formatos disponibles"));
+  }
+});
+
+router.get("/formats-data", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos de formatos", data.formatsData));
+  } catch (error) {
+    console.error("Error al obtener datos de formatos:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos de formatos"));
+  }
+});
+
+router.get("/learnsets", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos de learnsets", data.learnsets.Learnsets));
+  } catch (error) {
+    console.error("Error al obtener datos de learnsets:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos de learnsets"));
+  }
+});
+
+router.get("/types", async (req, res) => {
+  try {
+    res.json(formatResponse(true, "Datos de tipos", data.types));
+  } catch (error) {
+    console.error("Error al obtener datos de tipos:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos de tipos"));
+  }
+});
 
 module.exports = router;

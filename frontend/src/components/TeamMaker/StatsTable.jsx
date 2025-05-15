@@ -191,11 +191,11 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
   };
 
   if (!selectedPokemon || !selectedPokemon.name) {
-    return <div className="statsTableContainer">Selecciona un Pokémon primero</div>;
+    return <div className="table-container">Selecciona un Pokémon primero</div>;
   }
 
   return (
-    <div className="statsTableContainer">
+    <div className="table-container">
       <h2>Configuración de estadísticas para {selectedPokemon.name}</h2>
 
       <div className="statsControls">
@@ -226,55 +226,57 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
         </div>
       </div>
 
-      <table className="statsTable">
-        <thead>
-          <tr>
-            <th>Estadística</th>
-            <th>Base</th>
-            <th>EVs (0-252)</th>
-            <th>IVs (0-31)</th>
-            <th>Final</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(evs).map(([stat, value]) => (
-            <tr key={stat} className={getNatureClass(stat)}>
-              <td>{getStatLabel(stat)}</td>
-              <td>{baseStats[stat] || 0}</td>
-              <td>
-                <div className="input-group">
-                  <input
-                    type="range"
-                    min="0"
-                    max="252"
-                    step="4"
-                    value={value}
-                    onChange={(e) => handleEvChange(stat, e.target.value)}
-                  />
+      <div className="table-wrapper">
+        <table className="statsTable">
+          <thead>
+            <tr>
+              <th>Estadística</th>
+              <th>Base</th>
+              <th>EVs (0-252)</th>
+              <th>IVs (0-31)</th>
+              <th>Final</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(evs).map(([stat, value], index) => (
+              <tr key={stat} className={`${getNatureClass(stat)} ${index % 2 === 0 ? "even-row" : "odd-row"}`}>
+                <td>{getStatLabel(stat)}</td>
+                <td>{baseStats[stat] || 0}</td>
+                <td>
+                  <div className="input-group">
+                    <input
+                      type="range"
+                      min="0"
+                      max="252"
+                      step="4"
+                      value={value}
+                      onChange={(e) => handleEvChange(stat, e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="252"
+                      step="4"
+                      value={value}
+                      onChange={(e) => handleEvChange(stat, e.target.value)}
+                    />
+                  </div>
+                </td>
+                <td>
                   <input
                     type="number"
                     min="0"
-                    max="252"
-                    step="4"
-                    value={value}
-                    onChange={(e) => handleEvChange(stat, e.target.value)}
+                    max="31"
+                    value={ivs[stat]}
+                    onChange={(e) => handleIvChange(stat, e.target.value)}
                   />
-                </div>
-              </td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  max="31"
-                  value={ivs[stat]}
-                  onChange={(e) => handleIvChange(stat, e.target.value)}
-                />
-              </td>
-              <td className="finalStat">{calculatedStats[stat]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </td>
+                <td className="finalStat">{calculatedStats[stat]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="statsInfo">
         <p>Cada 4 EVs = +1 en la estadística final al nivel 100</p>

@@ -1,44 +1,156 @@
-import React, { memo } from "react";
+import React, { memo, useContext } from "react";
 import Tippy from "@tippyjs/react";
+import tippy from "tippy.js"; // Importamos la API imperativa
 import "tippy.js/dist/tippy.css";
 import "tippy.js/animations/scale.css";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
+
+// Tier descriptions
+const TIER_DESCRIPTIONS = {
+  OU: "Overused",
+  UU: "Underused",
+  UUBL: "Underused Banlist",
+  RUBL: "Rarely Used Banlist",
+  RU: "Rarely Used",
+  NUBL: "Never Used Banlist",
+  NU: "Never Used",
+  PUBL: "Partially Used Banlist",
+  PU: "Partially Used",
+  ZUBL: "Zero Used Banlist",
+  ZU: "Zero Used",
+  NFE: "Not Fully Evolved",
+  LC: "Little Cup",
+};
 
 const PokemonRow = memo(
   ({ pokemon, onClick, isEven }) => {
+    const { abilities } = usePokemonData();
     const imageUrl = `/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`;
+
+    // Get tier description or provide default message
+    const getTierDescription = (tier) => {
+      return TIER_DESCRIPTIONS[tier] || `${tier} - No description available`;
+    };
+
+    // Encuentra la descripción de la habilidad
+    const getAbilityDescription = (abilityName) => {
+      if (!abilities || !abilityName) return "No description available";
+
+      // Buscar en el objeto abilities por nombre de habilidad
+      for (const abilityKey in abilities) {
+        const abilityData = abilities[abilityKey];
+        // Buscar en las entradas de cada ability
+        for (const abilityCategoryKey in abilityData) {
+          // Los valores son [abilityName, abilityDescription]
+          if (abilityCategoryKey === "abilities") {
+            for (const slot in abilityData.abilities) {
+              const [name, description] = abilityData.abilities[slot];
+              if (name === abilityName) {
+                return description || "No description available";
+              }
+            }
+          }
+        }
+      }
+
+      return "No description available";
+    };
 
     return (
       <tr onClick={() => onClick(pokemon)} className={isEven ? "even-row" : "odd-row"}>
         <td>
-          <img
-            className="pokemon-image"
-            src={imageUrl}
-            alt={pokemon.name}
-            onError={(e) => {
-              e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
-              console.warn(`Failed to load image for ${pokemon.name}`);
-            }}
-          />
+          <div className="pokemon-icon-container">
+            <img
+              className="pokemon-image"
+              src={imageUrl}
+              alt={pokemon.name}
+              onError={(e) => {
+                e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                console.warn(`Failed to load image for ${pokemon.name}`);
+              }}
+            />
+          </div>
         </td>
-        <td>{pokemon.name}</td>
+        <td>
+          {/* Usamos una referencia para verificar si hay overflow */}
+          <span
+            className="pokemon-name-cell"
+            ref={(el) => {
+              if (el) {
+                // Determinamos si hay overflow
+                const hasOverflow = el.offsetWidth < el.scrollWidth;
+
+                // Si hay un componente Tippy previo, lo eliminamos
+                if (el._tippy) {
+                  el._tippy.destroy();
+                }
+
+                // Solo creamos el Tippy si hay overflow
+                if (hasOverflow) {
+                  // Usa tippy (en minúsculas) en lugar de Tippy
+                  tippy(el, {
+                    content: pokemon.name,
+                    placement: "top",
+                    animation: "scale",
+                    theme: "light-border",
+                    delay: [300, 100],
+                  });
+                }
+              }
+            }}
+          >
+            {pokemon.name}
+          </span>
+        </td>
         <td>
           <div className="pokemon-tier-cell">
-            <p className="pokemon-tier">{pokemon.tier}</p>
+            <Tippy
+              content={getTierDescription(pokemon.tier)}
+              placement="top"
+              animation="scale"
+              theme="light-border"
+              delay={[300, 100]}
+            >
+              <p className="pokemon-tier">{pokemon.tier}</p>
+            </Tippy>
           </div>
         </td>
         <td>
           <div className="types-cell">
             {pokemon.types.map((type, index) => (
-              <img className="type-icon" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
+              <Tippy
+                key={type}
+                content={
+                  <div className="type-tooltip-content">
+                    <img className="type-icon-banner" src={`/assets/type-icons/${type}_banner.png`} alt={type} />
+                  </div>
+                }
+                placement="top"
+                animation="scale"
+                theme={`type-tooltip-${type.toLowerCase()} transparent`}
+                delay={[300, 100]}
+                arrow={true}
+              >
+                <img className="type-icon" src={`/assets/type-icons/${type}2.png`} alt={type} />
+              </Tippy>
             ))}
           </div>
         </td>
         <td>
           <div className="abilities-cell">
             {pokemon.abilities.map((ability, index) => (
-              <span className="ability-name" key={ability}>
-                {ability}
-              </span>
+              <Tippy
+                key={ability}
+                content={getAbilityDescription(ability)}
+                placement="top"
+                animation="scale"
+                theme="not-rounded"
+                delay={[300, 0]}
+              >
+                <span className="ability-name" key={ability}>
+                  {ability}
+                </span>
+              </Tippy>
             ))}
           </div>
         </td>
