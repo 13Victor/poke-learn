@@ -1,7 +1,7 @@
 // src/services/apiService.js
 
 // URL base para las llamadas API
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Clase para gestionar todas las llamadas a la API
 class ApiService {

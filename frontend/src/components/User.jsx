@@ -98,7 +98,7 @@ function User() {
             </p>
             <div className="profile-image">
               <img
-                src={`http://localhost:5000/uploads/profile_pictures/${currentUser.profile_picture}`}
+                src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
                 width={100}
                 alt="Imagen de perfil"
               />
