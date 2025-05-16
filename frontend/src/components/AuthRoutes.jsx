@@ -5,8 +5,6 @@ import LoadingScreen from "./common/LoadingScreen";
 import Login from "./Login";
 import Register from "./Register";
 import User from "./User";
-import AdminPanel from "./AdminPanel";
-import TeamBuilder from "./TeamBuilder";
 import TeamMaker from "./TeamMaker/TeamMaker";
 import Teams from "./Teams/Teams";
 import Battle from "./Battle/Combat";
@@ -31,8 +29,6 @@ function AuthRoutes() {
         {/* Rutas protegidas - solo accesibles si está autenticado */}
         <Route element={<ProtectedRoute />}>
           <Route path="/user" element={<User />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/teambuilder" element={<TeamBuilder />} />
           <Route path="/teammaker" element={<TeamMaker />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/battle" element={<Battle />} />

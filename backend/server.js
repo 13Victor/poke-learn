@@ -15,7 +15,6 @@ const firebase = require("./config/firebase");
 // Importar rutas
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
-const adminRoutes = require("./routes/admin");
 const dataRoutes = require("./routes/data");
 const teamRoutes = require("./routes/teams");
 const battleRoutes = require("./routes/battle");
@@ -47,7 +46,6 @@ app.use((req, res, next) => {
 // Configurar rutas
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
-app.use("/admin", adminRoutes);
 app.use("/data", dataRoutes);
 app.use("/teams", teamRoutes);
 app.use("/battle", battleRoutes);
