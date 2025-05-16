@@ -110,7 +110,7 @@ async function createTeam(userId, name, pokemon) {
 
       // Insertar movimientos
       if (p.moves) {
-        const moveValues = p.moves.map((move, idx) => [pokemonId, idx + 1, move]);
+        const moveValues = p.moves.map((move, idx) => [pokemonId, idx + 1, move.id]);
         await connection.query(`INSERT INTO pokemon_moves (team_pokemon_id, move_slot, move_name) VALUES ?`, [
           moveValues,
         ]);
