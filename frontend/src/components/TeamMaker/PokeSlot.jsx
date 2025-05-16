@@ -35,6 +35,8 @@ const PokeSlot = memo(
         }
       : {};
 
+    console.log("PokeSlot", pokemon);
+
     return (
       <div
         className={`pokemonTeamCard ${isSelected ? "selected-slot" : ""}`}

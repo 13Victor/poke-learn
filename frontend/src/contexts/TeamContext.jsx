@@ -29,19 +29,18 @@ const FLOW_STAGES = {
 
 // Estado inicial
 const initialState = {
-  // Los Pokémon del equipo se manejan como objetos independientes
   pokemons: Array(6)
     .fill()
     .map(() => ({
       name: "",
       level: 100,
       item: "",
+      itemId: "",
       ability: "",
       abilityType: "",
       image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
-      itemSpriteNum: null,
     })),
   viewMode: "pokemon",
   selectedSlot: 0,
@@ -77,7 +76,7 @@ function teamReducer(state, action) {
         level: 100,
         moveset: ["", "", "", ""],
         item: "",
-        itemSpriteNum: null,
+        itemId: "", // Añadimos el itemId vacío
         ability: "",
         abilityType: "",
         evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
@@ -122,12 +121,12 @@ function teamReducer(state, action) {
     }
 
     case ACTIONS.SET_ITEM: {
-      const { slotIndex, item, spriteNum } = action.payload;
+      const { slotIndex, item, itemId } = action.payload;
       const newPokemons = [...state.pokemons];
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
-        item,
-        itemSpriteNum: spriteNum,
+        item, // Nombre del item para la UI
+        itemId, // ID del item para la base de datos
       };
       return {
         ...state,
@@ -372,6 +371,7 @@ export const TeamProvider = ({ children }) => {
         const moveIndex = state.selectedMove.moveIndex;
 
         // Establecer el movimiento seleccionado
+        // Asegurarnos de guardar el objeto de movimiento completo
         dispatch({
           type: ACTIONS.SET_MOVE,
           payload: { slotIndex, moveIndex, moveName: move },
@@ -411,7 +411,7 @@ export const TeamProvider = ({ children }) => {
           payload: {
             slotIndex,
             item: item.name,
-            spriteNum: item.spritenum,
+            itemId: item.key,
           },
         });
 

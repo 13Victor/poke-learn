@@ -108,19 +108,23 @@ async function createTeam(userId, name, pokemon) {
         );
       }
 
-      // Insertar movimientos
-      if (p.moves) {
-        const moveValues = p.moves.map((move, idx) => [pokemonId, idx + 1, move.id]);
-        await connection.query(`INSERT INTO pokemon_moves (team_pokemon_id, move_slot, move_name) VALUES ?`, [
-          moveValues,
-        ]);
+      // Insertar movimientos (solo IDs válidos)
+      if (p.moves && p.moves.length > 0) {
+        // Filtrar movimientos nulos
+        const validMoves = p.moves.filter((moveId) => moveId !== null && moveId !== undefined && moveId !== "");
+        if (validMoves.length > 0) {
+          const moveValues = validMoves.map((moveId, idx) => [pokemonId, idx + 1, moveId]);
+          await connection.query(`INSERT INTO pokemon_moves (team_pokemon_id, move_slot, move_id) VALUES ?`, [
+            moveValues,
+          ]);
+        }
       }
 
-      // Insertar información de build
+      // Insertar información de build (eliminado abilityType)
       await connection.query(
-        `INSERT INTO pokemon_build (team_pokemon_id, item, ability, ability_type)
-         VALUES (?, ?, ?, ?)`,
-        [pokemonId, p.item || null, p.ability, p.abilityType]
+        `INSERT INTO pokemon_build (team_pokemon_id, item_id, ability)
+         VALUES (?, ?, ?)`,
+        [pokemonId, p.item, p.ability]
       );
     }
 
@@ -181,13 +185,13 @@ async function getTeamById(teamId, userId) {
           'spatk', ps.spatk, 'spdef', ps.spdef, 'speed', ps.speed
         ) FROM pokemon_stats ps WHERE ps.team_pokemon_id = tp.id) as stats,
         
-        (SELECT JSON_ARRAYAGG(pm.move_name)
+        (SELECT JSON_ARRAYAGG(pm.move_id)
         FROM pokemon_moves pm 
         WHERE pm.team_pokemon_id = tp.id
         ORDER BY pm.move_slot) as moves,
         
         (SELECT JSON_OBJECT(
-          'item', pb.item, 'ability', pb.ability, 'abilityType', pb.ability_type
+          'item_id', pb.item_id, 'ability', pb.ability
         ) FROM pokemon_build pb WHERE pb.team_pokemon_id = tp.id) as build
         
       FROM team_pokemon tp
@@ -204,9 +208,8 @@ async function getTeamById(teamId, userId) {
       if (p.moves) p.moves = JSON.parse(p.moves);
       if (p.build) {
         p.build = JSON.parse(p.build);
-        p.item = p.build.item;
+        p.item = p.build.item_id;
         p.ability = p.build.ability;
-        p.abilityType = p.build.abilityType;
         delete p.build;
       }
     });

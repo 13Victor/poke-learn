@@ -49,12 +49,13 @@ const SaveTeamButton = () => {
           },
           stats: pokemon.stats || {},
           ability: pokemon.ability,
-          abilityType: pokemon.abilityType,
-          item: pokemon.item,
-          moves: pokemon.moveset,
+          item: pokemon.itemId, // Usamos el itemId en lugar del nombre o spriteNum
+          moves: pokemon.moveset.filter((move) => move).map((move) => (typeof move === "object" ? move.id : move)),
           slot: index + 1,
         })),
       };
+
+      console.log("Team data to save:", teamData);
 
       // Usar nuestro servicio API para crear el equipo
       const response = await apiService.createTeam(teamData);

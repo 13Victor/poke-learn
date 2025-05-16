@@ -73,21 +73,20 @@ CREATE TABLE `pokemon_stats` (
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabla para movimientos de los pokemon
+-- Tabla para movimientos de los pokemon (modificada para guardar solo ID)
 CREATE TABLE `pokemon_moves` (
     `team_pokemon_id` INT UNSIGNED NOT NULL,
     `move_slot` TINYINT UNSIGNED NOT NULL CHECK (`move_slot` BETWEEN 1 AND 4),
-    `move_name` VARCHAR(255),
+    `move_id` VARCHAR(255) NOT NULL,
     PRIMARY KEY (`team_pokemon_id`, `move_slot`),
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
 
--- Tabla para items y abilities
+-- Tabla para items y abilities (eliminado ability_type)
 CREATE TABLE `pokemon_build` (
     `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
-    `item` VARCHAR(255) DEFAULT NULL,
+    `item_id` VARCHAR(255) DEFAULT NULL,
     `ability` VARCHAR(255) DEFAULT NULL,
-    `ability_type` VARCHAR(10) DEFAULT NULL,
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
 
