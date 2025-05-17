@@ -48,9 +48,9 @@ const SaveTeamButton = () => {
             spe: pokemon.ivs?.spe || 31,
           },
           stats: pokemon.stats || {},
-          ability: pokemon.ability,
-          item: pokemon.itemId, // Usamos el itemId en lugar del nombre o spriteNum
-          moves: pokemon.moveset.filter((move) => move).map((move) => (typeof move === "object" ? move.id : move)),
+          ability: pokemon.abilityId, // Ahora usamos el ID de la habilidad
+          item: pokemon.itemId, // Usamos el ID del item
+          moves: pokemon.moveset.filter((move) => move).map((move) => (typeof move === "object" ? move.id : move)), // Filtramos movimientos vacíos y extraemos IDs
           slot: index + 1,
         })),
       };

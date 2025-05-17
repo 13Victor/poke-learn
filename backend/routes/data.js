@@ -102,9 +102,11 @@ const processItems = () => {
  * Procesa las habilidades con descripciones y filtra las prohibidas
  * @returns {Object} - Habilidades procesadas
  */
+
 const processPokemonAbilities = () => {
   const pokemonData = data.pokedex.Pokedex;
   const abilitiesDesc = data.abilitiesDesc.AbilitiesText;
+  const abilitiesData = data.abilities.Abilities; // Obtener datos completos de habilidades
   const abilitiesDescArray = Object.values(abilitiesDesc);
   const bannedAbilities = ["arenatrap", "moody", "sandveil", "shadowtag", "snowcloak"];
 
@@ -119,8 +121,17 @@ const processPokemonAbilities = () => {
     for (const abilitySlot in abilities) {
       const abilityName = abilities[abilitySlot];
 
+      // Encontrar el ID de la habilidad buscando en Abilities donde el nombre coincida
+      let abilityId = null;
+      for (const id in abilitiesData) {
+        if (abilitiesData[id].name === abilityName) {
+          abilityId = id;
+          break;
+        }
+      }
+
       // Omitir habilidades prohibidas
-      if (bannedAbilities.includes(abilityName.toLowerCase().replace(/\s|-/g, ""))) {
+      if (!abilityId || bannedAbilities.includes(abilityId)) {
         continue;
       }
 
@@ -129,7 +140,8 @@ const processPokemonAbilities = () => {
 
       const description = abilityDescData.shortDesc || abilityDescData.desc || "";
 
-      abilitiesWithDesc[abilitySlot] = [abilityName, description];
+      // Incluir tanto el nombre como el ID
+      abilitiesWithDesc[abilitySlot] = [abilityName, description, abilityId];
     }
 
     result[pokemonId] = {

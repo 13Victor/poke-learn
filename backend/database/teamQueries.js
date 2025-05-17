@@ -120,9 +120,9 @@ async function createTeam(userId, name, pokemon) {
         }
       }
 
-      // Insertar información de build (eliminado abilityType)
+      // Insertar información de build (usando IDs para item y ability)
       await connection.query(
-        `INSERT INTO pokemon_build (team_pokemon_id, item_id, ability)
+        `INSERT INTO pokemon_build (team_pokemon_id, item_id, ability_id)
          VALUES (?, ?, ?)`,
         [pokemonId, p.item, p.ability]
       );
@@ -191,7 +191,7 @@ async function getTeamById(teamId, userId) {
         ORDER BY pm.move_slot) as moves,
         
         (SELECT JSON_OBJECT(
-          'item_id', pb.item_id, 'ability', pb.ability
+          'item_id', pb.item_id, 'ability_id', pb.ability_id
         ) FROM pokemon_build pb WHERE pb.team_pokemon_id = tp.id) as build
         
       FROM team_pokemon tp
@@ -209,7 +209,7 @@ async function getTeamById(teamId, userId) {
       if (p.build) {
         p.build = JSON.parse(p.build);
         p.item = p.build.item_id;
-        p.ability = p.build.ability;
+        p.ability = p.build.ability_id;
         delete p.build;
       }
     });

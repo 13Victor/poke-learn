@@ -37,7 +37,7 @@ const initialState = {
       item: "",
       itemId: "",
       ability: "",
-      abilityType: "",
+      abilityId: "",
       image: "0000.webp",
       types: [],
       moveset: ["", "", "", ""],
@@ -78,7 +78,7 @@ function teamReducer(state, action) {
         item: "",
         itemId: "", // Añadimos el itemId vacío
         ability: "",
-        abilityType: "",
+        abilityId: "", // Añadimos el abilityId vacío
         evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
         nature: "Hardy",
@@ -92,12 +92,12 @@ function teamReducer(state, action) {
     }
 
     case ACTIONS.SET_ABILITY: {
-      const { slotIndex, ability, abilityType } = action.payload;
+      const { slotIndex, ability, abilityId } = action.payload;
       const newPokemons = [...state.pokemons];
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
-        ability,
-        abilityType,
+        ability, // Nombre de la habilidad para la UI
+        abilityId, // ID de la habilidad para la base de datos
       };
       return {
         ...state,
@@ -418,18 +418,17 @@ export const TeamProvider = ({ children }) => {
         // Avanzar al siguiente paso del flujo: habilidad
         advanceFlow(FLOW_STAGES.ITEM, slotIndex);
       },
-
-      selectAbility: (ability, abilityType) => {
+      selectAbility: (abilityName, abilityId, abilityType) => {
         // Use the ref to get the latest selectedSlot
         const slotIndex = selectedSlotRef.current;
 
-        // Establecer la habilidad seleccionada
+        // Ahora recibimos directamente el nombre y el ID separados
         dispatch({
           type: ACTIONS.SET_ABILITY,
           payload: {
             slotIndex,
-            ability,
-            abilityType,
+            ability: abilityName, // Nombre legible para la UI
+            abilityId: abilityId, // ID para la base de datos
           },
         });
 

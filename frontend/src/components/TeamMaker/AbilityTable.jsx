@@ -11,9 +11,9 @@ const AbilityTable = ({ onAbilitySelect, selectedPokemon, selectedSlot }) => {
     return abilities[selectedPokemon.id]?.abilities || null;
   }, [abilities, abilitiesLoaded, selectedPokemon?.id]);
 
-  // Handle ability selection
-  const handleRowClick = (ability, abilityType) => {
-    onAbilitySelect(ability[0], abilityType);
+  // Handle ability selection - Ahora recibimos también el ID
+  const handleRowClick = (abilityName, abilityId, abilityType) => {
+    onAbilitySelect(abilityName, abilityId, abilityType);
   };
 
   if (abilitiesLoading) {

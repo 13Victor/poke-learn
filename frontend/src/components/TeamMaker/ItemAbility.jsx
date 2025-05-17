@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { useTeam } from "../../contexts/TeamContext";
 
 const ItemAbility = memo(
-  ({ item, ability, itemSpriteNum, slotIndex, abilityType, pokemon }) => {
+  ({ item, ability, slotIndex, pokemon }) => {
     const { setViewMode, setSelectedSlot, FLOW_STAGES, setFlowStage, flowStage, selectedSlot } = useTeam();
 
     // Determine if this item or ability is currently selected based on the flow stage and selected slot
@@ -73,12 +73,10 @@ const ItemAbility = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Solo re-renderizar cuando cambia el item, la habilidad, el spriteNum o abilityType
+    // Solo re-renderizar cuando cambia el item, la habilidad o el pokemon
     return (
       prevProps.item === nextProps.item &&
       prevProps.ability === nextProps.ability &&
-      prevProps.abilityType === nextProps.abilityType &&
-      prevProps.itemSpriteNum === nextProps.itemSpriteNum &&
       prevProps.pokemon.name === nextProps.pokemon.name
     );
   }

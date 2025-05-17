@@ -86,7 +86,7 @@ CREATE TABLE `pokemon_moves` (
 CREATE TABLE `pokemon_build` (
     `team_pokemon_id` INT UNSIGNED NOT NULL PRIMARY KEY,
     `item_id` VARCHAR(255) DEFAULT NULL,
-    `ability` VARCHAR(255) DEFAULT NULL,
+    `ability_id` VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (`team_pokemon_id`) REFERENCES `team_pokemon`(`id`) ON DELETE CASCADE
 );
 
