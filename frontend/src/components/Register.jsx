@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -7,6 +7,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth } from "../firebase.config";
+import { useAuth } from "../contexts/AuthContext";
 import apiService from "../services/apiService";
 import GoogleButton from "react-google-button";
 
@@ -14,7 +15,7 @@ function Register() {
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setLocalError] = useState("");
   const [success, setSuccess] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +28,22 @@ function Register() {
     symbol: false,
   });
 
+  const { setError, clearError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Limpiar errores al montar el componente
+  useEffect(() => {
+    clearError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Efecto para redirigir al usuario si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Usuario ya autenticado, redirigiendo a /user");
+      navigate("/user", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Función para validar la contraseña en tiempo real
   const validatePassword = (password) => {
@@ -48,14 +64,15 @@ function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
+    setLocalError("");
+    clearError();
     setSuccess("");
     setIsLoading(true);
 
     // Validación de contraseña
     const allValid = Object.values(passwordErrors).every((valid) => valid);
     if (!allValid) {
-      setError("La contraseña no cumple con todos los requisitos de seguridad");
+      setLocalError("La contraseña no cumple con todos los requisitos de seguridad");
       setIsLoading(false);
       return;
     }
@@ -89,17 +106,17 @@ function Register() {
 
       // Manejo de errores específicos de Firebase
       if (error.code === "auth/email-already-in-use") {
-        setError("Este correo ya está registrado");
+        setLocalError("Este correo ya está registrado");
       } else if (error.code === "auth/invalid-email") {
-        setError("Formato de correo inválido");
+        setLocalError("Formato de correo inválido");
       } else if (error.code === "auth/weak-password") {
-        setError("La contraseña es demasiado débil");
+        setLocalError("La contraseña es demasiado débil");
       } else if (error.code === "auth/network-request-failed") {
-        setError("Error de red. Verifica tu conexión a internet");
+        setLocalError("Error de red. Verifica tu conexión a internet");
       } else if (error.message && error.message.includes("fetch")) {
-        setError("Error al conectar con el servidor");
+        setLocalError("Error al conectar con el servidor");
       } else {
-        setError(error.message || "Error desconocido en el registro");
+        setLocalError(error.message || "Error desconocido en el registro");
       }
     } finally {
       setIsLoading(false);
@@ -107,7 +124,8 @@ function Register() {
   };
 
   const handleGoogleRegister = async () => {
-    setError("");
+    setLocalError("");
+    clearError();
     setSuccess("");
     setGoogleLoading(true);
 
@@ -149,7 +167,7 @@ function Register() {
           // Guardar token y redirigir a la página principal
           localStorage.setItem("token", loginResponse.data.token);
           setSuccess("¡Has iniciado sesión con Google! Redirigiendo...");
-          setTimeout(() => navigate("/user"), 1500);
+          setTimeout(() => navigate("/user"), 1000);
           return;
         }
       } catch (loginError) {
@@ -187,7 +205,7 @@ function Register() {
       if (loginAfterRegister.success) {
         localStorage.setItem("token", loginAfterRegister.data.token);
         setSuccess("Registro con Google exitoso. Redirigiendo...");
-        setTimeout(() => navigate("/user"), 1500);
+        setTimeout(() => navigate("/user"), 1000);
       } else {
         throw new Error("Error al iniciar sesión después del registro");
       }
@@ -200,11 +218,11 @@ function Register() {
       }
       // Si ya existe una cuenta con el mismo email pero otro método
       else if (error.code === "auth/account-exists-with-different-credential") {
-        setError("Ya existe una cuenta con este email. Intenta otro método de inicio de sesión.");
+        setLocalError("Ya existe una cuenta con este email. Intenta otro método de inicio de sesión.");
       }
       // Otros errores
       else {
-        setError(`Error al registrarse con Google: ${error.message || "Error desconocido"}`);
+        setLocalError(`Error al registrarse con Google: ${error.message || "Error desconocido"}`);
       }
     } finally {
       setGoogleLoading(false);
@@ -308,7 +326,7 @@ function Register() {
           </div>
         )}
         {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
+        {success && !verificationSent && <p className="success-message">{success}</p>}
       </div>
       <div className="login-link">
         ¿Ya tienes una cuenta? <Link to="/auth/login">Inicia sesión</Link>

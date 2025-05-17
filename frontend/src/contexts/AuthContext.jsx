@@ -18,6 +18,11 @@ export const AuthProvider = ({ children }) => {
   const initialCheckDone = useRef(false);
   const loggingOut = useRef(false);
 
+  // Función para limpiar el error cuando cambia el estado de autenticación
+  const clearError = () => {
+    if (error) setError("");
+  };
+
   // Función para verificar token en el backend
   const verifyBackendToken = async () => {
     try {
@@ -28,13 +33,18 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
+      console.log("Verificando token con el backend...");
       const response = await apiService.checkAuth();
-      if (response.success && response.data && response.data.user) {
-        setCurrentUser(response.data.user);
-        return true;
-      }
 
-      return false;
+      if (response.success && response.data && response.data.user) {
+        console.log("Token válido, usuario autenticado:", response.data.user.email);
+        setCurrentUser(response.data.user);
+        clearError(); // Limpiar error al verificar token exitosamente
+        return true;
+      } else {
+        console.log("Token inválido o respuesta sin datos de usuario");
+        return false;
+      }
     } catch (error) {
       console.error("Error verificando token:", error);
       localStorage.removeItem("token");
@@ -66,43 +76,61 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
+        // Verificar primero si hay un token en localStorage
+        const tokenValid = await verifyBackendToken();
+
+        // Si el token es válido, no es necesario hacer más verificaciones
+        if (tokenValid) {
+          console.log("Token válido en localStorage, usuario autenticado");
+          authCheckInProgress.current = false;
+          return;
+        }
+
         if (firebaseUser) {
+          // Limpiar errores anteriores cuando hay un cambio en la autenticación
+          clearError();
+
           // El usuario está autenticado en Firebase
           console.log("Usuario autenticado en Firebase:", firebaseUser.email);
+          console.log("Email verificado:", firebaseUser.emailVerified);
 
-          // Si hay un token en localStorage, verificarlo
-          const tokenValid = await verifyBackendToken();
+          // Verificar si el email está verificado
+          if (!firebaseUser.emailVerified) {
+            console.log("Email no verificado");
+            setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
+            setCurrentUser(null);
+            setLoading(false);
+            authCheckInProgress.current = false;
+            return;
+          }
 
-          if (!tokenValid) {
-            // Si el token no es válido pero el usuario está en Firebase,
-            // intentar obtener un nuevo token
-            if (firebaseUser.emailVerified) {
-              const idToken = await firebaseUser.getIdToken();
-              const userInfo = {
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                emailVerified: firebaseUser.emailVerified,
-                displayName: firebaseUser.displayName,
-                photoURL: firebaseUser.photoURL,
-              };
+          // Si el token no es válido pero el usuario está autenticado en Firebase,
+          // intentar obtener un nuevo token
+          const idToken = await firebaseUser.getIdToken();
+          const userInfo = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            emailVerified: firebaseUser.emailVerified,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          };
 
-              const loginResponse = await apiService.loginWithFirebase(userInfo, idToken);
+          console.log("Obteniendo nuevo token para usuario:", userInfo.email);
 
-              if (loginResponse.success) {
-                localStorage.setItem("token", loginResponse.data.token);
-                setCurrentUser(loginResponse.data.user);
-              } else {
-                throw new Error(loginResponse.message);
-              }
-            } else {
-              setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
-              setCurrentUser(null);
-            }
+          const loginResponse = await apiService.loginWithFirebase(userInfo, idToken);
+
+          if (loginResponse.success) {
+            console.log("Login con Firebase exitoso en AuthContext");
+            localStorage.setItem("token", loginResponse.data.token);
+            setCurrentUser(loginResponse.data.user);
+            clearError(); // Limpiar error en caso de éxito
+          } else {
+            throw new Error(loginResponse.message);
           }
         } else {
-          // El usuario no está autenticado en Firebase
-          // Verificar si tenemos un token válido en el backend
-          await verifyBackendToken();
+          // El usuario no está autenticado en Firebase ni en el backend
+          console.log("Usuario no autenticado ni en Firebase ni en backend");
+          setCurrentUser(null);
         }
       } catch (error) {
         console.error("Error en autenticación:", error);
@@ -134,6 +162,7 @@ export const AuthProvider = ({ children }) => {
 
       // Luego, actualizar el estado
       setCurrentUser(null);
+      clearError(); // Limpiar errores anteriores
 
       // Por último, cerrar sesión en Firebase
       if (auth.currentUser) {
@@ -158,6 +187,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     setError,
+    clearError, // Exportar la función para limpiar errores
     isAuthenticated: !!currentUser,
     logout,
   };

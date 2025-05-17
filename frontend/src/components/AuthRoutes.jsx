@@ -1,4 +1,3 @@
-// src/components/AuthRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, AuthRoute } from "./common/ProtectedRoute";
 import LoadingScreen from "./common/LoadingScreen";

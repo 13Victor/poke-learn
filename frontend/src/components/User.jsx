@@ -5,7 +5,7 @@ import apiService from "../services/apiService";
 
 function User() {
   const [loading, setLoading] = useState(true);
-  const { currentUser, isAuthenticated, logout, error: authError, setError } = useAuth();
+  const { currentUser, isAuthenticated, logout, error: authError, setError, clearError } = useAuth();
   const [error, setLocalError] = useState("");
   const navigate = useNavigate();
 
@@ -14,9 +14,13 @@ function User() {
 
   // Cleanup al desmontar
   useEffect(() => {
+    // Limpiar errores al montar el componente
+    clearError();
+
     return () => {
       isMounted.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -54,6 +58,10 @@ function User() {
             error.message.includes("token") ||
             error.message.includes("expirada")
           ) {
+            // Limpiar información de autenticación
+            localStorage.removeItem("token");
+            setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+
             // Usar un setTimeout para dar tiempo a otros efectos a ejecutarse
             setTimeout(() => {
               if (isMounted.current) {
@@ -66,7 +74,7 @@ function User() {
     };
 
     fetchUserData();
-  }, [isAuthenticated, navigate, setError, authError]);
+  }, [isAuthenticated, navigate, setError, authError, clearError]);
 
   const handleLogout = async () => {
     // Marcar el componente como no montado antes del logout
@@ -97,11 +105,15 @@ function User() {
               <strong>Nombre de Usuario:</strong> {currentUser.user_name}
             </p>
             <div className="profile-image">
-              <img
-                src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
-                width={100}
-                alt="Imagen de perfil"
-              />
+              {currentUser.profile_picture ? (
+                <img
+                  src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
+                  width={100}
+                  alt="Imagen de perfil"
+                />
+              ) : (
+                <div className="no-image">Sin imagen de perfil</div>
+              )}
             </div>
           </div>
           <div className="actions">

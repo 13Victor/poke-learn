@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase.config";
@@ -16,20 +14,78 @@ function Login() {
   const [debugInfo, setDebugInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [unverifiedUser, setUnverifiedUser] = useState(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { setError, error } = useAuth();
+  const { setError, error, clearError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Obtener la ubicación anterior si existe
   const from = location.state?.from?.pathname || "/user";
 
+  // Efecto para redirigir al usuario si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Usuario ya autenticado, redirigiendo a:", from);
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
+  // Limpiar errores y estados al montar el componente
+  useEffect(() => {
+    clearError();
+    setUnverifiedUser(null);
+    setResendSuccess(false);
+
+    const checkExistingAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          // Verificar silenciosamente si hay un token válido
+          await apiService.checkAuth();
+        }
+      } catch (error) {
+        console.error("Error verificando token:", error);
+        localStorage.removeItem("token");
+      }
+    };
+
+    checkExistingAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Función para reenviar el correo de verificación
+  const handleResendVerification = async () => {
+    if (!unverifiedUser) return;
+
+    setResendLoading(true);
+    try {
+      await sendEmailVerification(unverifiedUser);
+      setResendSuccess(true);
+      setSuccess("Se ha enviado un nuevo correo de verificación a " + unverifiedUser.email);
+    } catch (error) {
+      console.error("Error al reenviar verificación:", error);
+      if (error.code === "auth/too-many-requests") {
+        setError("Demasiadas solicitudes. Espera unos minutos antes de intentarlo de nuevo.");
+      } else {
+        setError("Error al reenviar verificación: " + error.message);
+      }
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    clearError();
     setSuccess("");
     setDebugInfo("");
     setIsLoading(true);
+    setUnverifiedUser(null);
+    setResendSuccess(false);
 
     try {
       // 1. Autenticar con Firebase
@@ -41,9 +97,9 @@ function Login() {
 
       // 2. Verificar si el email está verificado
       if (!user.emailVerified) {
+        // Almacenar el usuario para permitir reenviar la verificación
+        setUnverifiedUser(user);
         setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
-        await sendEmailVerification(user);
-        setSuccess("Se ha enviado un nuevo correo de verificación");
         setIsLoading(false);
         return;
       }
@@ -83,8 +139,10 @@ function Login() {
 
       setSuccess("Login exitoso. Redirigiendo...");
 
-      // Redirigir a la página anterior o a /user por defecto
-      setTimeout(() => navigate(from, { replace: true }), 2000);
+      // Usar setTimeout para permitir que se muestre el mensaje de éxito brevemente
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 500);
     } catch (error) {
       console.error("Error completo:", error);
 
@@ -106,10 +164,13 @@ function Login() {
   };
 
   const handleGoogleLogin = async () => {
+    clearError();
     setError("");
     setSuccess("");
     setDebugInfo("");
     setGoogleLoading(true);
+    setUnverifiedUser(null);
+    setResendSuccess(false);
 
     try {
       const provider = new GoogleAuthProvider();
@@ -145,7 +206,11 @@ function Login() {
       localStorage.setItem("token", response.data.token);
 
       setSuccess("Inicio de sesión con Google exitoso. Redirigiendo...");
-      setTimeout(() => navigate(from, { replace: true }), 1500);
+
+      // Usar setTimeout para permitir que se muestre el mensaje de éxito brevemente
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 500);
     } catch (error) {
       console.error("Error en inicio de sesión con Google:", error);
 
@@ -177,62 +242,86 @@ function Login() {
             <p className="subtitle">¡Prepárate para la batalla!</p>
           </div>
 
-          {/* Formulario de login tradicional */}
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="email">Email o nombre de usuario</label>
-              <input
-                id="email"
-                type="text"
-                placeholder="trainer@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                disabled={isLoading || googleLoading}
-              />
-            </div>
+          {/* Sección de usuario no verificado */}
+          {unverifiedUser ? (
+            <div className="unverified-user-section">
+              <p className="error-message">Por favor verifica tu correo electrónico antes de iniciar sesión.</p>
+              <p>
+                Se ha enviado un correo de verificación a <strong>{unverifiedUser.email}</strong>
+              </p>
 
-            <div className="form-group">
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                disabled={isLoading || googleLoading}
-              />
-            </div>
+              {!resendSuccess ? (
+                <button onClick={handleResendVerification} disabled={resendLoading} className="resend-button">
+                  {resendLoading ? "Enviando..." : "Reenviar correo de verificación"}
+                </button>
+              ) : (
+                <p className="success-message">¡Correo de verificación reenviado con éxito!</p>
+              )}
 
-            <div className="form-options">
-              <div className="remember-me">
-                <input type="checkbox" id="remember" />
-                <label htmlFor="remember">Recordarme</label>
+              <button onClick={() => setUnverifiedUser(null)} className="back-button">
+                Volver al login
+              </button>
+            </div>
+          ) : (
+            /* Formulario de login tradicional */
+            <>
+              <form onSubmit={handleSubmit} className="login-form">
+                <div className="form-group">
+                  <label htmlFor="email">Email o nombre de usuario</label>
+                  <input
+                    id="email"
+                    type="text"
+                    placeholder="trainer@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={isLoading || googleLoading}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="password">Contraseña</label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    disabled={isLoading || googleLoading}
+                  />
+                </div>
+
+                <div className="form-options">
+                  <div className="remember-me">
+                    <input type="checkbox" id="remember" />
+                    <label htmlFor="remember">Recordarme</label>
+                  </div>
+                  <Link to="/auth/forgot-password" className="forgot-password">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+
+                <button type="submit" disabled={isLoading || googleLoading} className="login-button">
+                  {isLoading ? "Procesando..." : "Iniciar sesión"}
+                </button>
+              </form>
+
+              {/* Separador entre métodos de login */}
+              <div className="login-separator">
+                <span>O</span>
               </div>
-              <Link to="/auth/forgot-password" className="forgot-password">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
 
-            <button type="submit" disabled={isLoading || googleLoading} className="login-button">
-              {isLoading ? "Procesando..." : "Iniciar sesión"}
-            </button>
-          </form>
+              <div className="google-login-container">
+                <GoogleButton
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading || googleLoading}
+                  label={googleLoading ? "Procesando..." : "Iniciar sesión con Google"}
+                  type="light"
+                />
+              </div>
+            </>
+          )}
 
-          {/* Separador entre métodos de login */}
-          <div className="login-separator">
-            <span>O</span>
-          </div>
-
-          <div className="google-login-container">
-            <GoogleButton
-              onClick={handleGoogleLogin}
-              disabled={isLoading || googleLoading}
-              label={googleLoading ? "Procesando..." : "Iniciar sesión con Google"}
-              type="light"
-            />
-          </div>
-
-          {error && <p className="error-message">{error}</p>}
+          {error && !unverifiedUser && <p className="error-message">{error}</p>}
           {success && <p className="success-message">{success}</p>}
           {debugInfo && <p className="debug-info">{debugInfo}</p>}
 
