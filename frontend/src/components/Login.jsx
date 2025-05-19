@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase.config";
@@ -18,41 +18,109 @@ function Login() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const { setError, error, clearError, isAuthenticated } = useAuth();
+  // Estado interno para seguimiento del proceso de login
+  const [loginState, setLoginState] = useState("idle");
+  const redirectTimer = useRef(null);
+
+  const { setError, error, clearError, isAuthenticated, setManualLoginInProgress, forceAuthCheck, debugState } =
+    useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Obtener la ubicación anterior si existe
   const from = location.state?.from?.pathname || "/user";
 
+  // Efecto para mostrar el estado de depuración
+  useEffect(() => {
+    console.log("[Login] Estado de autenticación:", { isAuthenticated, loginState, debugState });
+  }, [isAuthenticated, loginState, debugState]);
+
   // Efecto para redirigir al usuario si ya está autenticado
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log("Usuario ya autenticado, redirigiendo a:", from);
+    if (isAuthenticated && loginState === "idle") {
+      console.log("[Login] Usuario ya autenticado, redirigiendo a:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, navigate, from, loginState]);
+
+  // Efecto para manejar la redirección después del login exitoso
+  useEffect(() => {
+    if (loginState === "success_waiting") {
+      console.log("[Login] Estado de login: success_waiting, preparando redirección...");
+
+      // Limpiar timer anterior si existe
+      if (redirectTimer.current) {
+        clearTimeout(redirectTimer.current);
+      }
+
+      redirectTimer.current = setTimeout(async () => {
+        console.log("[Login] Ejecutando verificación final antes de redirección");
+
+        try {
+          // Verificar explícitamente el token antes de redireccionar
+          const isAuthValid = await forceAuthCheck();
+          console.log("[Login] Resultado de verificación final:", isAuthValid);
+
+          if (isAuthValid) {
+            console.log("[Login] Autenticación confirmada, redirigiendo a:", from);
+            setLoginState("redirecting");
+            navigate(from, { replace: true });
+          } else {
+            console.log("[Login] La verificación final falló, reiniciando proceso");
+            setError("Error de autenticación. Por favor, intenta de nuevo.");
+            setLoginState("idle");
+            setManualLoginInProgress(false);
+          }
+        } catch (error) {
+          console.error("[Login] Error durante verificación final:", error);
+          setError("Error de verificación. Por favor, intenta de nuevo.");
+          setLoginState("idle");
+          setManualLoginInProgress(false);
+        }
+      }, 1000);
+
+      // Limpieza del timer en desmontaje
+      return () => {
+        if (redirectTimer.current) {
+          clearTimeout(redirectTimer.current);
+        }
+      };
+    }
+  }, [loginState, from, navigate, setError, forceAuthCheck, setManualLoginInProgress]);
 
   // Limpiar errores y estados al montar el componente
   useEffect(() => {
+    console.log("[Login] Componente montado");
     clearError();
     setUnverifiedUser(null);
     setResendSuccess(false);
+    setLoginState("idle");
 
     const checkExistingAuth = async () => {
       try {
         const token = localStorage.getItem("token");
         if (token) {
+          console.log("[Login] Token encontrado en localStorage, verificando validez");
           // Verificar silenciosamente si hay un token válido
           await apiService.checkAuth();
         }
       } catch (error) {
-        console.error("Error verificando token:", error);
+        console.error("[Login] Error verificando token:", error);
         localStorage.removeItem("token");
       }
     };
 
     checkExistingAuth();
+
+    // Limpieza al desmontar
+    return () => {
+      console.log("[Login] Componente desmontado");
+      if (redirectTimer.current) {
+        clearTimeout(redirectTimer.current);
+      }
+      // Asegurarse de que el login manual se marca como finalizado si se desmonta el componente
+      setManualLoginInProgress(false);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,7 +134,7 @@ function Login() {
       setResendSuccess(true);
       setSuccess("Se ha enviado un nuevo correo de verificación a " + unverifiedUser.email);
     } catch (error) {
-      console.error("Error al reenviar verificación:", error);
+      console.error("[Login] Error al reenviar verificación:", error);
       if (error.code === "auth/too-many-requests") {
         setError("Demasiadas solicitudes. Espera unos minutos antes de intentarlo de nuevo.");
       } else {
@@ -74,6 +142,35 @@ function Login() {
       }
     } finally {
       setResendLoading(false);
+    }
+  };
+
+  const completeLoginProcess = async (response, userEmail) => {
+    try {
+      // Guardar token
+      localStorage.setItem("token", response.data.token);
+
+      // Verificación inmediata
+      const storedToken = localStorage.getItem("token");
+      console.log(
+        "[Login] Token almacenado:",
+        storedToken
+          ? `${storedToken.substring(0, 15)}... (longitud: ${storedToken.length})`
+          : "No se guardó correctamente"
+      );
+
+      setSuccess("Login exitoso. Redirigiendo...");
+      console.log("[Login] Login exitoso para:", userEmail);
+
+      // Cambiar estado a 'esperando redirección'
+      setLoginState("success_waiting");
+
+      // La redirección se maneja en el useEffect
+    } catch (error) {
+      console.error("[Login] Error en proceso de finalización:", error);
+      setError("Error en el proceso de autenticación");
+      setLoginState("idle");
+      setManualLoginInProgress(false);
     }
   };
 
@@ -86,25 +183,34 @@ function Login() {
     setIsLoading(true);
     setUnverifiedUser(null);
     setResendSuccess(false);
+    setLoginState("processing");
+
+    // Indicar que se está realizando un login manual
+    setManualLoginInProgress(true);
+    console.log("[Login] Iniciando proceso de login con email/password");
 
     try {
       // 1. Autenticar con Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      console.log("Login exitoso en Firebase:", user.email);
-      console.log("Email verificado:", user.emailVerified);
+      console.log("[Login] Login exitoso en Firebase:", user.email);
+      console.log("[Login] Email verificado:", user.emailVerified);
 
       // 2. Verificar si el email está verificado
       if (!user.emailVerified) {
+        console.log("[Login] Email no verificado, mostrando mensaje");
         // Almacenar el usuario para permitir reenviar la verificación
         setUnverifiedUser(user);
         setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
         setIsLoading(false);
+        setManualLoginInProgress(false);
+        setLoginState("idle");
         return;
       }
 
       // Obtener token de Firebase
+      console.log("[Login] Obteniendo token de Firebase");
       const idToken = await user.getIdToken();
 
       // 3. Preparar información de usuario para enviar al backend
@@ -116,7 +222,7 @@ function Login() {
         photoURL: user.photoURL,
       };
 
-      console.log("Enviando información de usuario al backend...");
+      console.log("[Login] Enviando información de usuario al backend...");
 
       // 4. Autenticar en backend con información y token
       const response = await apiService.loginWithFirebase(userInfo, idToken);
@@ -125,26 +231,11 @@ function Login() {
         throw new Error(response.message || "Error del servidor");
       }
 
-      // Guardar token
-      localStorage.setItem("token", response.data.token);
-
-      // Verificación inmediata
-      const storedToken = localStorage.getItem("token");
-      console.log(
-        "Token almacenado:",
-        storedToken
-          ? `${storedToken.substring(0, 15)}... (longitud: ${storedToken.length})`
-          : "No se guardó correctamente"
-      );
-
-      setSuccess("Login exitoso. Redirigiendo...");
-
-      // Usar setTimeout para permitir que se muestre el mensaje de éxito brevemente
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 500);
+      await completeLoginProcess(response, user.email);
     } catch (error) {
-      console.error("Error completo:", error);
+      console.error("[Login] Error completo:", error);
+      setLoginState("idle");
+      setManualLoginInProgress(false);
 
       // Manejar errores específicos de Firebase
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
@@ -171,6 +262,11 @@ function Login() {
     setGoogleLoading(true);
     setUnverifiedUser(null);
     setResendSuccess(false);
+    setLoginState("processing");
+
+    // Indicar que se está realizando un login manual
+    setManualLoginInProgress(true);
+    console.log("[Login] Iniciando proceso de login con Google");
 
     try {
       const provider = new GoogleAuthProvider();
@@ -182,6 +278,7 @@ function Login() {
       const user = result.user;
 
       // Obtener el token de ID de Google
+      console.log("[Login] Obteniendo token de Google");
       const idToken = await user.getIdToken();
 
       // Preparar información del usuario
@@ -193,26 +290,21 @@ function Login() {
         photoURL: user.photoURL,
       };
 
-      console.log("Inicio de sesión con Google exitoso:", userInfo.email);
+      console.log("[Login] Inicio de sesión con Google exitoso:", userInfo.email);
 
       // Autenticar en el backend
+      console.log("[Login] Enviando información de usuario al backend...");
       const response = await apiService.loginWithFirebase(userInfo, idToken);
 
       if (!response.success) {
         throw new Error(response.message || "Error del servidor");
       }
 
-      // Guardar token
-      localStorage.setItem("token", response.data.token);
-
-      setSuccess("Inicio de sesión con Google exitoso. Redirigiendo...");
-
-      // Usar setTimeout para permitir que se muestre el mensaje de éxito brevemente
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 500);
+      await completeLoginProcess(response, user.email);
     } catch (error) {
-      console.error("Error en inicio de sesión con Google:", error);
+      console.error("[Login] Error en inicio de sesión con Google:", error);
+      setLoginState("idle");
+      setManualLoginInProgress(false);
 
       // Si el usuario canceló el popup, no mostrar error
       if (error.code === "auth/popup-closed-by-user") {
@@ -274,7 +366,9 @@ function Login() {
                     placeholder="trainer@example.com"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    disabled={isLoading || googleLoading}
+                    disabled={
+                      isLoading || googleLoading || loginState === "success_waiting" || loginState === "redirecting"
+                    }
                   />
                 </div>
 
@@ -286,7 +380,9 @@ function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    disabled={isLoading || googleLoading}
+                    disabled={
+                      isLoading || googleLoading || loginState === "success_waiting" || loginState === "redirecting"
+                    }
                   />
                 </div>
 
@@ -300,8 +396,20 @@ function Login() {
                   </Link>
                 </div>
 
-                <button type="submit" disabled={isLoading || googleLoading} className="login-button">
-                  {isLoading ? "Procesando..." : "Iniciar sesión"}
+                <button
+                  type="submit"
+                  disabled={
+                    isLoading || googleLoading || loginState === "success_waiting" || loginState === "redirecting"
+                  }
+                  className="login-button"
+                >
+                  {isLoading
+                    ? "Procesando..."
+                    : loginState === "success_waiting"
+                    ? "Verificando..."
+                    : loginState === "redirecting"
+                    ? "Redirigiendo..."
+                    : "Iniciar sesión"}
                 </button>
               </form>
 
@@ -313,8 +421,18 @@ function Login() {
               <div className="google-login-container">
                 <GoogleButton
                   onClick={handleGoogleLogin}
-                  disabled={isLoading || googleLoading}
-                  label={googleLoading ? "Procesando..." : "Iniciar sesión con Google"}
+                  disabled={
+                    isLoading || googleLoading || loginState === "success_waiting" || loginState === "redirecting"
+                  }
+                  label={
+                    googleLoading
+                      ? "Procesando..."
+                      : loginState === "success_waiting"
+                      ? "Verificando..."
+                      : loginState === "redirecting"
+                      ? "Redirigiendo..."
+                      : "Iniciar sesión con Google"
+                  }
                   type="light"
                 />
               </div>
@@ -324,6 +442,18 @@ function Login() {
           {error && !unverifiedUser && <p className="error-message">{error}</p>}
           {success && <p className="success-message">{success}</p>}
           {debugInfo && <p className="debug-info">{debugInfo}</p>}
+
+          {/* Información de depuración */}
+          <div
+            className="debug-section"
+            style={{ fontSize: "10px", color: "#888", marginTop: "10px", display: "none" }}
+          >
+            <p>Estado de login: {loginState}</p>
+            <p>isAuthenticated: {isAuthenticated ? "true" : "false"}</p>
+            <p>Login manual en progreso: {debugState?.manualLoginActive ? "true" : "false"}</p>
+            <p>Última acción: {debugState?.lastAction}</p>
+            <p>Estado token: {debugState?.lastTokenCheck}</p>
+          </div>
 
           <div className="register-link">
             ¿No tienes una cuenta? <Link to="/auth/register">Regístrate</Link>

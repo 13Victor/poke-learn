@@ -1,39 +1,58 @@
-// src/components/common/ProtectedRoute.jsx
-import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-// Componente para rutas que requieren autenticación
+// Componente para rutas protegidas (requieren autenticación)
 export const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
+  console.log(
+    "[ProtectedRoute] Verificando acceso. isAuthenticated:",
+    isAuthenticated,
+    "loading:",
+    loading,
+    "path:",
+    location.pathname
+  );
+
+  // Si estamos cargando, permitir renderizar temporalmente para evitar parpadeos
   if (loading) {
-    return <div className="loading">Verificando autenticación...</div>;
+    console.log("[ProtectedRoute] Cargando, permitiendo renderizado temporal");
+    return <Outlet />;
   }
 
+  // Si no está autenticado, redirigir a login y guardar la ubicación actual
   if (!isAuthenticated) {
-    // Redirigir a login y guardar la ubicación actual para volver después del login
+    console.log("[ProtectedRoute] Usuario no autenticado, redirigiendo a login");
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
+  // Si está autenticado, permitir acceso a la ruta protegida
+  console.log("[ProtectedRoute] Usuario autenticado, permitiendo acceso");
   return <Outlet />;
 };
 
-// Componente para rutas de autenticación (login/register)
-// Redirige a /user si el usuario ya está autenticado
+// Componente para rutas de autenticación (solo accesibles si NO está autenticado)
 export const AuthRoute = () => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/user";
 
+  console.log("[AuthRoute] Verificando acceso. isAuthenticated:", isAuthenticated, "loading:", loading, "from:", from);
+
+  // Si estamos cargando, permitir renderizar temporalmente para evitar parpadeos
   if (loading) {
-    return <div className="loading">Verificando autenticación...</div>;
+    console.log("[AuthRoute] Cargando, permitiendo renderizado temporal");
+    return <Outlet />;
   }
 
+  // Si está autenticado, redirigir a la página de usuario o a la ubicación anterior
   if (isAuthenticated) {
-    return <Navigate to="/user" replace />;
+    console.log("[AuthRoute] Usuario autenticado, redirigiendo a:", from);
+    return <Navigate to={from} replace />;
   }
 
+  // Si no está autenticado, permitir acceso a la ruta de autenticación
+  console.log("[AuthRoute] Usuario no autenticado, permitiendo acceso");
   return <Outlet />;
 };
-
-// Exportar por defecto ProtectedRoute para que sea más fácil de importar
-export default ProtectedRoute;

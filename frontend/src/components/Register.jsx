@@ -28,7 +28,7 @@ function Register() {
     symbol: false,
   });
 
-  const { setError, clearError, isAuthenticated } = useAuth();
+  const { setError, clearError, isAuthenticated, setManualLoginInProgress } = useAuth();
   const navigate = useNavigate();
 
   // Limpiar errores al montar el componente
@@ -129,6 +129,9 @@ function Register() {
     setSuccess("");
     setGoogleLoading(true);
 
+    // Indicar que se está realizando un login manual
+    setManualLoginInProgress(true);
+
     try {
       const provider = new GoogleAuthProvider();
       // Configurar para mostrar la pantalla de selección de cuenta cada vez
@@ -167,7 +170,25 @@ function Register() {
           // Guardar token y redirigir a la página principal
           localStorage.setItem("token", loginResponse.data.token);
           setSuccess("¡Has iniciado sesión con Google! Redirigiendo...");
-          setTimeout(() => navigate("/user"), 1000);
+
+          // Esperar para asegurar que el token se almacenó correctamente
+          setTimeout(() => {
+            // Actualizar estado de usuario en AuthContext
+            apiService
+              .checkAuth()
+              .then(() => {
+                // Finalizar login manual solo después de que se haya verificado el token
+                setManualLoginInProgress(false);
+                // Ahora redirigir al usuario
+                navigate("/user");
+              })
+              .catch((err) => {
+                console.error("Error verificando auth después de login con Google:", err);
+                setManualLoginInProgress(false);
+                navigate("/user");
+              });
+          }, 1000);
+
           return;
         }
       } catch (loginError) {
@@ -205,12 +226,30 @@ function Register() {
       if (loginAfterRegister.success) {
         localStorage.setItem("token", loginAfterRegister.data.token);
         setSuccess("Registro con Google exitoso. Redirigiendo...");
-        setTimeout(() => navigate("/user"), 1000);
+
+        // Esperar para asegurar que el token se almacenó correctamente
+        setTimeout(() => {
+          // Actualizar estado de usuario en AuthContext
+          apiService
+            .checkAuth()
+            .then(() => {
+              // Finalizar login manual solo después de que se haya verificado el token
+              setManualLoginInProgress(false);
+              // Ahora redirigir al usuario
+              navigate("/user");
+            })
+            .catch((err) => {
+              console.error("Error verificando auth después de registro con Google:", err);
+              setManualLoginInProgress(false);
+              navigate("/user");
+            });
+        }, 1000);
       } else {
         throw new Error("Error al iniciar sesión después del registro");
       }
     } catch (error) {
       console.error("Error en registro con Google:", error);
+      setManualLoginInProgress(false); // Finalizar login manual en caso de error
 
       // Si el usuario canceló el popup, no mostrar error
       if (error.code === "auth/popup-closed-by-user") {

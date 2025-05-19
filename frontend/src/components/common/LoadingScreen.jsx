@@ -1,32 +1,41 @@
-import React from "react";
-import { usePokemonData } from "../../contexts/PokemonDataContext";
-import { useAuth } from "../../contexts/AuthContext";
-import "../../styles/LoadingScreen.css"; // Deberás crear este archivo CSS
+import React, { useState, useEffect } from "react";
 
-const LoadingScreen = ({ children }) => {
-  const { isLoading: dataLoading, isAllDataLoaded } = usePokemonData();
-  const { loading: authLoading, isAuthenticated } = useAuth();
+// Componente para mostrar una pantalla de carga
+const LoadingScreen = ({ children, timeout = 800 }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Si estamos autenticados y cargando datos, mostrar pantalla de carga
-  const showLoading = isAuthenticated && dataLoading && !isAllDataLoaded;
+  useEffect(() => {
+    console.log("[LoadingScreen] Iniciando pantalla de carga");
 
-  // Si estamos verificando la autenticación, también mostrar pantalla de carga
-  const showAuthLoading = authLoading;
+    // Establecer un tiempo mínimo para mostrar la pantalla de carga
+    // para evitar parpadeos en cargas rápidas
+    const timer = setTimeout(() => {
+      console.log("[LoadingScreen] Tiempo de carga mínimo alcanzado");
+      setIsLoading(false);
+    }, timeout);
 
-  if (showLoading || showAuthLoading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-content">
-          <div className="spinner"></div>
-          <h2>Cargando Pokémon...</h2>
-          <p>Estamos preparando tus datos, esto puede tardar unos segundos.</p>
-        </div>
-      </div>
-    );
+    return () => {
+      console.log("[LoadingScreen] Limpiando temporizador de carga");
+      clearTimeout(timer);
+    };
+  }, [timeout]);
+
+  // Si ya no estamos cargando, mostrar los children
+  if (!isLoading) {
+    console.log("[LoadingScreen] Carga completada, mostrando contenido");
+    return <>{children}</>;
   }
 
-  // Si no estamos cargando, mostrar los hijos
-  return children;
+  // Mostrar pantalla de carga
+  return (
+    <div className="loading-screen">
+      <div className="loading-container">
+        <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="loading-logo" />
+        <div className="loading-spinner"></div>
+        <p>Cargando...</p>
+      </div>
+    </div>
+  );
 };
 
 export default LoadingScreen;
