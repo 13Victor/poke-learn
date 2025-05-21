@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTeam } from "../../contexts/TeamContext";
 import apiService from "../../services/apiService";
 
 const Teams = () => {
@@ -8,6 +9,7 @@ const Teams = () => {
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
   const { error, setError, isAuthenticated } = useAuth();
+  const { resetTeam } = useTeam(); // Importar la función resetTeam
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +41,9 @@ const Teams = () => {
   };
 
   const handleCreateTeam = () => {
+    // Resetear el estado del equipo antes de navegar
+    resetTeam();
+    console.log("🔄 Team state reset before creating new team");
     navigate("/teammaker");
   };
 

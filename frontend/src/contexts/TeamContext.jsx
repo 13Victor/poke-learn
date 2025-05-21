@@ -14,6 +14,7 @@ const ACTIONS = {
   SET_POKEMON_STATS: "SET_POKEMON_STATS",
   UPDATE_POKEMON_STATS: "UPDATE_POKEMON_STATS",
   UPDATE_TEAM_ANALYSIS: "UPDATE_TEAM_ANALYSIS",
+  RESET_TEAM: "RESET_TEAM",
 };
 
 const FLOW_STAGES = {
@@ -55,6 +56,11 @@ const initialState = {
 // Reducer para manejar las actualizaciones de estado
 function teamReducer(state, action) {
   switch (action.type) {
+    case ACTIONS.RESET_TEAM: {
+      return {
+        ...initialState,
+      };
+    }
     case ACTIONS.LOAD_POKEMON_COMPLETE: {
       const { slotIndex, pokemonData } = action.payload;
       const newPokemons = [...state.pokemons];
@@ -313,6 +319,11 @@ export const TeamProvider = ({ children }) => {
   // Crear acciones memorizadas para evitar recreaciones en cada renderizado
   const actions = useMemo(
     () => ({
+      resetTeam: () => {
+        dispatch({
+          type: ACTIONS.RESET_TEAM,
+        });
+      },
       loadPokemonComplete: (slotIndex, pokemonData) => {
         dispatch({
           type: ACTIONS.LOAD_POKEMON_COMPLETE,

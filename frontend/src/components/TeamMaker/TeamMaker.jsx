@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import TeamContainer from "./TeamContainer";
 import TableView from "./TableView";
 import LoadingIndicator from "./LoadingIndicator";
@@ -92,13 +92,33 @@ const TeamMaker = memo(() => {
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [error, setError] = useState(null);
   const [teamName, setTeamName] = useState("");
-  const { setPokemon, setMove, setItem, setAbility, updatePokemonStats } = useTeam();
+  const { setPokemon, setMove, setItem, setAbility, updatePokemonStats, resetTeam } = useTeam();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Ref para controlar si ya se ha cargado el equipo
   const teamLoadedRef = useRef(false);
+  // Ref para controlar si ya se ha reseteado el estado
+  const resetPerformedRef = useRef(false);
 
   console.log("🔴 TeamMaker component rendered, teamId:", teamId);
+
+  // Efecto para resetear el estado cuando se navega a /teammaker (sin ID)
+  useEffect(() => {
+    // Si no hay teamId, estamos creando un equipo nuevo
+    // y debemos resetear el estado si no lo hemos hecho ya
+    if (!teamId && !resetPerformedRef.current) {
+      console.log("🔄 Resetting team state for new team creation");
+      resetTeam();
+      resetPerformedRef.current = true;
+      teamLoadedRef.current = false; // También reset del flag de carga
+    }
+
+    // Si hay teamId, marcamos que no hemos reseteado para permitir futuras navegaciones
+    if (teamId) {
+      resetPerformedRef.current = false;
+    }
+  }, [teamId, resetTeam, location.pathname]);
 
   // Manejar errores y redireccionar si es necesario
   useEffect(() => {
