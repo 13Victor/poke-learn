@@ -6,6 +6,7 @@ import apiService from "../../services/apiService";
 const Teams = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
   const { error, setError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -20,17 +21,19 @@ const Teams = () => {
 
   const fetchTeams = async () => {
     try {
+      setLoading(true);
       const response = await apiService.getTeams();
       if (!response.success) {
         throw new Error(response.message || "Error al obtener equipos");
       }
 
       // Fix: Access the teams array inside the data object
-      setTeams(response.data.teams);
-      setLoading(false);
+      setTeams(response.data.teams || []);
+      console.log("✅ Teams loaded successfully:", response.data.teams);
     } catch (err) {
-      console.error("Error al obtener equipos:", err);
+      console.error("❌ Error al obtener equipos:", err);
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -39,56 +42,99 @@ const Teams = () => {
     navigate("/teammaker");
   };
 
+  const handleEditTeam = (teamId) => {
+    navigate(`/teammaker/${teamId}`);
+  };
+
   const handleDeleteTeam = async (teamId) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este equipo?")) {
+      return;
+    }
+
     try {
+      setLoadingAction(true);
+      console.log(`🗑️ Deleting team with ID: ${teamId}`);
+
       const response = await apiService.deleteTeam(teamId);
       if (!response.success) {
         throw new Error(response.message || "Error al eliminar equipo");
       }
 
+      console.log("✅ Team deleted successfully");
       fetchTeams(); // Actualizar lista de equipos
     } catch (err) {
-      console.error("Error al eliminar equipo:", err);
+      console.error("❌ Error al eliminar equipo:", err);
       setError(err.message);
+    } finally {
+      setLoadingAction(false);
     }
   };
 
-  if (loading) return <div>Loading teams...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading your Pokémon teams...</p>
+      </div>
+    );
 
   return (
     <div className="teams-container">
       <div className="teams-header">
         <h1>My Teams</h1>
-        <button className="create-team-button" onClick={handleCreateTeam}>
+        <button className="create-team-button" onClick={handleCreateTeam} disabled={loadingAction}>
           Create New Team
         </button>
       </div>
 
       <div className="teams-grid">
         {teams.length === 0 ? (
-          <p>No teams yet. Create your first team!</p>
+          <div className="no-teams-message">
+            <p>You don't have any teams yet. Create your first team!</p>
+            <button onClick={handleCreateTeam}>Create Team</button>
+          </div>
         ) : (
           teams.map((team) => (
             <div key={team.id} className="team-card">
               <h3>{team.name}</h3>
               <div className="team-preview">
-                {team.pokemon &&
+                {Array.isArray(team.pokemon) ? (
                   team.pokemon.map((pokemon, index) => (
-                    <div key={index} className="pokemon-preview">
-                      <h4>{pokemon.name}</h4>
-                      <img src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`} alt={pokemon.name} />
+                    <div key={pokemon.id || index} className="pokemon-preview">
+                      <img
+                        src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
+                        alt={pokemon.name || "Unknown"}
+                        title={pokemon.name || "Unknown"}
+                        onError={(e) => {
+                          console.warn(`Failed to load image for ${pokemon.name}`);
+                          e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                        }}
+                      />
                     </div>
-                  ))}
+                  ))
+                ) : (
+                  <p className="empty-team">No Pokémon in this team</p>
+                )}
               </div>
               <div className="team-actions">
-                <button onClick={() => navigate(`/teammaker/${team.id}`)}>Edit</button>
-                <button onClick={() => handleDeleteTeam(team.id)}>Delete</button>
+                <button className="edit-button" onClick={() => handleEditTeam(team.id)} disabled={loadingAction}>
+                  Edit
+                </button>
+                <button className="delete-button" onClick={() => handleDeleteTeam(team.id)} disabled={loadingAction}>
+                  Delete
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {error && (
+        <div className="error-notification">
+          <p>{error}</p>
+          <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
     </div>
   );
 };

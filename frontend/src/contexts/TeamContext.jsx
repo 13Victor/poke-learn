@@ -55,6 +55,19 @@ const initialState = {
 // Reducer para manejar las actualizaciones de estado
 function teamReducer(state, action) {
   switch (action.type) {
+    case ACTIONS.LOAD_POKEMON_COMPLETE: {
+      const { slotIndex, pokemonData } = action.payload;
+      const newPokemons = [...state.pokemons];
+      newPokemons[slotIndex] = {
+        ...newPokemons[slotIndex],
+        ...pokemonData,
+      };
+      return {
+        ...state,
+        pokemons: newPokemons,
+      };
+    }
+
     case ACTIONS.SET_POKEMON: {
       const { slotIndex, pokemon } = action.payload;
       const newPokemons = [...state.pokemons];
@@ -300,6 +313,13 @@ export const TeamProvider = ({ children }) => {
   // Crear acciones memorizadas para evitar recreaciones en cada renderizado
   const actions = useMemo(
     () => ({
+      loadPokemonComplete: (slotIndex, pokemonData) => {
+        dispatch({
+          type: ACTIONS.LOAD_POKEMON_COMPLETE,
+          payload: { slotIndex, pokemonData },
+        });
+      },
+
       setPokemon: (slotIndex, pokemon) =>
         dispatch({
           type: ACTIONS.SET_POKEMON,
@@ -312,17 +332,29 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, moveIndex, moveName },
         }),
 
-      setItem: (slotIndex, item, spriteNum) =>
+      setItem: (slotIndex, item, itemId) => {
+        console.log(`Setting item for slot ${slotIndex}: ${item} (ID: ${itemId})`);
         dispatch({
           type: ACTIONS.SET_ITEM,
-          payload: { slotIndex, item, spriteNum },
-        }),
+          payload: {
+            slotIndex,
+            item: item, // Nombre del item para la UI
+            itemId: itemId || item, // ID del item para la BD, usar item como fallback
+          },
+        });
+      },
 
-      setAbility: (slotIndex, ability, abilityType) =>
+      setAbility: (slotIndex, ability, abilityId) => {
+        console.log(`Setting ability for slot ${slotIndex}: ${ability} (ID: ${abilityId})`);
         dispatch({
           type: ACTIONS.SET_ABILITY,
-          payload: { slotIndex, ability, abilityType },
-        }),
+          payload: {
+            slotIndex,
+            ability: ability, // Nombre de la habilidad para la UI
+            abilityId: abilityId || ability, // ID de la habilidad para la BD, usar ability como fallback
+          },
+        });
+      },
 
       setViewMode: (mode) => dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: mode }),
 

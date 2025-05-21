@@ -76,17 +76,38 @@ async function createTeam(userId, name, pokemon) {
 
       // Insertar IVs
       if (p.ivs) {
+        // Debug: Mostrar los IVs recibidos
+        console.log(`Backend - IVs recibidos para ${p.pokemon_name}:`, p.ivs);
+
+        // Validar y preparar los IVs correctamente
+        const hpIv = p.ivs.hp !== undefined ? p.ivs.hp : 31;
+        const atkIv = p.ivs.atk !== undefined ? p.ivs.atk : 31;
+        const defIv = p.ivs.def !== undefined ? p.ivs.def : 31;
+        const spaIv = p.ivs.spa !== undefined ? p.ivs.spa : 31;
+        const spdIv = p.ivs.spd !== undefined ? p.ivs.spd : 31;
+        const speIv = p.ivs.spe !== undefined ? p.ivs.spe : 31;
+
+        // Debug: Mostrar los IVs procesados
+        console.log(`Backend - IVs procesados para ${p.pokemon_name}:`, {
+          hp: hpIv,
+          atk: atkIv,
+          def: defIv,
+          spatk: spaIv,
+          spdef: spdIv,
+          speed: speIv,
+        });
+
         await connection.query(
           `INSERT INTO pokemon_ivs (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             pokemonId,
-            p.ivs.hp || 31,
-            p.ivs.atk || 31,
-            p.ivs.def || 31,
-            p.ivs.spa || 31, // spa -> spatk
-            p.ivs.spd || 31, // spd -> spdef
-            p.ivs.spe || 31, // spe -> speed
+            hpIv,
+            atkIv,
+            defIv,
+            spaIv, // spa -> spatk
+            spdIv, // spd -> spdef
+            speIv, // spe -> speed
           ]
         );
       }
@@ -202,15 +223,113 @@ async function getTeamById(teamId, userId) {
 
     // Formatear los resultados JSON (convertir strings a objetos)
     pokemon.forEach((p) => {
-      if (p.evs) p.evs = JSON.parse(p.evs);
-      if (p.ivs) p.ivs = JSON.parse(p.ivs);
-      if (p.stats) p.stats = JSON.parse(p.stats);
-      if (p.moves) p.moves = JSON.parse(p.moves);
-      if (p.build) {
-        p.build = JSON.parse(p.build);
-        p.item = p.build.item_id;
-        p.ability = p.build.ability_id;
-        delete p.build;
+      try {
+        // Verificar que los valores no sean nulos y son strings antes de parsearlos
+        if (p.evs && typeof p.evs === "string") p.evs = JSON.parse(p.evs);
+        else if (p.evs === null) p.evs = { hp: 0, atk: 0, def: 0, spatk: 0, spdef: 0, speed: 0 };
+
+        if (p.ivs && typeof p.ivs === "string") p.ivs = JSON.parse(p.ivs);
+        else if (p.ivs === null) p.ivs = { hp: 31, atk: 31, def: 31, spatk: 31, spdef: 31, speed: 31 };
+
+        if (p.stats && typeof p.stats === "string") p.stats = JSON.parse(p.stats);
+        else if (p.stats === null) p.stats = { hp: 0, atk: 0, def: 0, spatk: 0, spdef: 0, speed: 0 };
+
+        // Mapear nombres de stats de la BD al formato del frontend
+        if (p.stats) {
+          // Crear copia para no modificar el objeto original
+          const mappedStats = { ...p.stats };
+
+          // Mapear de BD a frontend: spatk->spa, spdef->spd, speed->spe
+          if ("spatk" in mappedStats) {
+            mappedStats.spa = mappedStats.spatk;
+            delete mappedStats.spatk;
+          }
+
+          if ("spdef" in mappedStats) {
+            mappedStats.spd = mappedStats.spdef;
+            delete mappedStats.spdef;
+          }
+
+          if ("speed" in mappedStats) {
+            mappedStats.spe = mappedStats.speed;
+            delete mappedStats.speed;
+          }
+
+          p.stats = mappedStats;
+        }
+
+        // Hacer el mismo mapeo para EVs e IVs
+        if (p.evs) {
+          const mappedEvs = { ...p.evs };
+
+          if ("spatk" in mappedEvs) {
+            mappedEvs.spa = mappedEvs.spatk;
+            delete mappedEvs.spatk;
+          }
+
+          if ("spdef" in mappedEvs) {
+            mappedEvs.spd = mappedEvs.spdef;
+            delete mappedEvs.spdef;
+          }
+
+          if ("speed" in mappedEvs) {
+            mappedEvs.spe = mappedEvs.speed;
+            delete mappedEvs.speed;
+          }
+
+          p.evs = mappedEvs;
+        }
+
+        if (p.ivs) {
+          const mappedIvs = { ...p.ivs };
+
+          if ("spatk" in mappedIvs) {
+            mappedIvs.spa = mappedIvs.spatk;
+            delete mappedIvs.spatk;
+          }
+
+          if ("spdef" in mappedIvs) {
+            mappedIvs.spd = mappedIvs.spdef;
+            delete mappedIvs.spdef;
+          }
+
+          if ("speed" in mappedIvs) {
+            mappedIvs.spe = mappedIvs.speed;
+            delete mappedIvs.speed;
+          }
+
+          p.ivs = mappedIvs;
+        }
+
+        if (p.moves && typeof p.moves === "string") p.moves = JSON.parse(p.moves);
+        else if (p.moves === null) p.moves = [];
+
+        if (p.build && typeof p.build === "string") {
+          p.build = JSON.parse(p.build);
+          p.item = p.build.item_id;
+          p.ability = p.build.ability_id;
+          delete p.build;
+        } else if (p.build === null) {
+          p.item = null;
+          p.ability = null;
+        }
+      } catch (parseError) {
+        console.error(`Error parsing JSON for pokemon ${p.id}:`, parseError);
+        console.error("Problematic data:", {
+          evs: p.evs,
+          ivs: p.ivs,
+          stats: p.stats,
+          moves: p.moves,
+          build: p.build,
+        });
+
+        // Asignar valores por defecto en caso de error
+        p.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+        p.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+        p.stats = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+        p.moves = [];
+        p.item = null;
+        p.ability = null;
       }
     });
 
@@ -224,9 +343,141 @@ async function getTeamById(teamId, userId) {
   }
 }
 
+/**
+ * Actualizar un equipo existente
+ * @param {number} teamId - ID del equipo
+ * @param {number} userId - ID del usuario
+ * @param {string} name - Nombre del equipo
+ * @param {Array} pokemon - Lista de Pokémon
+ * @returns {Promise<Object>} - Equipo actualizado
+ */
+async function updateTeam(teamId, userId, name, pokemon) {
+  return db.transaction(async (connection) => {
+    // Verificar que el equipo existe y pertenece al usuario
+    const [teamCheck] = await connection.query("SELECT id FROM team WHERE id = ? AND user_id = ?", [teamId, userId]);
+
+    if (teamCheck.length === 0) {
+      throw new Error("Equipo no encontrado o no pertenece al usuario");
+    }
+
+    // Actualizar el nombre del equipo
+    await connection.query("UPDATE team SET name = ? WHERE id = ?", [name, teamId]);
+
+    // Eliminar todos los Pokémon existentes asociados al equipo
+    await connection.query("DELETE FROM team_pokemon WHERE team_id = ?", [teamId]);
+
+    // Insertar los nuevos Pokémon (mismo código que en createTeam)
+    for (let i = 0; i < pokemon.length; i++) {
+      const p = pokemon[i];
+
+      // Insertar pokemon base
+      const [pokemonResult] = await connection.query(
+        `INSERT INTO team_pokemon (team_id, pokemon_name, pokemon_id, image, level, nature, slot) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [teamId, p.pokemon_name, p.pokemon_id, p.image, p.level || 100, p.nature || "Hardy", p.slot]
+      );
+      const pokemonId = pokemonResult.insertId;
+
+      // Insertar EVs
+      if (p.evs) {
+        await connection.query(
+          `INSERT INTO pokemon_evs (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            pokemonId,
+            p.evs.hp || 0,
+            p.evs.atk || 0,
+            p.evs.def || 0,
+            p.evs.spa || 0, // spa -> spatk
+            p.evs.spd || 0, // spd -> spdef
+            p.evs.spe || 0, // spe -> speed
+          ]
+        );
+      }
+
+      // Insertar IVs
+      if (p.ivs) {
+        // Debug: Mostrar los IVs recibidos
+        console.log(`Backend - IVs recibidos para ${p.pokemon_name}:`, p.ivs);
+
+        // Validar y preparar los IVs correctamente
+        const hpIv = p.ivs.hp !== undefined ? p.ivs.hp : 31;
+        const atkIv = p.ivs.atk !== undefined ? p.ivs.atk : 31;
+        const defIv = p.ivs.def !== undefined ? p.ivs.def : 31;
+        const spaIv = p.ivs.spa !== undefined ? p.ivs.spa : 31;
+        const spdIv = p.ivs.spd !== undefined ? p.ivs.spd : 31;
+        const speIv = p.ivs.spe !== undefined ? p.ivs.spe : 31;
+
+        // Debug: Mostrar los IVs procesados
+        console.log(`Backend - IVs procesados para ${p.pokemon_name}:`, {
+          hp: hpIv,
+          atk: atkIv,
+          def: defIv,
+          spatk: spaIv,
+          spdef: spdIv,
+          speed: speIv,
+        });
+
+        await connection.query(
+          `INSERT INTO pokemon_ivs (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            pokemonId,
+            hpIv,
+            atkIv,
+            defIv,
+            spaIv, // spa -> spatk
+            spdIv, // spd -> spdef
+            speIv, // spe -> speed
+          ]
+        );
+      }
+
+      // Insertar stats calculadas
+      if (p.stats) {
+        await connection.query(
+          `INSERT INTO pokemon_stats (team_pokemon_id, hp, atk, def, spatk, spdef, speed)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            pokemonId,
+            p.stats.hp || 0,
+            p.stats.atk || 0,
+            p.stats.def || 0,
+            p.stats.spa || 0, // spa -> spatk
+            p.stats.spd || 0, // spd -> spdef
+            p.stats.spe || 0, // spe -> speed
+          ]
+        );
+      }
+
+      // Insertar movimientos (solo IDs válidos)
+      if (p.moves && p.moves.length > 0) {
+        // Filtrar movimientos nulos
+        const validMoves = p.moves.filter((moveId) => moveId !== null && moveId !== undefined && moveId !== "");
+        if (validMoves.length > 0) {
+          const moveValues = validMoves.map((moveId, idx) => [pokemonId, idx + 1, moveId]);
+          await connection.query(`INSERT INTO pokemon_moves (team_pokemon_id, move_slot, move_id) VALUES ?`, [
+            moveValues,
+          ]);
+        }
+      }
+
+      // Insertar información de build (usando IDs para item y ability)
+      await connection.query(
+        `INSERT INTO pokemon_build (team_pokemon_id, item_id, ability_id)
+         VALUES (?, ?, ?)`,
+        [pokemonId, p.item, p.ability]
+      );
+    }
+
+    return { id: teamId, name };
+  });
+}
+
 module.exports = {
   getUserTeams,
   createTeam,
   deleteTeam,
   getTeamById,
+  updateTeam,
 };

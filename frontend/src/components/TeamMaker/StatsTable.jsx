@@ -44,20 +44,53 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
   const [baseStats, setBaseStats] = useState({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
   const [initialized, setInitialized] = useState(false);
 
+  // Debug: Para ver los valores iniciales del Pokemon
+  useEffect(() => {
+    if (selectedPokemon) {
+      console.log("StatsTable - selectedPokemon recibido:", selectedPokemon);
+      console.log("IVs originales:", selectedPokemon.ivs);
+    }
+  }, [selectedPokemon]);
+
   // Load initial values and baseStats when Pokemon changes
   useEffect(() => {
     const loadPokemonData = async () => {
       if (selectedPokemon?.name) {
         try {
+          // Reset the initialized state to prevent using old values
+          setInitialized(false);
+
           const allPokemonData = await getPokemons();
           const fullPokemonData = allPokemonData.find((p) => p.name === selectedPokemon.name);
 
           if (fullPokemonData?.baseStats) {
             setBaseStats(fullPokemonData.baseStats);
 
-            // Initialize stats from Pokemon or use defaults
-            setEvs(selectedPokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
-            setIvs(selectedPokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
+            // IMPORTANTE: Guardar los valores reales de EVs e IVs del Pokémon, o usar valores por defecto si no existen
+            // PROBLEMA ENCONTRADO: No estamos respetando los valores personalizados de IVs como spe: 0
+
+            // Implementación anterior (problemática):
+            // setEvs(selectedPokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+            // setIvs(selectedPokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 });
+
+            // SOLUCIÓN: Respetar TODOS los valores existentes, usando la propagación de objetos
+            const defaultEvs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+            const defaultIvs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+
+            // Usar propagación para mantener valores personalizados como spe: 0
+            const pokemonEvs = selectedPokemon.evs || {};
+            const pokemonIvs = selectedPokemon.ivs || {};
+
+            // Crear nuevos objetos combinando los valores por defecto con los valores reales del Pokémon
+            const mergedEvs = { ...defaultEvs, ...pokemonEvs };
+            const mergedIvs = { ...defaultIvs, ...pokemonIvs };
+
+            console.log("IVs originales:", pokemonIvs);
+            console.log("IVs combinados:", mergedIvs);
+
+            // Establecer los estados con los valores fusionados
+            setEvs(mergedEvs);
+            setIvs(mergedIvs);
             setNature(selectedPokemon.nature || "Hardy");
             setInitialized(true);
           }
@@ -68,7 +101,7 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
     };
 
     loadPokemonData();
-  }, [selectedPokemon?.name, getPokemons]);
+  }, [selectedPokemon?.name, getPokemons, selectedPokemon]);
 
   // Calculate total EVs
   useEffect(() => {
@@ -113,6 +146,7 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
   // Handle save and continue
   const handleSaveAndContinue = () => {
     const stats = calculateStats();
+    console.log("Guardando estadísticas con IVs:", ivs);
     updatePokemonStats(selectedSlot, stats, evs, ivs, nature);
     advanceFromStats();
   };
@@ -276,6 +310,15 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Debug info */}
+      <div
+        className="debug-info"
+        style={{ fontSize: "10px", color: "#666", margin: "10px 0", display: "flex", flexDirection: "column" }}
+      >
+        <div>IVs originales: {JSON.stringify(selectedPokemon.ivs)}</div>
+        <div>IVs actuales: {JSON.stringify(ivs)}</div>
       </div>
 
       <div className="statsInfo">

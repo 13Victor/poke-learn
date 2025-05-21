@@ -127,10 +127,29 @@ class ApiService {
     });
   }
 
+  // Obtener un equipo específico por ID
+  async getTeamById(teamId) {
+    return this.fetchData(`/teams/${teamId}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
+
   // Crear equipo
   async createTeam(teamData) {
     return this.fetchData("/teams", {
       method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(teamData),
+      requiresAuth: true,
+    });
+  }
+
+  // Actualizar equipo existente
+  async updateTeam(teamId, teamData) {
+    return this.fetchData(`/teams/${teamId}`, {
+      method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify(teamData),
       requiresAuth: true,

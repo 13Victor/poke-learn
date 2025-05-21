@@ -6,7 +6,9 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 const { formatResponse, parseId } = require("../utils/helpers");
 const { errorMessages, successMessages } = require("../utils/messages");
 const { validateTeam } = require("../utils/validators");
-const { getUserTeams, createTeam, deleteTeam, getTeamById } = require("../database/teamQueries");
+// Importar el objeto db
+const db = require("../database/db");
+const { getUserTeams, createTeam, deleteTeam, getTeamById, updateTeam } = require("../database/teamQueries");
 
 const router = express.Router();
 
@@ -87,10 +89,24 @@ router.put("/:id", verifyToken, async (req, res) => {
       return res.status(400).json(formatResponse(false, "ID de equipo inválido"));
     }
 
-    // Implementar actualización de equipo
-    // ...
+    const { name, pokemon } = req.body;
 
-    res.json(formatResponse(true, successMessages.TEAM_UPDATED));
+    // Validar datos del equipo
+    const validation = validateTeam({ name, pokemon });
+    if (!validation.valid) {
+      return res.status(400).json(formatResponse(false, validation.message));
+    }
+
+    // Usar la función updateTeam en lugar de la lógica en línea
+    try {
+      await updateTeam(teamId, userId, name, pokemon);
+      res.json(formatResponse(true, successMessages.TEAM_UPDATED));
+    } catch (error) {
+      if (error.message.includes("no encontrado")) {
+        return res.status(404).json(formatResponse(false, errorMessages.TEAM_NOT_FOUND));
+      }
+      throw error; // Re-lanzar para que lo capture el try/catch externo
+    }
   } catch (error) {
     console.error("Error al actualizar equipo:", error);
     res.status(500).json(formatResponse(false, errorMessages.TEAM_UPDATE_ERROR || "Error al actualizar equipo"));

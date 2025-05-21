@@ -47,6 +47,7 @@ function AuthRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/user" element={<User />} />
         <Route path="/teammaker" element={<TeamMaker />} />
+        <Route path="/teammaker/:teamId" element={<TeamMaker />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/battle" element={<Battle />} />
       </Route>
