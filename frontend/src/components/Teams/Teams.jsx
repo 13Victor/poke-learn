@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTeam } from "../../contexts/TeamContext";
 import apiService from "../../services/apiService";
+import { HiOutlineTrash } from "react-icons/hi";
+import { RiEditLine } from "react-icons/ri";
 
 const Teams = () => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
   const { error, setError, isAuthenticated } = useAuth();
-  const { resetTeam } = useTeam(); // Importar la función resetTeam
+  const { resetTeam } = useTeam();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,7 +31,6 @@ const Teams = () => {
         throw new Error(response.message || "Error al obtener equipos");
       }
 
-      // Fix: Access the teams array inside the data object
       setTeams(response.data.teams || []);
       console.log("✅ Teams loaded successfully:", response.data.teams);
     } catch (err) {
@@ -41,7 +42,6 @@ const Teams = () => {
   };
 
   const handleCreateTeam = () => {
-    // Resetear el estado del equipo antes de navegar
     resetTeam();
     console.log("🔄 Team state reset before creating new team");
     navigate("/teammaker");
@@ -66,7 +66,7 @@ const Teams = () => {
       }
 
       console.log("✅ Team deleted successfully");
-      fetchTeams(); // Actualizar lista de equipos
+      fetchTeams();
     } catch (err) {
       console.error("❌ Error al eliminar equipo:", err);
       setError(err.message);
@@ -101,32 +101,47 @@ const Teams = () => {
         ) : (
           teams.map((team) => (
             <div key={team.id} className="team-card">
-              <h3>{team.name}</h3>
-              <div className="team-preview">
-                {Array.isArray(team.pokemon) ? (
-                  team.pokemon.map((pokemon, index) => (
-                    <div key={pokemon.id || index} className="pokemon-preview">
-                      <img
-                        src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
-                        alt={pokemon.name || "Unknown"}
-                        title={pokemon.name || "Unknown"}
-                        onError={(e) => {
-                          console.warn(`Failed to load image for ${pokemon.name}`);
-                          e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
-                        }}
-                      />
-                    </div>
-                  ))
+              <h5 className="team-title">{team.name}</h5>
+
+              <div className="pokemon-grid">
+                {Array.isArray(team.pokemon) && team.pokemon.length > 0 ? (
+                  team.pokemon
+                    .sort((a, b) => (a.slot || 0) - (b.slot || 0))
+                    .map((pokemon, index) => (
+                      <div key={pokemon.id || index} className="pokemon">
+                        <img
+                          className="pokemon-sprite"
+                          src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
+                          alt={pokemon.name || "Unknown"}
+                          title={pokemon.name || "Unknown"}
+                          onError={(e) => {
+                            console.warn(`Failed to load image for ${pokemon.name}`);
+                            e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                          }}
+                        />
+                        {pokemon.item_id && (
+                          <img
+                            className="item-sprite"
+                            src={`/assets/items/${pokemon.item_id}.webp`}
+                            alt={pokemon.item_id}
+                            title={pokemon.item_id}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))
                 ) : (
                   <p className="empty-team">No Pokémon in this team</p>
                 )}
               </div>
               <div className="team-actions">
                 <button className="edit-button" onClick={() => handleEditTeam(team.id)} disabled={loadingAction}>
-                  Edit
+                  <RiEditLine />
                 </button>
                 <button className="delete-button" onClick={() => handleDeleteTeam(team.id)} disabled={loadingAction}>
-                  Delete
+                  <HiOutlineTrash />
                 </button>
               </div>
             </div>

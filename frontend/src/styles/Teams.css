@@ -1,6 +1,79 @@
-.team-preview {
+.team-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+  flex-direction: column;
+  background-color: var(--white);
+  padding-block: var(--spacing-xs) var(--spacing-sm);
+  padding-inline: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.team-card:hover .team-actions {
+  opacity: 1;
+}
+
+.team-title {
+  text-align: center;
+  padding-block: var(--spacing-xs);
+}
+
+.pokemon-grid {
+  width: fit-content;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.pokemon-grid .pokemon {
+  position: relative;
+  display: flex;
+}
+
+.pokemon .pokemon-sprite {
+  width: 60px;
+  filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.25));
+  aspect-ratio: 1;
+}
+
+.pokemon .item-sprite {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.team-actions {
+  opacity: 0;
+  position: absolute;
+  padding: var(--spacing-xs);
+  display: flex;
+  top: 0;
+  right: 0;
+  gap: 2px;
+  transition: var(--transition-fast);
+}
+
+.team-actions button {
+  background-color: transparent;
+  border: none;
+  padding: 1px;
+  border-radius: var(--radius-sm);
+}
+
+.team-actions svg {
+  font-size: 20px;
+}
+
+.delete-button {
+  background-color: var(--danger-bg) !important;
+}
+
+.delete-button:hover {
+  color: var(--danger-dark);
+}
+
+.edit-button:hover {
+  background-color: var(--gray);
 }

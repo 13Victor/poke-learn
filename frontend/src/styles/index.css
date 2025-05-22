@@ -10,6 +10,7 @@
   /* Grayscale palette */
   --white: #ffffffff;
   --white-smoke: #f0f0f0ff;
+  --gray: #dcdcdcff;
   --silver: #c0c0c0ff;
   --battleship-gray: #898989ff;
   --eerie-black: #1f1f1fff;
@@ -128,4 +129,7 @@
   --category-status: #959595;
 
   --item-slot-size: 24px;
+
+  --danger-dark: rgb(150, 0, 0);
+  --danger-bg: rgb(250, 185, 185);
 }

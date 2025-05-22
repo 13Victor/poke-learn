@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useMemo, useRef } from "react";
+import { calculateBaseDisplayStats } from "../utils/pokemonStatsCalculator";
 
 // Definir acciones para el reducer
 const ACTIONS = {
@@ -78,30 +79,21 @@ function teamReducer(state, action) {
       const { slotIndex, pokemon } = action.payload;
       const newPokemons = [...state.pokemons];
 
-      // Calcular stats iniciales
-      const level = 100;
-      const baseStats = pokemon.baseStats || {};
-      const initialStats = {
-        hp: Math.floor(((2 * baseStats.hp + 31) * level) / 100) + level + 10,
-        atk: Math.floor(((2 * baseStats.atk + 31) * level) / 100) + 5,
-        def: Math.floor(((2 * baseStats.def + 31) * level) / 100) + 5,
-        spa: Math.floor(((2 * baseStats.spa + 31) * level) / 100) + 5,
-        spd: Math.floor(((2 * baseStats.spd + 31) * level) / 100) + 5,
-        spe: Math.floor(((2 * baseStats.spe + 31) * level) / 100) + 5,
-      };
+      // Calcular stats iniciales usando la utilidad centralizada
+      const initialStats = calculateBaseDisplayStats(pokemon.baseStats, 100);
 
       newPokemons[slotIndex] = {
         ...pokemon,
         level: 100,
         moveset: ["", "", "", ""],
         item: "",
-        itemId: "", // Añadimos el itemId vacío
+        itemId: "",
         ability: "",
-        abilityId: "", // Añadimos el abilityId vacío
+        abilityId: "",
         evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
         nature: "Hardy",
-        stats: initialStats,
+        stats: initialStats || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
       };
 
       return {
@@ -115,8 +107,8 @@ function teamReducer(state, action) {
       const newPokemons = [...state.pokemons];
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
-        ability, // Nombre de la habilidad para la UI
-        abilityId, // ID de la habilidad para la base de datos
+        ability,
+        abilityId,
       };
       return {
         ...state,
@@ -128,7 +120,7 @@ function teamReducer(state, action) {
       const { slotIndex, moveIndex, moveName } = action.payload;
       const newPokemons = [...state.pokemons];
       const newMoveset = [...newPokemons[slotIndex].moveset];
-      newMoveset[moveIndex] = moveName; // This will store either the string or object
+      newMoveset[moveIndex] = moveName;
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
         moveset: newMoveset,
@@ -144,8 +136,8 @@ function teamReducer(state, action) {
       const newPokemons = [...state.pokemons];
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
-        item, // Nombre del item para la UI
-        itemId, // ID del item para la base de datos
+        item,
+        itemId,
       };
       return {
         ...state,
@@ -181,7 +173,6 @@ function teamReducer(state, action) {
       const { slotIndex, evs, ivs, nature, stats } = action.payload;
       const newPokemons = [...state.pokemons];
 
-      // Update the Pokémon with the new stat configuration
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
         evs,
@@ -229,29 +220,24 @@ const TeamContext = createContext();
 
 export const TeamProvider = ({ children }) => {
   const [state, dispatch] = useReducer(teamReducer, initialState);
-  // Add a ref to track the latest selectedSlot
   const selectedSlotRef = useRef(state.selectedSlot);
 
-  // Update ref whenever selectedSlot changes
   selectedSlotRef.current = state.selectedSlot;
 
   // Función auxiliar para avanzar al siguiente paso del flujo
   const advanceFlow = (currentStage, slotIndex) => {
     switch (currentStage) {
       case FLOW_STAGES.POKEMON:
-        // Después de seleccionar un Pokémon, vamos al ítem
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.ITEM });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "items" });
         break;
 
       case FLOW_STAGES.ITEM:
-        // CAMBIO: Después del ítem, vamos a la selección de habilidad
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.ABILITY });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "abilities" });
         break;
 
       case FLOW_STAGES.ABILITY:
-        // Después de la habilidad, vamos al primer movimiento
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.MOVE_1 });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "moves" });
         dispatch({
@@ -261,7 +247,6 @@ export const TeamProvider = ({ children }) => {
         break;
 
       case FLOW_STAGES.MOVE_1:
-        // Avanzamos al segundo movimiento
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.MOVE_2 });
         dispatch({
           type: ACTIONS.SET_SELECTED_MOVE,
@@ -270,7 +255,6 @@ export const TeamProvider = ({ children }) => {
         break;
 
       case FLOW_STAGES.MOVE_2:
-        // Avanzamos al tercer movimiento
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.MOVE_3 });
         dispatch({
           type: ACTIONS.SET_SELECTED_MOVE,
@@ -279,7 +263,6 @@ export const TeamProvider = ({ children }) => {
         break;
 
       case FLOW_STAGES.MOVE_3:
-        // Avanzamos al cuarto movimiento
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.MOVE_4 });
         dispatch({
           type: ACTIONS.SET_SELECTED_MOVE,
@@ -287,16 +270,12 @@ export const TeamProvider = ({ children }) => {
         });
         break;
 
-      // In the advanceFlow function within TeamContext.jsx, modify the MOVE_4 case:
       case FLOW_STAGES.MOVE_4:
-        // After the fourth move, go to stats configuration
         dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: FLOW_STAGES.STATS });
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "stats" });
         break;
 
-      // Add a new case for STATS:
       case FLOW_STAGES.STATS:
-        // After stats, proceed to the next slot
         const nextSlot = (slotIndex + 1) % 6;
         dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: nextSlot });
         dispatch({
@@ -307,7 +286,6 @@ export const TeamProvider = ({ children }) => {
         break;
 
       default:
-        // Por defecto volvemos a la selección de Pokémon
         dispatch({
           type: ACTIONS.SET_FLOW_STAGE,
           payload: FLOW_STAGES.POKEMON,
@@ -338,7 +316,6 @@ export const TeamProvider = ({ children }) => {
         }),
 
       setMove: (slotIndex, moveIndex, move) => {
-        // If move is a string, use it as the name
         const moveName = typeof move === "object" ? move.name : move;
 
         dispatch({
@@ -353,8 +330,8 @@ export const TeamProvider = ({ children }) => {
           type: ACTIONS.SET_ITEM,
           payload: {
             slotIndex,
-            item: item, // Nombre del item para la UI
-            itemId: itemId || item, // ID del item para la BD, usar item como fallback
+            item: item,
+            itemId: itemId || item,
           },
         });
       },
@@ -365,8 +342,8 @@ export const TeamProvider = ({ children }) => {
           type: ACTIONS.SET_ABILITY,
           payload: {
             slotIndex,
-            ability: ability, // Nombre de la habilidad para la UI
-            abilityId: abilityId || ability, // ID de la habilidad para la BD, usar ability como fallback
+            ability: ability,
+            abilityId: abilityId || ability,
           },
         });
       },
@@ -379,9 +356,7 @@ export const TeamProvider = ({ children }) => {
 
       setFlowStage: (stage) => dispatch({ type: ACTIONS.SET_FLOW_STAGE, payload: stage }),
 
-      // Función para seleccionar slot y cambiar vista en una sola acción
       selectSlot: (slotIndex) => {
-        const isSameSlot = slotIndex === state.selectedSlot;
         console.log("Selecting slot index:", slotIndex);
         dispatch({ type: ACTIONS.SET_SELECTED_SLOT, payload: slotIndex });
         dispatch({
@@ -397,9 +372,7 @@ export const TeamProvider = ({ children }) => {
         dispatch({ type: ACTIONS.SET_VIEW_MODE, payload: "pokemon" });
       },
 
-      // Función para seleccionar Pokémon y avanzar al flujo de ítems
       selectPokemon: (pokemon) => {
-        // Use the ref to get the latest selectedSlot
         const slotIndex = selectedSlotRef.current;
         console.log("Selecting Pokemon for slot index:", slotIndex);
         dispatch({
@@ -407,24 +380,18 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, pokemon },
         });
 
-        // Avanzar al siguiente paso del flujo: selección de ítem
         advanceFlow(FLOW_STAGES.POKEMON, slotIndex);
       },
 
-      // Método para manejar la selección de movimientos y la actualización del índice
       selectMove: (move) => {
-        // Use the ref to get the latest selectedSlot
         const slotIndex = selectedSlotRef.current;
         const moveIndex = state.selectedMove.moveIndex;
 
-        // Establecer el movimiento seleccionado
-        // Asegurarnos de guardar el objeto de movimiento completo
         dispatch({
           type: ACTIONS.SET_MOVE,
           payload: { slotIndex, moveIndex, moveName: move },
         });
 
-        // Determinar la etapa actual del flujo basado en el moveIndex
         let currentStage;
         switch (moveIndex) {
           case 0:
@@ -443,16 +410,12 @@ export const TeamProvider = ({ children }) => {
             currentStage = FLOW_STAGES.MOVE_1;
         }
 
-        // Avanzar al siguiente paso del flujo
         advanceFlow(currentStage, slotIndex);
       },
 
-      // Método para manejar la selección de items y avanzar al flujo de habilidades
       selectItem: (item) => {
-        // Use the ref to get the latest selectedSlot
         const slotIndex = selectedSlotRef.current;
 
-        // Establecer el item seleccionado
         dispatch({
           type: ACTIONS.SET_ITEM,
           payload: {
@@ -462,33 +425,27 @@ export const TeamProvider = ({ children }) => {
           },
         });
 
-        // Avanzar al siguiente paso del flujo: habilidad
         advanceFlow(FLOW_STAGES.ITEM, slotIndex);
       },
       selectAbility: (abilityName, abilityId, abilityType) => {
-        // Use the ref to get the latest selectedSlot
         const slotIndex = selectedSlotRef.current;
 
-        // Ahora recibimos directamente el nombre y el ID separados
         dispatch({
           type: ACTIONS.SET_ABILITY,
           payload: {
             slotIndex,
-            ability: abilityName, // Nombre legible para la UI
-            abilityId: abilityId, // ID para la base de datos
+            ability: abilityName,
+            abilityId: abilityId,
           },
         });
 
-        // Avanzar al siguiente paso del flujo: primer movimiento
         advanceFlow(FLOW_STAGES.ABILITY, slotIndex);
       },
 
-      // Método para obtener el Pokémon seleccionado actualmente
       getSelectedPokemon: () => {
         return state.pokemons[state.selectedSlot];
       },
 
-      // Método para avanzar manualmente al siguiente paso en el flujo
       advanceToNextStep: () => {
         advanceFlow(state.flowStage, selectedSlotRef.current);
       },
@@ -518,7 +475,7 @@ export const TeamProvider = ({ children }) => {
         });
       },
     }),
-    [state.selectedMove.moveIndex, state.flowStage] // Removed state.selectedSlot dependency since we're using the ref
+    [state.selectedMove.moveIndex, state.flowStage]
   );
 
   const value = {

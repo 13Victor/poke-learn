@@ -17,13 +17,17 @@ async function getUserTeams(userId) {
           JSON_OBJECT(
             'id', tp.id,
             'name', tp.pokemon_name,
-            'image', tp.image
+            'image', tp.image,
+            'item_id', pb.item_id,
+            'slot', tp.slot
           )
         ) as pokemon
       FROM team t
       LEFT JOIN team_pokemon tp ON t.id = tp.team_id
+      LEFT JOIN pokemon_build pb ON tp.id = pb.team_pokemon_id
       WHERE t.user_id = ?
-      GROUP BY t.id`;
+      GROUP BY t.id
+      ORDER BY t.created_at DESC`;
 
     return await db.query(query, [userId]);
   } catch (error) {

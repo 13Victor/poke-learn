@@ -1,6 +1,7 @@
 import React from "react";
 import Stat from "./Stat";
 import { useTeam } from "../../contexts/TeamContext";
+import { calculateBaseDisplayStats } from "../../utils/pokemonStatsCalculator";
 
 const Stats = ({ pokemon, index }) => {
   const { setViewMode, selectedSlot, setSelectedSlot, setFlowStage, FLOW_STAGES, flowStage, viewMode } = useTeam();
@@ -8,52 +9,23 @@ const Stats = ({ pokemon, index }) => {
   // Determinar si los stats están seleccionados actualmente
   const isStatsSelected = flowStage === FLOW_STAGES.STATS && selectedSlot === index && viewMode === "stats";
 
-  // Calculamos las stats base si no hay stats guardadas
-  const calculateBaseStats = () => {
-    if (!pokemon?.baseStats) return null;
-
-    const level = pokemon.level || 100;
-    return {
-      hp: Math.floor(((2 * pokemon.baseStats.hp + 31) * level) / 100) + level + 10,
-      atk: Math.floor(((2 * pokemon.baseStats.atk + 31) * level) / 100) + 5,
-      def: Math.floor(((2 * pokemon.baseStats.def + 31) * level) / 100) + 5,
-      spa: Math.floor(((2 * pokemon.baseStats.spa + 31) * level) / 100) + 5,
-      spd: Math.floor(((2 * pokemon.baseStats.spd + 31) * level) / 100) + 5,
-      spe: Math.floor(((2 * pokemon.baseStats.spe + 31) * level) / 100) + 5,
-    };
-  };
-
-  // Get stats from pokemon - use calculated stats if available, otherwise calculate base stats
+  // Obtener stats - usar las calculadas si existen, sino calcular las base
   const stats = pokemon?.stats ||
-    calculateBaseStats() || {
-      hp: 0,
-      atk: 0,
-      def: 0,
-      spa: 0,
-      spd: 0,
-      spe: 0,
-    };
+    calculateBaseDisplayStats(pokemon?.baseStats, pokemon?.level) || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 
   const handleStatsClick = (e) => {
-    // Prevent event propagation
     e.stopPropagation();
-
-    // Set the selected slot
     setSelectedSlot(index);
 
-    // If no Pokémon is selected, show Pokémon selection view
     if (!pokemon.name) {
       setViewMode("pokemon");
       setFlowStage(FLOW_STAGES.POKEMON);
     } else {
-      // If Pokémon exists, go to stats view
       setViewMode("stats");
       setFlowStage(FLOW_STAGES.STATS);
     }
   };
 
-  // Podemos establecer valores máximos basados en las estadísticas base más altas de los Pokémon
-  // Estos valores pueden ajustarse según el game balance
   const maxValues = {
     hp: 600,
     atk: 600,
@@ -95,7 +67,6 @@ const Stats = ({ pokemon, index }) => {
           maxValue={maxValues.def}
           isStatsSelected={isStatsSelected}
         />
-
         <Stat
           label="SpA"
           fullname="Special Attack"
@@ -104,7 +75,6 @@ const Stats = ({ pokemon, index }) => {
           maxValue={maxValues.spa}
           isStatsSelected={isStatsSelected}
         />
-
         <Stat
           label="Spd"
           fullname="Special Defense"

@@ -44,7 +44,7 @@ const TypeBackgroundPokeball = ({ types = [], className = "" }) => {
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ position: "absolute", top: 0, left: 0, zIndex: 1, transform: "rotate(135deg)" }}
+        className="pokeball-svg"
       >
         <g>
           {/* Top half of the pokeball - primary type color */}
