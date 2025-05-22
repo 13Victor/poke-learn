@@ -218,13 +218,21 @@ const TeamMaker = memo(() => {
                 if (pokemonData.moves && pokemonData.moves.length) {
                   pokemonData.moves.forEach((moveId, moveIndex) => {
                     if (moveId) {
-                      console.log(`Setting move ${moveIndex} from DB: ${moveId} for ${pokemonData.pokemon_name}`);
+                      // Get the full move data from the moves object
+                      const moveData = moves[moveId];
 
-                      // Buscar el nombre del movimiento para la UI
-                      const moveName = getDisplayNameForMove(moveId);
-
-                      // Siempre guardamos el moveId original
-                      setMove(slotIndex, moveIndex, moveName);
+                      if (moveData) {
+                        // Pass the complete move object
+                        const moveObject = {
+                          name: moveData.name,
+                          type: moveData.type,
+                          id: moveId,
+                        };
+                        setMove(slotIndex, moveIndex, moveObject);
+                      } else {
+                        // Fallback to just the name/id if not found
+                        setMove(slotIndex, moveIndex, moveId);
+                      }
                     }
                   });
                 }

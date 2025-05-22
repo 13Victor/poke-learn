@@ -128,7 +128,7 @@ function teamReducer(state, action) {
       const { slotIndex, moveIndex, moveName } = action.payload;
       const newPokemons = [...state.pokemons];
       const newMoveset = [...newPokemons[slotIndex].moveset];
-      newMoveset[moveIndex] = moveName;
+      newMoveset[moveIndex] = moveName; // This will store either the string or object
       newPokemons[slotIndex] = {
         ...newPokemons[slotIndex],
         moveset: newMoveset,
@@ -337,11 +337,15 @@ export const TeamProvider = ({ children }) => {
           payload: { slotIndex, pokemon },
         }),
 
-      setMove: (slotIndex, moveIndex, moveName) =>
+      setMove: (slotIndex, moveIndex, move) => {
+        // If move is a string, use it as the name
+        const moveName = typeof move === "object" ? move.name : move;
+
         dispatch({
           type: ACTIONS.SET_MOVE,
-          payload: { slotIndex, moveIndex, moveName },
-        }),
+          payload: { slotIndex, moveIndex, moveName: move },
+        });
+      },
 
       setItem: (slotIndex, item, itemId) => {
         console.log(`Setting item for slot ${slotIndex}: ${item} (ID: ${itemId})`);
