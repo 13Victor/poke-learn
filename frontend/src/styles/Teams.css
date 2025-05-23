@@ -1,3 +1,15 @@
+.teams-page {
+  display: grid;
+  grid-template-columns: 2fr 1.25fr;
+  height: 100vh;
+  padding: var(--spacing-xl);
+}
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
 .team-card {
   display: flex;
   flex-direction: column;
@@ -30,7 +42,7 @@
 }
 
 .pokemon .pokemon-sprite {
-  width: 60px;
+  width: clamp(40px, 100%, 100%);
   filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.25));
   aspect-ratio: 1;
 }
