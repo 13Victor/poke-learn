@@ -1,7 +1,13 @@
 // components/teams/TeamAdditionalInfo.jsx
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
+import { calculatePokemonStats } from "../../utils/pokemonStatsCalculator";
+import { useEffect, useState } from "react";
 
 const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
+  const { pokemons, abilities, items, moves, isAllDataLoaded } = usePokemonData();
+  const [enhancedTeams, setEnhancedTeams] = useState([]);
+
   // Si no hay equipos, no mostrar nada
   if (!teams || teams.length === 0) {
     return null;
@@ -9,7 +15,51 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
 
   // Encontrar el índice del equipo seleccionado
   const selectedTeamIndex = teams.findIndex((team) => team.id === selectedTeamId);
-  const selectedTeam = selectedTeamIndex !== -1 ? teams[selectedTeamIndex] : teams[0];
+  const selectedTeam = selectedTeamIndex !== -1 ? enhancedTeams[selectedTeamIndex] : enhancedTeams[0];
+
+  // Mejorar los datos del equipo con información del contexto
+  useEffect(() => {
+    if (!isAllDataLoaded) return;
+
+    const enhanced = teams.map((team) => ({
+      ...team,
+      pokemon:
+        team.pokemon?.map((pokemon) => {
+          // Encontrar el Pokémon en los datos cargados
+          const pokemonData = pokemons.find(
+            (p) => p.name.toLowerCase() === pokemon.pokemon_name?.toLowerCase() || p.id === pokemon.pokemon_id
+          );
+
+          // Calcular stats si tenemos los datos base
+          let calculatedStats = null;
+          if (pokemonData?.baseStats) {
+            calculatedStats = calculatePokemonStats(pokemonData.baseStats, {
+              evs: pokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+              ivs: pokemon.ivs || { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+              nature: pokemon.nature || "Hardy",
+              level: pokemon.level || 100,
+            });
+          }
+
+          // Obtener nombres de habilidades, items y movimientos
+          const abilityName = abilities[pokemon.ability_id]?.name || pokemon.ability_id;
+          const itemName = items[pokemon.item_id]?.name || pokemon.item_id;
+          const moveNames = pokemon.moves?.map((moveId) => moves[moveId]?.name || moveId) || [];
+
+          return {
+            ...pokemon,
+            pokemonData,
+            calculatedStats,
+            abilityName,
+            itemName,
+            moveNames,
+            types: pokemonData?.types || [],
+          };
+        }) || [],
+    }));
+
+    setEnhancedTeams(enhanced);
+  }, [teams, pokemons, abilities, items, moves, isAllDataLoaded]);
 
   const handlePrevTeam = () => {
     const prevIndex = (selectedTeamIndex - 1 + teams.length) % teams.length;
@@ -30,7 +80,11 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
     );
   }
 
-  console.log("Selected Team:", selectedTeam);
+  // Función para formatear EVs/IVs
+  const formatStatSpread = (stats) => {
+    if (!stats) return "0/0/0/0/0/0";
+    return `${stats.hp}/${stats.atk}/${stats.def}/${stats.spa}/${stats.spd}/${stats.spe}`;
+  };
 
   return (
     <div className="team-additional-info-container">
@@ -64,15 +118,24 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                   <img
                     className="pokemon-detail-sprite"
                     src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
-                    alt={pokemon.name || "Unknown"}
+                    alt={pokemon.pokemon_name || "Unknown"}
                     onError={(e) => {
                       e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
                     }}
                   />
+                  {/* Mostrar tipos */}
+                  <div className="pokemon-types">
+                    {pokemon.types.map((type, idx) => (
+                      <span key={idx} className={`type-badge type-${type.toLowerCase()}`}>
+                        {type}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="pokemon-full-info">
                   <div className="pokemon-header">
-                    <h4>{pokemon.name || "Unknown Pokémon"}</h4>
+                    <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
+                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
                     <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
                   </div>
 
@@ -86,12 +149,12 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                             <img
                               className="detail-item-sprite"
                               src={`/assets/items/${pokemon.item_id}.webp`}
-                              alt={pokemon.item_id}
+                              alt={pokemon.itemName}
                               onError={(e) => {
                                 e.target.style.display = "none";
                               }}
                             />
-                            {pokemon.item_id}
+                            {pokemon.itemName}
                           </>
                         ) : (
                           "None"
@@ -102,15 +165,15 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                     {/* Ability */}
                     <div className="detail-row">
                       <span className="detail-label">Ability:</span>
-                      <span className="detail-value">{pokemon.ability_id || "None"}</span>
+                      <span className="detail-value">{pokemon.abilityName || "None"}</span>
                     </div>
 
                     {/* Moves */}
                     <div className="detail-row moves-row">
                       <span className="detail-label">Moves:</span>
                       <div className="moves-list">
-                        {pokemon.moves && pokemon.moves.length > 0 ? (
-                          pokemon.moves.map((move, moveIndex) => (
+                        {pokemon.moveNames && pokemon.moveNames.length > 0 ? (
+                          pokemon.moveNames.map((move, moveIndex) => (
                             <span key={moveIndex} className="move-item">
                               {move || "-"}
                             </span>
@@ -121,19 +184,29 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                       </div>
                     </div>
 
-                    {/* EVs if available */}
-                    {pokemon.evs && (
-                      <div className="detail-row evs-row">
-                        <span className="detail-label">EVs:</span>
-                        <div className="evs-list">
-                          {Object.entries(pokemon.evs).map(
-                            ([stat, value]) =>
-                              value > 0 && (
-                                <span key={stat} className="ev-item">
-                                  {stat.toUpperCase()}: {value}
-                                </span>
-                              )
-                          )}
+                    {/* EVs */}
+                    <div className="detail-row">
+                      <span className="detail-label">EVs:</span>
+                      <span className="detail-value stat-spread">{formatStatSpread(pokemon.evs)}</span>
+                    </div>
+
+                    {/* IVs */}
+                    <div className="detail-row">
+                      <span className="detail-label">IVs:</span>
+                      <span className="detail-value stat-spread">{formatStatSpread(pokemon.ivs)}</span>
+                    </div>
+
+                    {/* Stats calculadas */}
+                    {pokemon.calculatedStats && (
+                      <div className="detail-row stats-row">
+                        <span className="detail-label">Stats:</span>
+                        <div className="stats-grid">
+                          <span className="stat-item">HP: {pokemon.calculatedStats.hp}</span>
+                          <span className="stat-item">Atk: {pokemon.calculatedStats.atk}</span>
+                          <span className="stat-item">Def: {pokemon.calculatedStats.def}</span>
+                          <span className="stat-item">SpA: {pokemon.calculatedStats.spa}</span>
+                          <span className="stat-item">SpD: {pokemon.calculatedStats.spd}</span>
+                          <span className="stat-item">Spe: {pokemon.calculatedStats.spe}</span>
                         </div>
                       </div>
                     )}

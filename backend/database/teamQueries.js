@@ -11,25 +11,72 @@ const { errorMessages } = require("../utils/messages");
  */
 async function getUserTeams(userId) {
   try {
-    const query = `
-      SELECT t.*, 
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', tp.id,
-            'name', tp.pokemon_name,
-            'image', tp.image,
-            'item_id', pb.item_id,
-            'slot', tp.slot
-          )
-        ) as pokemon
-      FROM team t
-      LEFT JOIN team_pokemon tp ON t.id = tp.team_id
-      LEFT JOIN pokemon_build pb ON tp.id = pb.team_pokemon_id
-      WHERE t.user_id = ?
-      GROUP BY t.id
-      ORDER BY t.created_at DESC`;
+    // Primero obtener los equipos
+    const teamsQuery = `
+      SELECT id, name, created_at 
+      FROM team 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `;
 
-    return await db.query(query, [userId]);
+    const teams = await db.query(teamsQuery, [userId]);
+
+    // Para cada equipo, obtener sus Pokémon con todos los detalles
+    for (const team of teams) {
+      const pokemonQuery = `
+        SELECT 
+          tp.*,
+          pe.hp as ev_hp, pe.atk as ev_atk, pe.def as ev_def, 
+          pe.spatk as ev_spa, pe.spdef as ev_spd, pe.speed as ev_spe,
+          pi.hp as iv_hp, pi.atk as iv_atk, pi.def as iv_def,
+          pi.spatk as iv_spa, pi.spdef as iv_spd, pi.speed as iv_spe,
+          pb.item_id, pb.ability_id,
+          GROUP_CONCAT(pm.move_id ORDER BY pm.move_slot) as moves
+        FROM team_pokemon tp
+        LEFT JOIN pokemon_evs pe ON tp.id = pe.team_pokemon_id
+        LEFT JOIN pokemon_ivs pi ON tp.id = pi.team_pokemon_id
+        LEFT JOIN pokemon_build pb ON tp.id = pb.team_pokemon_id
+        LEFT JOIN pokemon_moves pm ON tp.id = pm.team_pokemon_id
+        WHERE tp.team_id = ?
+        GROUP BY tp.id
+        ORDER BY tp.slot
+      `;
+
+      const pokemonData = await db.query(pokemonQuery, [team.id]);
+
+      // Formatear los datos de cada Pokémon
+      team.pokemon = pokemonData.map((p) => ({
+        id: p.id,
+        name: p.pokemon_name,
+        pokemon_name: p.pokemon_name,
+        pokemon_id: p.pokemon_id,
+        image: p.image,
+        level: p.level,
+        nature: p.nature,
+        slot: p.slot,
+        item_id: p.item_id,
+        ability_id: p.ability_id,
+        moves: p.moves ? p.moves.split(",") : [],
+        evs: {
+          hp: p.ev_hp || 0,
+          atk: p.ev_atk || 0,
+          def: p.ev_def || 0,
+          spa: p.ev_spa || 0,
+          spd: p.ev_spd || 0,
+          spe: p.ev_spe || 0,
+        },
+        ivs: {
+          hp: p.iv_hp || 31,
+          atk: p.iv_atk || 31,
+          def: p.iv_def || 31,
+          spa: p.iv_spa || 31,
+          spd: p.iv_spd || 31,
+          spe: p.iv_spe || 31,
+        },
+      }));
+    }
+
+    return teams;
   } catch (error) {
     console.error("Error al obtener equipos:", error);
     throw new Error(errorMessages.TEAM_FETCH_ERROR);
