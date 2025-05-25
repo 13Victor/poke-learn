@@ -3,6 +3,12 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { calculatePokemonStats } from "../../utils/pokemonStatsCalculator";
 import { useEffect, useState } from "react";
+import MoveButton from "../TeamMaker/MoveButton";
+import { Radar } from "react-chartjs-2";
+import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from "chart.js";
+
+// Registrar los componentes necesarios de Chart.js
+ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
 const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
   const { pokemons, abilities, items, moves, isAllDataLoaded } = usePokemonData();
@@ -41,10 +47,23 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             });
           }
 
-          // Obtener nombres de habilidades, items y movimientos
+          // Obtener nombres de habilidades, items y movimientos con información de tipo
           const abilityName = abilities[pokemon.ability_id]?.name || pokemon.ability_id;
           const itemName = items[pokemon.item_id]?.name || pokemon.item_id;
-          const moveNames = pokemon.moves?.map((moveId) => moves[moveId]?.name || moveId) || [];
+
+          // Para los movimientos, obtener tanto el nombre como el tipo
+          const moveData =
+            pokemon.moves
+              ?.map((moveId) => {
+                const move = moves[moveId];
+                return move
+                  ? {
+                      name: move.name || moveId,
+                      type: move.type || null,
+                    }
+                  : null;
+              })
+              .filter(Boolean) || [];
 
           return {
             ...pokemon,
@@ -52,7 +71,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             calculatedStats,
             abilityName,
             itemName,
-            moveNames,
+            moveData,
             types: pokemonData?.types || [],
           };
         }) || [],
@@ -80,11 +99,47 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
     );
   }
 
-  // Función para formatear EVs/IVs
-  const formatStatSpread = (stats) => {
-    if (!stats) return "0/0/0/0/0/0";
-    return `${stats.hp}/${stats.atk}/${stats.def}/${stats.spa}/${stats.spd}/${stats.spe}`;
+  // Función para formatear el nombre (capitalizar primera letra de cada palabra)
+  const formatName = (name) => {
+    if (!name) return "None";
+    return name
+      .split(/[\s-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   };
+
+  const calculateRadarScale = (stats) => {
+    if (!stats) return 500;
+
+    // Obtener todas las estadísticas del Pokémon
+    const allStats = [stats.hp, stats.atk, stats.def, stats.spa, stats.spd, stats.spe];
+
+    // Encontrar la estadística más alta
+    const maxStat = Math.max(...allStats);
+
+    // Si la estadística máxima es menor o igual a 500, usar 500 como máximo
+    if (maxStat <= 500) {
+      return 500;
+    }
+
+    // Si supera 500, redondear hacia arriba al siguiente múltiplo de 100
+    return Math.ceil(maxStat / 100) * 100;
+  };
+
+  function convertToRGBA(color, opacity) {
+    if (color.startsWith("rgb")) {
+      // Si el color ya está en formato rgb, añade la opacidad
+      return color.replace("rgb", "rgba").replace(")", `, ${opacity})`);
+    } else if (color.startsWith("#")) {
+      // Convertir de hex a rgba
+      const bigint = parseInt(color.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+    return color; // Devuelve el color original si no es rgb o hex
+  }
 
   return (
     <div className="team-additional-info-container">
@@ -114,101 +169,198 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             .sort((a, b) => (a.slot || 0) - (b.slot || 0))
             .map((pokemon, index) => (
               <div key={pokemon.id || index} className="pokemon-detail-item">
-                <div className="pokemon-image-container">
-                  <img
-                    className="pokemon-detail-sprite"
-                    src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
-                    alt={pokemon.pokemon_name || "Unknown"}
-                    onError={(e) => {
-                      e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                {/* Imagen del Pokémon */}
+                <div
+                  className="image-container"
+                  style={{
+                    background:
+                      pokemon.types.length > 1
+                        ? `linear-gradient(to right, var(--type-${pokemon.types[0].toLowerCase()}), var(--type-${pokemon.types[1].toLowerCase()}))`
+                        : `var(--type-${pokemon.types[0].toLowerCase()})`,
+                    opacity: 0.75,
+                  }}
+                ></div>
+                <img
+                  className="pokemon-detail-sprite"
+                  src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
+                  alt={pokemon.pokemon_name || "Unknown"}
+                  onError={(e) => {
+                    e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                  }}
+                />
+
+                {/* Tipos del Pokémon */}
+                <div className="pokemon-types" style={{ position: "absolute" }}>
+                  {pokemon.types.map((type, idx) => (
+                    <img key={idx} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
+                  ))}
+                </div>
+
+                {/* Gráfico de estadísticas */}
+                {pokemon.calculatedStats && (
+                  <Radar
+                    className="stats-chart"
+                    data={{
+                      labels: [
+                        `HP: ${pokemon.calculatedStats.hp}`,
+                        `Atk: ${pokemon.calculatedStats.atk}`,
+                        `Def: ${pokemon.calculatedStats.def}`,
+                        `SpA: ${pokemon.calculatedStats.spa}`,
+                        `SpD: ${pokemon.calculatedStats.spd}`,
+                        `Spe: ${pokemon.calculatedStats.spe}`,
+                      ],
+                      datasets: [
+                        {
+                          label: pokemon.pokemon_name,
+                          data: [
+                            pokemon.calculatedStats.hp,
+                            pokemon.calculatedStats.atk,
+                            pokemon.calculatedStats.def,
+                            pokemon.calculatedStats.spa,
+                            pokemon.calculatedStats.spd,
+                            pokemon.calculatedStats.spe,
+                          ],
+                          backgroundColor: function (context) {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+
+                            if (!chartArea) {
+                              // Si el área del gráfico aún no está disponible, devuelve un color por defecto
+                              return "rgba(0, 167, 251, 0.3)";
+                            }
+
+                            // Crear el gradiente dinámico
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            if (pokemon.types.length > 1) {
+                              gradient.addColorStop(
+                                0,
+                                convertToRGBA(
+                                  getComputedStyle(document.documentElement)
+                                    .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
+                                    .trim(),
+                                  0.4
+                                )
+                              );
+                              gradient.addColorStop(
+                                1,
+                                convertToRGBA(
+                                  getComputedStyle(document.documentElement)
+                                    .getPropertyValue(`--type-${pokemon.types[1].toLowerCase()}`)
+                                    .trim(),
+                                  0.4
+                                )
+                              );
+                            } else {
+                              const color = getComputedStyle(document.documentElement)
+                                .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
+                                .trim();
+                              gradient.addColorStop(0, convertToRGBA(color, 0.4));
+                              gradient.addColorStop(1, convertToRGBA(color, 0.4));
+                            }
+                            return gradient;
+                          },
+                          borderWidth: 0,
+                          fill: true,
+                          pointRadius: 0,
+                          pointHoverRadius: 0,
+                          pointHitRadius: 0,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      aspectRatio: 1,
+                      interaction: {
+                        intersect: false,
+                        mode: "none",
+                      },
+                      scales: {
+                        r: {
+                          angleLines: {
+                            color: "rgba(220, 220, 220, 0.8)",
+                          },
+                          grid: {
+                            color: "rgba(220, 220, 220, 0.5)",
+                          },
+                          suggestedMin: 0,
+                          suggestedMax: calculateRadarScale(pokemon.calculatedStats),
+                          ticks: {
+                            stepSize: 100,
+                            display: false,
+                          },
+                          pointLabels: {
+                            color: "rgb(0, 0, 0)",
+                            font: {
+                              size: 10,
+                              weight: "600",
+                              family: "Arial, sans-serif",
+                            },
+                          },
+                        },
+                      },
+                      plugins: {
+                        legend: {
+                          display: false,
+                        },
+                        tooltip: {
+                          enabled: false,
+                        },
+                      },
                     }}
                   />
-                  {/* Mostrar tipos */}
-                  <div className="pokemon-types">
-                    {pokemon.types.map((type, idx) => (
-                      <span key={idx} className={`type-badge type-${type.toLowerCase()}`}>
-                        {type}
-                      </span>
-                    ))}
+                )}
+
+                {/* Nombre y nivel del Pokémon */}
+                <div className="pokemon-header-info">
+                  <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
+                  <div className="pokemon-meta">
+                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
                   </div>
                 </div>
-                <div className="pokemon-full-info">
-                  <div className="pokemon-header">
-                    <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
-                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
-                    <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
-                  </div>
 
-                  <div className="pokemon-details">
-                    {/* Item */}
-                    <div className="detail-row">
-                      <span className="detail-label">Item:</span>
-                      <span className="detail-value">
-                        {pokemon.item_id ? (
-                          <>
-                            <img
-                              className="detail-item-sprite"
-                              src={`/assets/items/${pokemon.item_id}.webp`}
-                              alt={pokemon.itemName}
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                              }}
-                            />
-                            {pokemon.itemName}
-                          </>
-                        ) : (
-                          "None"
-                        )}
-                      </span>
-                    </div>
+                {/* Detalles del Pokémon: ítem, habilidad y naturaleza */}
+                <div className="info-container">
+                  <span className="info-value">
+                    {pokemon.item_id ? (
+                      <>
+                        <img
+                          className="item-icon"
+                          src={`/assets/items/${pokemon.item_id}.webp`}
+                          alt={pokemon.itemName}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                        {formatName(pokemon.itemName)}
+                      </>
+                    ) : (
+                      "None"
+                    )}
+                  </span>
 
-                    {/* Ability */}
-                    <div className="detail-row">
-                      <span className="detail-label">Ability:</span>
-                      <span className="detail-value">{pokemon.abilityName || "None"}</span>
-                    </div>
+                  <span className="info-value">{formatName(pokemon.abilityName)}</span>
 
-                    {/* Moves */}
-                    <div className="detail-row moves-row">
-                      <span className="detail-label">Moves:</span>
-                      <div className="moves-list">
-                        {pokemon.moveNames && pokemon.moveNames.length > 0 ? (
-                          pokemon.moveNames.map((move, moveIndex) => (
-                            <span key={moveIndex} className="move-item">
-                              {move || "-"}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="no-moves">No moves</span>
-                        )}
-                      </div>
-                    </div>
+                  <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
+                </div>
 
-                    {/* EVs */}
-                    <div className="detail-row">
-                      <span className="detail-label">EVs:</span>
-                      <span className="detail-value stat-spread">{formatStatSpread(pokemon.evs)}</span>
-                    </div>
-
-                    {/* IVs */}
-                    <div className="detail-row">
-                      <span className="detail-label">IVs:</span>
-                      <span className="detail-value stat-spread">{formatStatSpread(pokemon.ivs)}</span>
-                    </div>
-
-                    {/* Stats calculadas */}
-                    {pokemon.calculatedStats && (
-                      <div className="detail-row stats-row">
-                        <span className="detail-label">Stats:</span>
-                        <div className="stats-grid">
-                          <span className="stat-item">HP: {pokemon.calculatedStats.hp}</span>
-                          <span className="stat-item">Atk: {pokemon.calculatedStats.atk}</span>
-                          <span className="stat-item">Def: {pokemon.calculatedStats.def}</span>
-                          <span className="stat-item">SpA: {pokemon.calculatedStats.spa}</span>
-                          <span className="stat-item">SpD: {pokemon.calculatedStats.spd}</span>
-                          <span className="stat-item">Spe: {pokemon.calculatedStats.spe}</span>
-                        </div>
-                      </div>
+                {/* Movimientos */}
+                <div className="moves-section">
+                  <div className="moveInputsContainer">
+                    {pokemon.moveData && pokemon.moveData.length > 0 ? (
+                      pokemon.moveData.map((move, moveIndex) => (
+                        <MoveButton
+                          key={moveIndex}
+                          move={move}
+                          index={moveIndex}
+                          isSelected={false} // Puedes ajustar esta lógica si es necesario
+                          pokemonHasName={!!pokemon.pokemon_name}
+                          isMovesMode={false} // Puedes ajustar esta lógica si es necesario
+                          onClick={() => {}} // No hace nada al hacer clic
+                        />
+                      ))
+                    ) : (
+                      <span className="no-moves">No moves</span>
                     )}
                   </div>
                 </div>

@@ -65,6 +65,9 @@
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
+  --transition-slow-2: 500ms ease;
+  --transition-slow-3: 750ms ease;
+  --transition-slow-4: 1000ms ease;
 
   --type-normal: #9fa19f;
   --type-fire: #e62829;

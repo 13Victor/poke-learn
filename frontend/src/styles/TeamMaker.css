@@ -58,9 +58,8 @@
   grid-row-gap: 0px;
 }
 
-.pokemonTeamCard button {
+button {
   border: none;
-  height: 100%;
 }
 
 .selected-slot {
@@ -213,6 +212,7 @@
 .moveInputsContainer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: var(--spacing-xs);
   height: 100%;
 }
@@ -231,11 +231,6 @@
   box-sizing: border-box;
   border-radius: var(--radius-sm);
   transition: none;
-}
-
-.moveInput:hover .move-type-icon-small {
-  transform: scale(0.75);
-  transition: all var(--transition-fast) !important;
 }
 
 .moveInput[style*="--type-normal"]:hover {
@@ -469,10 +464,28 @@
   padding-block: 1px;
 }
 
-.move-type-icon-small {
+/* .move-type-icon-small {
   position: absolute;
   height: 20px;
   left: var(--spacing-xs);
+} */
+
+.move-type-icon-small {
+  position: absolute;
+  height: 45px;
+  transform: rotate(-20deg);
+  left: -10px;
+  bottom: -20px;
+  opacity: 0.2;
+}
+
+.moveInput:hover .move-type-icon-small {
+  opacity: 0.5;
+  height: 22px;
+  bottom: auto;
+  left: var(--spacing-xs);
+  transform: none;
+  transition: all var(--transition-fast) !important;
 }
 
 .pokeball-svg {

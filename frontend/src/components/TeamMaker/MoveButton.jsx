@@ -20,7 +20,7 @@ const MoveButton = memo(
       >
         {moveType && (
           <img
-            src={`/assets/type-icons/${moveType}_icon2.png`}
+            src={`/assets/type-icons/${moveType}_icon.png`}
             alt={`${moveType} type`}
             className="move-type-icon-small"
           />
