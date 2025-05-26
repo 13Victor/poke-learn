@@ -13,6 +13,33 @@ ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, 
 const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
   const { pokemons, abilities, items, moves, isAllDataLoaded } = usePokemonData();
   const [enhancedTeams, setEnhancedTeams] = useState([]);
+  const [labels, setLabels] = useState({});
+  const [hoveredRadarId, setHoveredRadarId] = useState(null); // ID del radar actualmente hovereado
+
+  const handleRadarMouseEnter = (pokemon, radarId) => {
+    // Cambiar los labels a los valores de las estadísticas del Pokémon hovereado
+    setHoveredRadarId(radarId);
+    setLabels((prevLabels) => ({
+      ...prevLabels,
+      [radarId]: [
+        pokemon.calculatedStats.hp,
+        pokemon.calculatedStats.atk,
+        pokemon.calculatedStats.def,
+        pokemon.calculatedStats.spe,
+        pokemon.calculatedStats.spa,
+        pokemon.calculatedStats.spd,
+      ],
+    }));
+  };
+
+  const handleRadarMouseLeave = (radarId) => {
+    // Restaurar los labels originales
+    setHoveredRadarId(null);
+    setLabels((prevLabels) => ({
+      ...prevLabels,
+      [radarId]: ["HP", "Atk", "Def", "Spe", "SpA", "SpD"],
+    }));
+  };
 
   // Si no hay equipos, no mostrar nada
   if (!teams || teams.length === 0) {
@@ -164,193 +191,194 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
         {Array.isArray(selectedTeam.pokemon) && selectedTeam.pokemon.length > 0 ? (
           selectedTeam.pokemon
             .sort((a, b) => (a.slot || 0) - (b.slot || 0))
-            .map((pokemon, index) => (
-              <div key={pokemon.id || index} className="pokemon-detail-item">
-                <div
-                  className="image-container"
-                  style={{
-                    background:
-                      pokemon.types.length > 1
-                        ? `linear-gradient(to right, var(--type-${pokemon.types[0].toLowerCase()}), var(--type-${pokemon.types[1].toLowerCase()}))`
-                        : `var(--type-${pokemon.types[0].toLowerCase()})`,
-                    opacity: 0.75,
-                  }}
-                ></div>
-                <img
-                  className="pokemon-detail-sprite"
-                  src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
-                  alt={pokemon.pokemon_name || "Unknown"}
-                  onError={(e) => {
-                    e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
-                  }}
-                />
+            .map((pokemon, index) => {
+              const radarId = `radar-${index}`; // ID único para cada radar
+              return (
+                <div key={pokemon.id || index} className="pokemon-detail-item">
+                  <div
+                    className="image-container"
+                    style={{
+                      background:
+                        pokemon.types.length > 1
+                          ? `linear-gradient(to right, var(--type-${pokemon.types[0].toLowerCase()}), var(--type-${pokemon.types[1].toLowerCase()}))`
+                          : `var(--type-${pokemon.types[0].toLowerCase()})`,
+                      opacity: 0.75,
+                    }}
+                  ></div>
+                  <img
+                    className="pokemon-detail-sprite"
+                    src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
+                    alt={pokemon.pokemon_name || "Unknown"}
+                    onError={(e) => {
+                      e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                    }}
+                  />
 
-                <div className="pokemon-types" style={{ position: "absolute" }}>
-                  {pokemon.types.map((type, idx) => (
-                    <img key={idx} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
-                  ))}
-                </div>
-
-                <div className="poke-card-info-grid">
-                  <div className="pokemon-header-info">
-                    <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
-                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
-                    <span className="info-value">
-                      {pokemon.item_id ? (
-                        <>
-                          <img
-                            className="item-icon"
-                            src={`/assets/items/${pokemon.item_id}.webp`}
-                            alt={pokemon.itemName}
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                          {formatName(pokemon.itemName)}
-                        </>
-                      ) : (
-                        "None"
-                      )}
-                    </span>
-
-                    <span className="info-value">{formatName(pokemon.abilityName)}</span>
-
-                    <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
+                  <div className="pokemon-types" style={{ position: "absolute" }}>
+                    {pokemon.types.map((type, idx) => (
+                      <img key={idx} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
+                    ))}
                   </div>
-                  <div className="moves-section">
-                    <div className="moveInputsContainer">
-                      {pokemon.moveData && pokemon.moveData.length > 0 ? (
-                        pokemon.moveData.map((move, moveIndex) => (
-                          <MoveButton
-                            key={moveIndex}
-                            move={move}
-                            index={moveIndex}
-                            isSelected={false} // Puedes ajustar esta lógica si es necesario
-                            pokemonHasName={!!pokemon.pokemon_name}
-                            isMovesMode={false} // Puedes ajustar esta lógica si es necesario
-                            onClick={() => {}} // No hace nada al hacer clic
-                          />
-                        ))
-                      ) : (
-                        <span className="no-moves">No moves</span>
-                      )}
+
+                  <div className="poke-card-info-grid">
+                    <div className="pokemon-header-info">
+                      <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
+                      <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
+                      <span className="info-value">
+                        {pokemon.item_id ? (
+                          <>
+                            <img
+                              className="item-icon"
+                              src={`/assets/items/${pokemon.item_id}.webp`}
+                              alt={pokemon.itemName}
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                            {formatName(pokemon.itemName)}
+                          </>
+                        ) : (
+                          "None"
+                        )}
+                      </span>
+
+                      <span className="info-value">{formatName(pokemon.abilityName)}</span>
+
+                      <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
                     </div>
-                  </div>
-                  <div className="stats-chart-container">
-                    {pokemon.calculatedStats && (
-                      <Radar
-                        className="stats-chart"
-                        data={{
-                          labels: [
-                            `HP: ${pokemon.calculatedStats.hp}`,
-                            `Atk: ${pokemon.calculatedStats.atk}`,
-                            `Def: ${pokemon.calculatedStats.def}`,
-                            `Spe: ${pokemon.calculatedStats.spe}`,
-                            `SpA: ${pokemon.calculatedStats.spa}`,
-                            `SpD: ${pokemon.calculatedStats.spd}`,
-                          ],
-                          datasets: [
-                            {
-                              label: pokemon.pokemon_name,
-                              data: [
-                                pokemon.calculatedStats.hp,
-                                pokemon.calculatedStats.atk,
-                                pokemon.calculatedStats.def,
-                                pokemon.calculatedStats.spe,
-                                pokemon.calculatedStats.spa,
-                                pokemon.calculatedStats.spd,
-                              ],
-                              backgroundColor: function (context) {
-                                const chart = context.chart;
-                                const { ctx, chartArea } = chart;
+                    <div className="moves-section">
+                      <div className="moveInputsContainer">
+                        {pokemon.moveData && pokemon.moveData.length > 0 ? (
+                          pokemon.moveData.map((move, moveIndex) => (
+                            <MoveButton
+                              key={moveIndex}
+                              move={move}
+                              index={moveIndex}
+                              isSelected={false}
+                              pokemonHasName={!!pokemon.pokemon_name}
+                              isMovesMode={false}
+                              onClick={() => {}}
+                            />
+                          ))
+                        ) : (
+                          <span className="no-moves">No moves</span>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      className="stats-chart-container"
+                      id={radarId}
+                      onMouseEnter={() => handleRadarMouseEnter(pokemon, radarId)}
+                      onMouseLeave={() => handleRadarMouseLeave(radarId)}
+                    >
+                      {pokemon.calculatedStats && (
+                        <Radar
+                          className="stats-chart"
+                          data={{
+                            labels: labels[radarId] || ["HP", "Atk", "Def", "Spe", "SpA", "SpD"], // Usa etiquetas específicas para este radar
+                            datasets: [
+                              {
+                                label: pokemon.pokemon_name,
+                                data: [
+                                  pokemon.calculatedStats.hp,
+                                  pokemon.calculatedStats.atk,
+                                  pokemon.calculatedStats.def,
+                                  pokemon.calculatedStats.spe,
+                                  pokemon.calculatedStats.spa,
+                                  pokemon.calculatedStats.spd,
+                                ],
+                                backgroundColor: function (context) {
+                                  const chart = context.chart;
+                                  const { ctx, chartArea } = chart;
 
-                                if (!chartArea) {
-                                  return "rgba(168, 168, 168, 0.3)";
-                                }
+                                  if (!chartArea) {
+                                    return "rgba(168, 168, 168, 0.3)";
+                                  }
 
-                                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                                if (pokemon.types.length > 1) {
-                                  gradient.addColorStop(
-                                    0,
-                                    convertToRGBA(
-                                      getComputedStyle(document.documentElement)
-                                        .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
-                                        .trim(),
-                                      0.4
-                                    )
-                                  );
-                                  gradient.addColorStop(
-                                    1,
-                                    convertToRGBA(
-                                      getComputedStyle(document.documentElement)
-                                        .getPropertyValue(`--type-${pokemon.types[1].toLowerCase()}`)
-                                        .trim(),
-                                      0.4
-                                    )
-                                  );
-                                } else {
-                                  const color = getComputedStyle(document.documentElement)
-                                    .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
-                                    .trim();
-                                  gradient.addColorStop(0, convertToRGBA(color, 0.4));
-                                  gradient.addColorStop(1, convertToRGBA(color, 0.4));
-                                }
-                                return gradient;
+                                  const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                  if (pokemon.types.length > 1) {
+                                    gradient.addColorStop(
+                                      0,
+                                      convertToRGBA(
+                                        getComputedStyle(document.documentElement)
+                                          .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
+                                          .trim(),
+                                        0.4
+                                      )
+                                    );
+                                    gradient.addColorStop(
+                                      1,
+                                      convertToRGBA(
+                                        getComputedStyle(document.documentElement)
+                                          .getPropertyValue(`--type-${pokemon.types[1].toLowerCase()}`)
+                                          .trim(),
+                                        0.4
+                                      )
+                                    );
+                                  } else {
+                                    const color = getComputedStyle(document.documentElement)
+                                      .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
+                                      .trim();
+                                    gradient.addColorStop(0, convertToRGBA(color, 0.4));
+                                    gradient.addColorStop(1, convertToRGBA(color, 0.4));
+                                  }
+                                  return gradient;
+                                },
+                                borderWidth: 0,
+                                fill: true,
+                                pointRadius: 0, // Elimina las "bolitas"
+                                pointHoverRadius: 0, // Elimina las "bolitas" al hacer hover
+                                pointHitRadius: 0,
                               },
-                              borderWidth: 0,
-                              fill: true,
-                              pointRadius: 0,
-                              pointHoverRadius: 0,
-                              pointHitRadius: 0,
+                            ],
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                              intersect: true,
+                              mode: "nearest",
                             },
-                          ],
-                        }}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          interaction: {
-                            intersect: false,
-                            mode: "none",
-                          },
-                          scales: {
-                            r: {
-                              angleLines: {
-                                color: "rgba(220, 220, 220, 0.8)",
-                              },
-                              grid: {
-                                color: "rgba(220, 220, 220, 0.5)",
-                              },
-                              suggestedMin: 0,
-                              suggestedMax: calculateRadarScale(pokemon.calculatedStats),
-                              ticks: {
-                                stepSize: 100,
-                                display: false,
-                              },
-                              pointLabels: {
-                                color: "rgb(0, 0, 0)",
-                                font: {
-                                  size: 10,
-                                  weight: "500",
-                                  family: "system-ui",
+                            scales: {
+                              r: {
+                                angleLines: {
+                                  color: "rgba(220, 220, 220, 0.8)",
+                                },
+                                grid: {
+                                  color: "rgba(220, 220, 220, 0.5)",
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: calculateRadarScale(pokemon.calculatedStats),
+                                ticks: {
+                                  stepSize: 100,
+                                  display: false,
+                                },
+                                pointLabels: {
+                                  color: "rgb(0, 0, 0)",
+                                  font: {
+                                    size: 10,
+                                    weight: "500",
+                                    family: "system-ui",
+                                  },
                                 },
                               },
                             },
-                          },
-                          plugins: {
-                            legend: {
-                              display: false,
+                            plugins: {
+                              legend: {
+                                display: false,
+                              },
+                              tooltip: {
+                                enabled: false,
+                              },
                             },
-                            tooltip: {
-                              enabled: false,
-                            },
-                          },
-                        }}
-                      />
-                    )}
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
         ) : (
           <p className="no-pokemon-message">This team has no Pokémon yet</p>
         )}
