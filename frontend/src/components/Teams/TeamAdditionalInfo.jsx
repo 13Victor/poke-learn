@@ -145,8 +145,6 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
     <div className="team-additional-info-container">
       <div className="team-navigation-header">
         <h3>{selectedTeam.name}</h3>
-
-        {/* Navegación con flechas si hay más de un equipo */}
         {teams.length > 1 && (
           <div className="team-navigation">
             <button className="nav-arrow" onClick={handlePrevTeam} aria-label="Previous team">
@@ -162,14 +160,12 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
         )}
       </div>
 
-      {/* Lista de Pokémon con información detallada */}
       <div className="pokemon-details-list">
         {Array.isArray(selectedTeam.pokemon) && selectedTeam.pokemon.length > 0 ? (
           selectedTeam.pokemon
             .sort((a, b) => (a.slot || 0) - (b.slot || 0))
             .map((pokemon, index) => (
               <div key={pokemon.id || index} className="pokemon-detail-item">
-                {/* Imagen del Pokémon */}
                 <div
                   className="image-container"
                   style={{
@@ -189,178 +185,167 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                   }}
                 />
 
-                {/* Tipos del Pokémon */}
                 <div className="pokemon-types" style={{ position: "absolute" }}>
                   {pokemon.types.map((type, idx) => (
                     <img key={idx} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
                   ))}
                 </div>
 
-                {/* Gráfico de estadísticas */}
-                {pokemon.calculatedStats && (
-                  <Radar
-                    className="stats-chart"
-                    data={{
-                      labels: [
-                        `HP: ${pokemon.calculatedStats.hp}`,
-                        `Atk: ${pokemon.calculatedStats.atk}`,
-                        `Def: ${pokemon.calculatedStats.def}`,
-                        `SpA: ${pokemon.calculatedStats.spa}`,
-                        `SpD: ${pokemon.calculatedStats.spd}`,
-                        `Spe: ${pokemon.calculatedStats.spe}`,
-                      ],
-                      datasets: [
-                        {
-                          label: pokemon.pokemon_name,
-                          data: [
-                            pokemon.calculatedStats.hp,
-                            pokemon.calculatedStats.atk,
-                            pokemon.calculatedStats.def,
-                            pokemon.calculatedStats.spa,
-                            pokemon.calculatedStats.spd,
-                            pokemon.calculatedStats.spe,
+                <div className="poke-card-info-grid">
+                  <div className="pokemon-header-info">
+                    <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
+                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
+                    <span className="info-value">
+                      {pokemon.item_id ? (
+                        <>
+                          <img
+                            className="item-icon"
+                            src={`/assets/items/${pokemon.item_id}.webp`}
+                            alt={pokemon.itemName}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                          {formatName(pokemon.itemName)}
+                        </>
+                      ) : (
+                        "None"
+                      )}
+                    </span>
+
+                    <span className="info-value">{formatName(pokemon.abilityName)}</span>
+
+                    <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
+                  </div>
+                  <div className="moves-section">
+                    <div className="moveInputsContainer">
+                      {pokemon.moveData && pokemon.moveData.length > 0 ? (
+                        pokemon.moveData.map((move, moveIndex) => (
+                          <MoveButton
+                            key={moveIndex}
+                            move={move}
+                            index={moveIndex}
+                            isSelected={false} // Puedes ajustar esta lógica si es necesario
+                            pokemonHasName={!!pokemon.pokemon_name}
+                            isMovesMode={false} // Puedes ajustar esta lógica si es necesario
+                            onClick={() => {}} // No hace nada al hacer clic
+                          />
+                        ))
+                      ) : (
+                        <span className="no-moves">No moves</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="stats-chart-container">
+                    {pokemon.calculatedStats && (
+                      <Radar
+                        className="stats-chart"
+                        data={{
+                          labels: [
+                            `HP: ${pokemon.calculatedStats.hp}`,
+                            `Atk: ${pokemon.calculatedStats.atk}`,
+                            `Def: ${pokemon.calculatedStats.def}`,
+                            `Spe: ${pokemon.calculatedStats.spe}`,
+                            `SpA: ${pokemon.calculatedStats.spa}`,
+                            `SpD: ${pokemon.calculatedStats.spd}`,
                           ],
-                          backgroundColor: function (context) {
-                            const chart = context.chart;
-                            const { ctx, chartArea } = chart;
+                          datasets: [
+                            {
+                              label: pokemon.pokemon_name,
+                              data: [
+                                pokemon.calculatedStats.hp,
+                                pokemon.calculatedStats.atk,
+                                pokemon.calculatedStats.def,
+                                pokemon.calculatedStats.spe,
+                                pokemon.calculatedStats.spa,
+                                pokemon.calculatedStats.spd,
+                              ],
+                              backgroundColor: function (context) {
+                                const chart = context.chart;
+                                const { ctx, chartArea } = chart;
 
-                            if (!chartArea) {
-                              // Si el área del gráfico aún no está disponible, devuelve un color por defecto
-                              return "rgba(0, 167, 251, 0.3)";
-                            }
+                                if (!chartArea) {
+                                  return "rgba(168, 168, 168, 0.3)";
+                                }
 
-                            // Crear el gradiente dinámico
-                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                            if (pokemon.types.length > 1) {
-                              gradient.addColorStop(
-                                0,
-                                convertToRGBA(
-                                  getComputedStyle(document.documentElement)
+                                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                if (pokemon.types.length > 1) {
+                                  gradient.addColorStop(
+                                    0,
+                                    convertToRGBA(
+                                      getComputedStyle(document.documentElement)
+                                        .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
+                                        .trim(),
+                                      0.4
+                                    )
+                                  );
+                                  gradient.addColorStop(
+                                    1,
+                                    convertToRGBA(
+                                      getComputedStyle(document.documentElement)
+                                        .getPropertyValue(`--type-${pokemon.types[1].toLowerCase()}`)
+                                        .trim(),
+                                      0.4
+                                    )
+                                  );
+                                } else {
+                                  const color = getComputedStyle(document.documentElement)
                                     .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
-                                    .trim(),
-                                  0.4
-                                )
-                              );
-                              gradient.addColorStop(
-                                1,
-                                convertToRGBA(
-                                  getComputedStyle(document.documentElement)
-                                    .getPropertyValue(`--type-${pokemon.types[1].toLowerCase()}`)
-                                    .trim(),
-                                  0.4
-                                )
-                              );
-                            } else {
-                              const color = getComputedStyle(document.documentElement)
-                                .getPropertyValue(`--type-${pokemon.types[0].toLowerCase()}`)
-                                .trim();
-                              gradient.addColorStop(0, convertToRGBA(color, 0.4));
-                              gradient.addColorStop(1, convertToRGBA(color, 0.4));
-                            }
-                            return gradient;
+                                    .trim();
+                                  gradient.addColorStop(0, convertToRGBA(color, 0.4));
+                                  gradient.addColorStop(1, convertToRGBA(color, 0.4));
+                                }
+                                return gradient;
+                              },
+                              borderWidth: 0,
+                              fill: true,
+                              pointRadius: 0,
+                              pointHoverRadius: 0,
+                              pointHitRadius: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          interaction: {
+                            intersect: false,
+                            mode: "none",
                           },
-                          borderWidth: 0,
-                          fill: true,
-                          pointRadius: 0,
-                          pointHoverRadius: 0,
-                          pointHitRadius: 0,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: true,
-                      aspectRatio: 1,
-                      interaction: {
-                        intersect: false,
-                        mode: "none",
-                      },
-                      scales: {
-                        r: {
-                          angleLines: {
-                            color: "rgba(220, 220, 220, 0.8)",
-                          },
-                          grid: {
-                            color: "rgba(220, 220, 220, 0.5)",
-                          },
-                          suggestedMin: 0,
-                          suggestedMax: calculateRadarScale(pokemon.calculatedStats),
-                          ticks: {
-                            stepSize: 100,
-                            display: false,
-                          },
-                          pointLabels: {
-                            color: "rgb(0, 0, 0)",
-                            font: {
-                              size: 10,
-                              weight: "600",
-                              family: "Arial, sans-serif",
+                          scales: {
+                            r: {
+                              angleLines: {
+                                color: "rgba(220, 220, 220, 0.8)",
+                              },
+                              grid: {
+                                color: "rgba(220, 220, 220, 0.5)",
+                              },
+                              suggestedMin: 0,
+                              suggestedMax: calculateRadarScale(pokemon.calculatedStats),
+                              ticks: {
+                                stepSize: 100,
+                                display: false,
+                              },
+                              pointLabels: {
+                                color: "rgb(0, 0, 0)",
+                                font: {
+                                  size: 10,
+                                  weight: "500",
+                                  family: "system-ui",
+                                },
+                              },
                             },
                           },
-                        },
-                      },
-                      plugins: {
-                        legend: {
-                          display: false,
-                        },
-                        tooltip: {
-                          enabled: false,
-                        },
-                      },
-                    }}
-                  />
-                )}
-
-                {/* Nombre y nivel del Pokémon */}
-                <div className="pokemon-header-info">
-                  <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
-                  <div className="pokemon-meta">
-                    <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
-                  </div>
-                </div>
-
-                {/* Detalles del Pokémon: ítem, habilidad y naturaleza */}
-                <div className="info-container">
-                  <span className="info-value">
-                    {pokemon.item_id ? (
-                      <>
-                        <img
-                          className="item-icon"
-                          src={`/assets/items/${pokemon.item_id}.webp`}
-                          alt={pokemon.itemName}
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                        {formatName(pokemon.itemName)}
-                      </>
-                    ) : (
-                      "None"
-                    )}
-                  </span>
-
-                  <span className="info-value">{formatName(pokemon.abilityName)}</span>
-
-                  <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
-                </div>
-
-                {/* Movimientos */}
-                <div className="moves-section">
-                  <div className="moveInputsContainer">
-                    {pokemon.moveData && pokemon.moveData.length > 0 ? (
-                      pokemon.moveData.map((move, moveIndex) => (
-                        <MoveButton
-                          key={moveIndex}
-                          move={move}
-                          index={moveIndex}
-                          isSelected={false} // Puedes ajustar esta lógica si es necesario
-                          pokemonHasName={!!pokemon.pokemon_name}
-                          isMovesMode={false} // Puedes ajustar esta lógica si es necesario
-                          onClick={() => {}} // No hace nada al hacer clic
-                        />
-                      ))
-                    ) : (
-                      <span className="no-moves">No moves</span>
+                          plugins: {
+                            legend: {
+                              display: false,
+                            },
+                            tooltip: {
+                              enabled: false,
+                            },
+                          },
+                        }}
+                      />
                     )}
                   </div>
                 </div>
