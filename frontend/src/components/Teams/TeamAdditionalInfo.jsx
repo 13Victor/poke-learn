@@ -205,25 +205,42 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                       opacity: 0.75,
                     }}
                   ></div>
-                  <img
-                    className="pokemon-detail-sprite"
-                    src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
-                    alt={pokemon.pokemon_name || "Unknown"}
-                    onError={(e) => {
-                      e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
-                    }}
-                  />
+                  <h5>{pokemon.pokemon_name || "Unknown Pokémon"}</h5>
+                  <div className="pokemon-sprite-title">
+                    <img
+                      className="pokemon-detail-sprite"
+                      src={`/assets/pokemon-small-hd-sprites-webp/${pokemon.image}`}
+                      alt={pokemon.pokemon_name || "Unknown"}
+                      onError={(e) => {
+                        e.target.src = "/assets/pokemon-small-hd-sprites-webp/0000.webp";
+                      }}
+                    />
+                  </div>
 
-                  <div className="pokemon-types" style={{ position: "absolute" }}>
+                  <div className="pokemon-types">
                     {pokemon.types.map((type, idx) => (
                       <img key={idx} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
                     ))}
                   </div>
 
+                  <div className="container-top">
+                    <span className="pokemonCurrentLevel">
+                      <strong>Lv.</strong>
+                      <p> {pokemon.level || 100}</p>
+                    </span>
+                    <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
+                  </div>
+
                   <div className="poke-card-info-grid">
-                    <div className="pokemon-header-info">
-                      <h4>{pokemon.pokemon_name || "Unknown Pokémon"}</h4>
-                      <span className="pokemon-level">Lv. {pokemon.level || 100}</span>
+                    <div
+                      className="pokemon-header-info"
+                      style={{
+                        background:
+                          pokemon.types.length > 1
+                            ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.75), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.75))`
+                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.75)`,
+                      }}
+                    >
                       <span className="info-value">
                         {pokemon.item_id ? (
                           <>
@@ -241,10 +258,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                           "None"
                         )}
                       </span>
-
                       <span className="info-value">{formatName(pokemon.abilityName)}</span>
-
-                      <span className="pokemon-nature">{pokemon.nature || "Hardy"}</span>
                     </div>
                     <div className="moves-section">
                       <div className="moveInputsContainer">
