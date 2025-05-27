@@ -41,6 +41,59 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
     }));
   };
 
+  // Función auxiliar para obtener el nombre de visualización de una habilidad a partir de su ID
+  const getDisplayNameForAbility = (abilityId) => {
+    let displayName = abilityId;
+
+    try {
+      for (const pokemonId in abilities) {
+        const pokemonAbilities = abilities[pokemonId];
+
+        if (pokemonAbilities?.abilities) {
+          for (const type in pokemonAbilities.abilities) {
+            const ability = pokemonAbilities.abilities[type];
+
+            if (Array.isArray(ability) && ability.length >= 3) {
+              const name = ability[0];
+              const id = ability[2];
+
+              if (id === abilityId) {
+                console.log(`Found ability display name: ${name} for ID: ${abilityId}`);
+                displayName = name;
+                return displayName;
+              }
+            }
+          }
+        }
+      }
+
+      console.log(`Using original ID as display name for ability: ${abilityId}`);
+      return displayName;
+    } catch (err) {
+      console.error(`Error getting display name for ability: ${abilityId}`, err);
+      return displayName;
+    }
+  };
+
+  // Función auxiliar para obtener el nombre de visualización de un item a partir de su ID
+  const getDisplayNameForItem = (itemId) => {
+    let displayName = itemId;
+
+    try {
+      if (items && items[itemId] && items[itemId].name) {
+        displayName = items[itemId].name;
+        console.log(`Found item display name: ${displayName} for ID: ${itemId}`);
+        return displayName;
+      }
+
+      console.log(`Using original ID as display name for item: ${itemId}`);
+      return displayName;
+    } catch (err) {
+      console.error(`Error getting display name for item: ${itemId}`, err);
+      return displayName;
+    }
+  };
+
   // Si no hay equipos, no mostrar nada
   if (!teams || teams.length === 0) {
     return null;
@@ -74,9 +127,9 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             });
           }
 
-          // Obtener nombres de habilidades, items y movimientos con información de tipo
-          const abilityName = abilities[pokemon.ability_id]?.name || pokemon.ability_id;
-          const itemName = items[pokemon.item_id]?.name || pokemon.item_id;
+          // Obtener nombres de habilidades, items y movimientos usando las funciones auxiliares
+          const abilityName = getDisplayNameForAbility(pokemon.ability_id);
+          const itemName = getDisplayNameForItem(pokemon.item_id);
 
           // Para los movimientos, obtener tanto el nombre como el tipo
           const moveData =
