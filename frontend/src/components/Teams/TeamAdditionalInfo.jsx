@@ -237,8 +237,8 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                       style={{
                         background:
                           pokemon.types.length > 1
-                            ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.75), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.75))`
-                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.75)`,
+                            ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.4), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.4))`
+                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.4)`,
                       }}
                     >
                       <span className="info-value">

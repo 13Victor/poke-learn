@@ -246,8 +246,7 @@
 }
 
 .teams-additional-info .pokemonCurrentLevel {
-  background: var(--white);
-  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.25));
+  background: rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-sm);
 }
 
@@ -257,9 +256,9 @@
 }
 
 .pokemon-header-info span.info-value:not(:last-child)::after {
-  content: "•"; /* Punto separador */
-  margin: 0 var(--spacing-sm); /* Espaciado alrededor del punto */
-  color: #000; /* Color del punto */
+  content: "•"; 
+  margin: 0 var(--spacing-sm); 
+  color: #000; /
 }
 
 .stats-chart-container {
@@ -286,7 +285,7 @@
   align-items: center;
   justify-content: center;
   grid-area: 1 / 1 / 2 / 3;
-  margin-block: var(--spacing-sm);
+  margin-block:var(--spacing-xs) var(--spacing-sm);
   margin-inline: auto;
   padding: 2px var(--spacing-sm);
   border-radius: var(--radius-full);
