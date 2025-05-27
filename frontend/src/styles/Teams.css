@@ -1,11 +1,18 @@
 .teams-page {
   display: grid;
-  grid-template-columns: 2fr 1.25fr;
+  grid-template-columns: 2fr auto 1.25fr;
   height: 100vh;
   padding: var(--spacing-xl);
   row-gap: var(--spacing-lg);
-  column-gap: var(--spacing-lg);
+  column-gap: var(--spacing-md);
   position: relative;
+}
+
+.separator-line {
+  height: 100%;
+  width: 2px;
+  border-radius: var(--radius-full);
+  background-color: var(--silver);
 }
 
 .teams-grid {
@@ -60,6 +67,28 @@
   filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.25));
 }
 
+.teams-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.create-team-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--picton-blue);
+  font-size: var(--font-size-md);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.create-team-button .icon {
+  font-size: 18px;
+}
+
 .team-actions {
   opacity: 0;
   position: absolute;
@@ -95,13 +124,13 @@
 }
 
 .team-card.selected {
-  outline: 2px solid #007bff;
+  outline: 2px solid var(--silver);
   outline-offset: -2px;
 }
 
 .team-card {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Container principal */
@@ -122,23 +151,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--spacing-sm);
 }
 
-.team-additional-info-container h3 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
-}
 
 .team-navigation {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--spacing-xs);
 }
 
 .nav-arrow {
   cursor: pointer;
-  transition: color 0.2s;
+  padding: var(--spacing-xs);
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+
+.nav-arrow:hover {
+  background-color: var(--silver);
 }
 
 .nav-arrow svg {
@@ -172,6 +203,7 @@
   position: relative;
   padding: var(--spacing-sm);
   height: 100%;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
 .pokemon-sprite-title {
@@ -343,4 +375,28 @@
   .pokemon-info {
     flex: 1;
   }
+}
+
+.team-warning-icon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  background-color: var(--warning-bg, #fff3cd);
+  border-radius: 50%;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-normal);
+}
+
+.team-warning-icon svg {
+  color: var(--warning-color, #856404);
+  font-size: 16px;
+}
+
+.team-warning-icon:hover {
+  transform: scale(1.1);
 }

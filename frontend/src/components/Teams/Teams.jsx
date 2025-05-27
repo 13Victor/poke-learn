@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTeam } from "../../contexts/TeamContext";
 import apiService from "../../services/apiService";
 import TeamsGrid from "./TeamsGrid";
+import { FaPlus } from "react-icons/fa6";
 import TeamAdditionalInfo from "./TeamAdditionalInfo";
 
 const Teams = () => {
@@ -109,7 +110,8 @@ const Teams = () => {
         <div className="teams-header">
           <h1>My Teams</h1>
           <button className="create-team-button" onClick={handleCreateTeam} disabled={loadingAction}>
-            Create New Team
+            <FaPlus className="icon" />
+            New Team
           </button>
         </div>
 
@@ -130,6 +132,8 @@ const Teams = () => {
           </div>
         )}
       </div>
+
+      <div className="separator-line"></div>
 
       <div className="teams-additional-info">
         <TeamAdditionalInfo teams={teams} selectedTeamId={selectedTeamId} onSelectTeam={handleSelectTeam} />
