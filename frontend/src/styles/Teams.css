@@ -3,7 +3,11 @@
   grid-template-columns: 2fr 1.25fr;
   height: 100vh;
   padding: var(--spacing-xl);
+  row-gap: var(--spacing-lg);
+  column-gap: var(--spacing-lg);
+  position: relative;
 }
+
 .teams-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -106,7 +110,6 @@
   display: flex;
   flex-direction: column;
 }
-
 .no-team-selected {
   text-align: center;
   color: #666;
@@ -134,27 +137,12 @@
 }
 
 .nav-arrow {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
+  transition: color 0.2s;
 }
 
-.nav-arrow:hover {
-  background-color: #0056b3;
-  transform: scale(1.1);
-}
-
-.nav-arrow:active {
-  transform: scale(0.95);
+.nav-arrow svg {
+  font-size: var(--font-size-md);
 }
 
 .team-counter {

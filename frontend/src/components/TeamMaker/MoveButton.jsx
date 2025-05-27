@@ -2,6 +2,24 @@ import React, { memo } from "react";
 
 const MoveButton = memo(
   ({ move, index, isSelected, pokemonHasName, isMovesMode, onClick }) => {
+    // Handle null/undefined move case first
+    if (!move) {
+      return (
+        <button
+          className={`moveInput ${isSelected ? "selected-move" : ""}`}
+          onClick={onClick}
+          style={{
+            backgroundColor: `var(--white-smoke)`,
+            textTransform: "none",
+            fontWeight: "400",
+            color: "var(--black)",
+          }}
+        >
+          <p>{`Move ${index + 1}`}</p>
+        </button>
+      );
+    }
+
     // Check if move is an object (with name and type) or just a string
     const moveName = typeof move === "object" ? move.name : move;
     const moveType = typeof move === "object" ? move.type : null;
@@ -30,6 +48,10 @@ const MoveButton = memo(
     );
   },
   (prevProps, nextProps) => {
+    // Handle null/undefined cases first
+    if (!prevProps.move && !nextProps.move) return true;
+    if (!prevProps.move || !nextProps.move) return false;
+
     // If move is now an object, we need to compare differently
     if (typeof prevProps.move !== typeof nextProps.move) return false;
 

@@ -181,7 +181,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
 
   // Función para formatear el nombre (capitalizar primera letra de cada palabra)
   const formatName = (name) => {
-    if (!name) return "None";
+    if (!name) return "No Ability";
     return name
       .split(/[\s-]/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -230,9 +230,6 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             <button className="nav-arrow" onClick={handlePrevTeam} aria-label="Previous team">
               <FaChevronLeft />
             </button>
-            <span className="team-counter">
-              {selectedTeamIndex + 1} / {teams.length}
-            </span>
             <button className="nav-arrow" onClick={handleNextTeam} aria-label="Next team">
               <FaChevronRight />
             </button>
@@ -308,15 +305,17 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                             {formatName(pokemon.itemName)}
                           </>
                         ) : (
-                          "None"
+                          "No item"
                         )}
                       </span>
                       <span className="info-value">{formatName(pokemon.abilityName)}</span>
                     </div>
                     <div className="moves-section">
                       <div className="moveInputsContainer">
-                        {pokemon.moveData && pokemon.moveData.length > 0 ? (
-                          pokemon.moveData.map((move, moveIndex) => (
+                        {/* Always show 4 move slots, with placeholders for empty ones */}
+                        {Array.from({ length: 4 }, (_, moveIndex) => {
+                          const move = pokemon.moveData?.[moveIndex] || null;
+                          return (
                             <MoveButton
                               key={moveIndex}
                               move={move}
@@ -326,10 +325,8 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                               isMovesMode={false}
                               onClick={() => {}}
                             />
-                          ))
-                        ) : (
-                          <span className="no-moves">No moves</span>
-                        )}
+                          );
+                        })}
                       </div>
                     </div>
                     <div
