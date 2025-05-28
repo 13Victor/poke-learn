@@ -1,11 +1,13 @@
 // components/teams/TeamAdditionalInfo.jsx
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { calculatePokemonStats } from "../../utils/pokemonStatsCalculator";
 import { useEffect, useState } from "react";
 import MoveButton from "../TeamMaker/MoveButton";
 import { Radar } from "react-chartjs-2";
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from "chart.js";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 
 // Registrar los componentes necesarios de Chart.js
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
@@ -15,6 +17,34 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
   const [enhancedTeams, setEnhancedTeams] = useState([]);
   const [labels, setLabels] = useState({});
   const [hoveredRadarId, setHoveredRadarId] = useState(null); // ID del radar actualmente hovereado
+
+  // Función para validar si un Pokémon está completo (igual que en TeamCard)
+  const isPokemonComplete = (pokemon) => {
+    const hasAllMoves =
+      pokemon.moves && pokemon.moves.length === 4 && pokemon.moves.every((move) => move && move.trim() !== "");
+    const hasAbility = pokemon.ability_id && pokemon.ability_id.trim() !== "";
+    const hasItem = pokemon.item_id && pokemon.item_id.trim() !== "";
+    const evs = pokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    const totalEvs = Object.values(evs).reduce((sum, ev) => sum + (ev || 0), 0);
+    const hasAllEvs = totalEvs === 508;
+
+    return { hasAllMoves, hasAbility, hasItem, hasAllEvs };
+  };
+
+  // Función para obtener el estado de un Pokémon individual
+  const getPokemonStatus = (pokemon) => {
+    const { hasAllMoves, hasAbility, hasItem, hasAllEvs } = isPokemonComplete(pokemon);
+
+    if (!hasAllMoves || !hasAbility || !hasItem) {
+      return "missing-requirements";
+    }
+
+    if (!hasAllEvs) {
+      return "missing-evs";
+    }
+
+    return "complete";
+  };
 
   const handleRadarMouseEnter = (pokemon, radarId) => {
     // Cambiar los labels a los valores de las estadísticas del Pokémon hovereado
@@ -243,8 +273,30 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             .sort((a, b) => (a.slot || 0) - (b.slot || 0))
             .map((pokemon, index) => {
               const radarId = `radar-${index}`; // ID único para cada radar
+              const pokemonStatus = getPokemonStatus(pokemon); // Obtener el estado del Pokémon
+
               return (
                 <div key={pokemon.id || index} className="pokemon-detail-item">
+                  {/* Iconos de estado del Pokémon */}
+                  {pokemonStatus === "missing-evs" && (
+                    <Tippy content="Missing EVs" placement="top" theme="warning">
+                      <div className="pokemon-warning-icon team-warning-icon">
+                        <FaExclamationTriangle />
+                      </div>
+                    </Tippy>
+                  )}
+                  {pokemonStatus === "missing-requirements" && (
+                    <Tippy
+                      content="Incomplete Pokémon (missing moves, ability, or item)"
+                      placement="top"
+                      theme="danger"
+                    >
+                      <div className="pokemon-error-icon team-error-icon">
+                        <FaExclamationCircle />
+                      </div>
+                    </Tippy>
+                  )}
+
                   <div
                     className="image-container"
                     style={{

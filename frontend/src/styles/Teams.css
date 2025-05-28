@@ -319,7 +319,6 @@
 
 .pokemon-types .type-icon {
   border-radius: var(--radius-sm);
-  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.25));
 }
 
 /* Contenido principal (gráfico + info) */
@@ -417,4 +416,19 @@
 
 .tippy-box[data-theme~='warning'][data-placement^='top'] > .tippy-arrow::before {
   border-top-color: var(--warning); /* Flecha hacia arriba */
+}
+
+.pokemon-error-icon, .pokemon-warning-icon {
+  top: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.pokemon-warning-icon {
+  border-radius: var(--radius-sm);
 }
