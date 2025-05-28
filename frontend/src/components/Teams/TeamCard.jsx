@@ -1,52 +1,65 @@
-// components/teams/TeamCard.jsx
 import { HiOutlineTrash } from "react-icons/hi";
 import { RiEditLine } from "react-icons/ri";
-import { FaCircleExclamation } from "react-icons/fa6";
+import { FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
+import Tippy from "@tippyjs/react";
+import "tippy.js/dist/tippy.css";
 
 const TeamCard = ({ team, onEdit, onDelete, loadingAction, onSelectTeam, isSelected }) => {
   // Función para validar si un Pokémon está completo
   const isPokemonComplete = (pokemon) => {
-    // Verificar que tenga 4 movimientos
     const hasAllMoves =
       pokemon.moves && pokemon.moves.length === 4 && pokemon.moves.every((move) => move && move.trim() !== "");
-
-    // Verificar que tenga habilidad
     const hasAbility = pokemon.ability_id && pokemon.ability_id.trim() !== "";
-
-    // Verificar que tenga item (opcional - comentar si no es requerido)
     const hasItem = pokemon.item_id && pokemon.item_id.trim() !== "";
-
-    // Verificar que tenga todos los 504 EVs distribuidos
     const evs = pokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     const totalEvs = Object.values(evs).reduce((sum, ev) => sum + (ev || 0), 0);
     const hasAllEvs = totalEvs === 508;
 
-    return hasAllMoves && hasAbility && hasItem && hasAllEvs;
+    return { hasAllMoves, hasAbility, hasItem, hasAllEvs };
   };
 
   // Función para verificar si el equipo está completo
-  const isTeamComplete = () => {
+  const getTeamStatus = () => {
     if (!team.pokemon || team.pokemon.length === 0) {
-      return false;
+      return "incomplete"; // Equipo vacío
     }
 
-    // Verificar que tenga 6 Pokémon
     if (team.pokemon.length !== 6) {
-      return false;
+      return "incomplete"; // No tiene 6 Pokémon
     }
 
-    // Verificar que todos los Pokémon estén completos
-    return team.pokemon.every((pokemon) => isPokemonComplete(pokemon));
+    let missingEvs = false;
+    let missingOtherRequirements = false;
+
+    team.pokemon.forEach((pokemon) => {
+      const { hasAllMoves, hasAbility, hasItem, hasAllEvs } = isPokemonComplete(pokemon);
+      if (!hasAllEvs) missingEvs = true;
+      if (!hasAllMoves || !hasAbility || !hasItem) missingOtherRequirements = true;
+    });
+
+    if (missingOtherRequirements) return "missing-requirements";
+    if (missingEvs) return "missing-evs";
+
+    return "complete"; // Equipo perfecto
   };
 
-  const teamComplete = isTeamComplete();
+  const teamStatus = getTeamStatus();
 
   return (
     <div className={`team-card ${isSelected ? "selected" : ""}`} onClick={() => onSelectTeam(team)}>
-      {!teamComplete && (
-        <div className="team-warning-icon">
-          <FaCircleExclamation />
-        </div>
+      {teamStatus === "missing-evs" && (
+        <Tippy content="Missing EVs" placement="top" theme="warning">
+          <div className="team-warning-icon">
+            <FaExclamationTriangle />
+          </div>
+        </Tippy>
+      )}
+      {teamStatus === "missing-requirements" && (
+        <Tippy content="Incomplete Team" placement="top" theme="danger">
+          <div className="team-error-icon">
+            <FaExclamationCircle />
+          </div>
+        </Tippy>
       )}
 
       <h5 className="team-title">{team.name}</h5>
@@ -84,26 +97,30 @@ const TeamCard = ({ team, onEdit, onDelete, loadingAction, onSelectTeam, isSelec
         )}
       </div>
       <div className="team-actions">
-        <button
-          className="edit-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(team.id);
-          }}
-          disabled={loadingAction}
-        >
-          <RiEditLine />
-        </button>
-        <button
-          className="delete-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(team.id);
-          }}
-          disabled={loadingAction}
-        >
-          <HiOutlineTrash />
-        </button>
+        <Tippy content="Edit Team" placement="top" theme="info">
+          <button
+            className="edit-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(team.id);
+            }}
+            disabled={loadingAction}
+          >
+            <RiEditLine />
+          </button>
+        </Tippy>
+        <Tippy content="Delete Team" placement="top" theme="danger">
+          <button
+            className="delete-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(team.id);
+            }}
+            disabled={loadingAction}
+          >
+            <HiOutlineTrash />
+          </button>
+        </Tippy>
       </div>
     </div>
   );

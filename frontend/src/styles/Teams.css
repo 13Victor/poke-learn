@@ -116,7 +116,7 @@
 }
 
 .delete-button:hover {
-  color: var(--danger-dark);
+  color: var(--danger);
 }
 
 .edit-button:hover {
@@ -377,26 +377,44 @@
   }
 }
 
-.team-warning-icon {
+.team-warning-icon, .team-error-icon {
   position: absolute;
-  top: 8px;
-  left: 8px;
   z-index: 10;
-  background-color: var(--warning-bg, #fff3cd);
-  border-radius: 50%;
-  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: var(--transition-normal);
+}
+
+ .team-error-icon svg {
+  color: var(--danger);
+  font-size: 16px; 
 }
 
 .team-warning-icon svg {
-  color: var(--warning-color, #856404);
+  color: var(--warning);
   font-size: 16px;
+
 }
 
-.team-warning-icon:hover {
-  transform: scale(1.1);
+/* Agregar estos estilos a tu archivo CSS principal o Teams.css */
+
+/* Tema danger para Tippy.js */
+.tippy-box[data-theme~='danger'] {
+  background-color: var(--danger); /* Rojo de peligro */
+  color: var(--white);
+  font-weight: 500;
+}
+
+.tippy-box[data-theme~='danger'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: var(--danger); /* Flecha hacia arriba */
+}
+
+.tippy-box[data-theme~='warning'] {
+  background-color: var(--warning);
+  color: var(--white);
+  font-weight: 500;
+}
+
+.tippy-box[data-theme~='warning'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: var(--warning); /* Flecha hacia arriba */
 }

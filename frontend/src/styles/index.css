@@ -152,6 +152,11 @@
 
   --item-slot-size: 24px;
 
-  --danger-dark: rgb(150, 0, 0);
-  --danger-bg: rgb(250, 185, 185);
+  --danger-dark: rgb(120, 0, 0);
+  --danger: rgb(220, 38, 38); /* más vivo y moderno */
+  --danger-bg: rgb(254, 226, 226); /* más suave, mejor contraste con texto oscuro */
+
+  --warning-dark: rgb(133, 101, 14);
+  --warning: rgb(234, 179, 8);
+  --warning-bg: rgb(254, 243, 199);
 }
