@@ -8,7 +8,14 @@ const { errorMessages, successMessages } = require("../utils/messages");
 const { validateTeam } = require("../utils/validators");
 // Importar el objeto db
 const db = require("../database/db");
-const { getUserTeams, createTeam, deleteTeam, getTeamById, updateTeam } = require("../database/teamQueries");
+const {
+  getUserTeams,
+  createTeam,
+  deleteTeam,
+  getTeamById,
+  updateTeam,
+  toggleTeamFavorite,
+} = require("../database/teamQueries");
 
 const router = express.Router();
 
@@ -136,6 +143,37 @@ router.delete("/:id", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("Error al eliminar equipo:", error);
     res.status(500).json(formatResponse(false, errorMessages.TEAM_DELETE_ERROR));
+  }
+});
+
+/**
+ * @route PATCH /teams/:id/favorite
+ * @desc Alternar el estado de favorito de un equipo
+ */
+router.patch("/:id/favorite", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const teamId = parseId(req.params.id);
+    const { is_favorite } = req.body;
+
+    if (!teamId) {
+      return res.status(400).json(formatResponse(false, "ID de equipo inválido"));
+    }
+
+    if (typeof is_favorite !== "boolean") {
+      return res.status(400).json(formatResponse(false, "El valor de favorito debe ser booleano"));
+    }
+
+    const updated = await toggleTeamFavorite(teamId, userId, is_favorite);
+
+    if (!updated) {
+      return res.status(404).json(formatResponse(false, errorMessages.TEAM_NOT_FOUND));
+    }
+
+    res.json(formatResponse(true, `Equipo ${is_favorite ? "marcado como favorito" : "desmarcado como favorito"}`));
+  } catch (error) {
+    console.error("Error al actualizar favorito:", error);
+    res.status(500).json(formatResponse(false, "Error al actualizar el estado de favorito"));
   }
 });
 

@@ -1,10 +1,10 @@
 import { HiOutlineTrash } from "react-icons/hi";
 import { RiEditLine } from "react-icons/ri";
-import { FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaExclamationCircle, FaExclamationTriangle, FaStar, FaRegStar } from "react-icons/fa";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 
-const TeamCard = ({ team, onEdit, onDelete, loadingAction, onSelectTeam, isSelected }) => {
+const TeamCard = ({ team, onEdit, onDelete, onToggleFavorite, loadingAction, onSelectTeam, isSelected }) => {
   // Función para validar si un Pokémon está completo
   const isPokemonComplete = (pokemon) => {
     const hasAllMoves =
@@ -45,8 +45,15 @@ const TeamCard = ({ team, onEdit, onDelete, loadingAction, onSelectTeam, isSelec
 
   const teamStatus = getTeamStatus();
 
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    onToggleFavorite(team.id, !team.is_favorite);
+  };
+
   return (
     <div className={`team-card ${isSelected ? "selected" : ""}`} onClick={() => onSelectTeam(team)}>
+      {/* Estrella de favorito */}
+
       {teamStatus === "missing-evs" && (
         <Tippy content="Missing EVs" placement="top" theme="warning">
           <div className="team-warning-icon">
@@ -97,6 +104,18 @@ const TeamCard = ({ team, onEdit, onDelete, loadingAction, onSelectTeam, isSelec
         )}
       </div>
       <div className="team-actions">
+        <Tippy content={team.is_favorite ? "Remove from favorites" : "Add to favorites"} placement="top" theme="info">
+          <button
+            className="favorite-button"
+            onClick={handleFavoriteClick}
+            disabled={loadingAction}
+            style={{
+              color: team.is_favorite ? "#ffd000" : "",
+            }}
+          >
+            {team.is_favorite ? <FaStar /> : <FaRegStar />}
+          </button>
+        </Tippy>
         <Tippy content="Edit Team" placement="top" theme="info">
           <button
             className="edit-button"

@@ -4,7 +4,7 @@
   height: 100vh;
   padding: var(--spacing-xl);
   row-gap: var(--spacing-lg);
-  column-gap: var(--spacing-md);
+  column-gap: var(--spacing-sm);
   position: relative;
 }
 
@@ -24,8 +24,10 @@
 .teams-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   overflow: auto;
+  padding-block: var(--spacing-sm);
+  padding-right: var(--spacing-sm);
 }
 
 .team-card {
@@ -112,6 +114,7 @@
   border: none;
   padding: 1px;
   border-radius: var(--radius-sm);
+  color: #444;
 }
 
 .team-actions svg {
@@ -126,8 +129,8 @@
   color: var(--danger);
 }
 
-.edit-button:hover {
-  background-color: var(--gray);
+.edit-button:hover, .favorite-button:hover {
+  background-color: var(--white-smoke);
 }
 
 .team-card.selected {
@@ -145,6 +148,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding-left: var(--spacing-sm);
 }
 .no-team-selected {
   text-align: center;
@@ -384,7 +388,7 @@
   }
 }
 
-.team-warning-icon, .team-error-icon {
+.team-warning-icon, .team-error-icon{
   position: absolute;
   z-index: 10;
   display: flex;
@@ -400,7 +404,6 @@
 .team-warning-icon svg {
   color: var(--warning);
   font-size: 16px;
-
 }
 
 /* Agregar estos estilos a tu archivo CSS principal o Teams.css */
@@ -452,8 +455,8 @@
     transform: scale(1);
   }
   50% {
-    opacity: .75;
-    transform: scale(.9);
+    opacity: .7;
+    transform: scale(.8);
   }
   100% {
     opacity: 1;

@@ -165,6 +165,16 @@ class ApiService {
     });
   }
 
+  // Alternar estado de favorito de equipo
+  async toggleTeamFavorite(teamId, isFavorite) {
+    return this.fetchData(`/teams/${teamId}/favorite`, {
+      method: "PATCH",
+      headers: this.getHeaders(),
+      body: JSON.stringify({ is_favorite: isFavorite }),
+      requiresAuth: true,
+    });
+  }
+
   // MÉTODOS DE DATOS POKÉMON
 
   // Obtener pokémon disponibles

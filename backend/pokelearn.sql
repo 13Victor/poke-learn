@@ -20,6 +20,7 @@ CREATE TABLE `team` (
     `name` VARCHAR(255) NOT NULL,
     `user_id` INT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `is_favorite` BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 );
 
@@ -92,4 +93,5 @@ CREATE TABLE `pokemon_build` (
 
 -- Índices para mejorar el rendimiento
 CREATE INDEX `idx_team_user_id` ON `team` (`user_id`);
+CREATE INDEX `idx_team_is_favorite` ON `team` (`is_favorite`, `user_id`);
 CREATE INDEX `idx_team_pokemon_team_id` ON `team_pokemon` (`team_id`);

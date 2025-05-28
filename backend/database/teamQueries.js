@@ -11,12 +11,12 @@ const { errorMessages } = require("../utils/messages");
  */
 async function getUserTeams(userId) {
   try {
-    // Primero obtener los equipos
+    // Primero obtener los equipos ordenados por favoritos y fecha
     const teamsQuery = `
-      SELECT id, name, created_at 
+      SELECT id, name, is_favorite, created_at 
       FROM team 
       WHERE user_id = ? 
-      ORDER BY created_at DESC
+      ORDER BY is_favorite DESC, created_at DESC
     `;
 
     const teams = await db.query(teamsQuery, [userId]);
@@ -525,10 +525,22 @@ async function updateTeam(teamId, userId, name, pokemon) {
   });
 }
 
+async function toggleTeamFavorite(teamId, userId, isFavorite) {
+  try {
+    const query = "UPDATE team SET is_favorite = ? WHERE id = ? AND user_id = ?";
+    const result = await db.update(query, [isFavorite, teamId, userId]);
+    return result > 0;
+  } catch (error) {
+    console.error("Error al actualizar favorito del equipo:", error);
+    throw new Error("Error al actualizar favorito del equipo");
+  }
+}
+
 module.exports = {
   getUserTeams,
   createTeam,
   deleteTeam,
   getTeamById,
   updateTeam,
+  toggleTeamFavorite,
 };

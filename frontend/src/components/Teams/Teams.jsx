@@ -91,6 +91,33 @@ const Teams = () => {
     }
   };
 
+  const handleToggleFavorite = async (teamId, isFavorite) => {
+    try {
+      setLoadingAction(true);
+      console.log(`⭐ ${isFavorite ? "Adding to" : "Removing from"} favorites team with ID: ${teamId}`);
+
+      const response = await apiService.toggleTeamFavorite(teamId, isFavorite);
+      if (!response.success) {
+        throw new Error(response.message || "Error al actualizar favorito");
+      }
+
+      console.log("✅ Team favorite status updated successfully");
+
+      // Actualizar el estado local inmediatamente para una mejor UX
+      setTeams((prevTeams) =>
+        prevTeams.map((team) => (team.id === teamId ? { ...team, is_favorite: isFavorite } : team))
+      );
+
+      // Opcional: refrescar desde el servidor para asegurar sincronización
+      // fetchTeams();
+    } catch (err) {
+      console.error("❌ Error al actualizar favorito:", err);
+      setError(err.message);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
   const handleSelectTeam = (team) => {
     setSelectedTeamId(team.id);
   };
@@ -120,6 +147,7 @@ const Teams = () => {
           onCreateTeam={handleCreateTeam}
           onEditTeam={handleEditTeam}
           onDeleteTeam={handleDeleteTeam}
+          onToggleFavorite={handleToggleFavorite}
           loadingAction={loadingAction}
           onSelectTeam={handleSelectTeam}
           selectedTeamId={selectedTeamId}

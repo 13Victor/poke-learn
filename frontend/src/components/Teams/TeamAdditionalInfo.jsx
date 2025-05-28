@@ -356,13 +356,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                             : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.4)`,
                       }}
                     >
-                      <span
-                        className="info-value"
-                        style={{
-                          color: !hasItem ? "var(--danger)" : "inherit",
-                          fontWeight: !hasItem ? "500" : "inherit",
-                        }}
-                      >
+                      <span className="info-value">
                         {pokemon.item_id ? (
                           <>
                             <img
@@ -379,15 +373,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                           "No item"
                         )}
                       </span>
-                      <span
-                        className="info-value"
-                        style={{
-                          color: !hasAbility ? "var(--danger)" : "inherit",
-                          fontWeight: !hasItem ? "500" : "inherit",
-                        }}
-                      >
-                        {formatName(pokemon.abilityName)}
-                      </span>
+                      <span className="info-value">{formatName(pokemon.abilityName)}</span>
                     </div>
                     <div className="moves-section">
                       <div className="moveInputsContainer">
@@ -408,7 +394,6 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                                 pokemonHasName={!!pokemon.pokemon_name}
                                 isMovesMode={false}
                                 onClick={() => {}}
-                                isEmpty={isEmpty}
                               />
                             </div>
                           );
