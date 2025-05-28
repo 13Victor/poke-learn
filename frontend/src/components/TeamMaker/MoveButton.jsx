@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 
 const MoveButton = memo(
-  ({ move, index, isSelected, pokemonHasName, isMovesMode, onClick }) => {
+  ({ move, index, isSelected, pokemonHasName, isMovesMode, onClick, isEmpty = false }) => {
     // Handle null/undefined move case first
     if (!move) {
       return (
@@ -12,7 +12,8 @@ const MoveButton = memo(
             backgroundColor: `var(--white-smoke)`,
             textTransform: "none",
             fontWeight: "400",
-            color: "var(--black)",
+            color: isEmpty ? "var(--danger)" : "var(--black)",
+            fontWeight: isEmpty ? "500" : "400",
           }}
         >
           <p>{`Move ${index + 1}`}</p>
@@ -33,7 +34,7 @@ const MoveButton = memo(
           backgroundColor: moveType ? `var(--type-${moveTypeLower})` : `var(--white-smoke)`,
           textTransform: moveType ? "Uppercase" : "none",
           fontWeight: moveType ? "600" : "400",
-          color: moveType ? "var(--white)" : "var(--black)",
+          color: isEmpty ? "var(--danger)" : moveType ? "var(--white)" : "var(--black)",
         }}
       >
         {moveType && (
@@ -66,6 +67,7 @@ const MoveButton = memo(
     if (prevProps.isSelected !== nextProps.isSelected) return false;
     if (prevProps.pokemonHasName !== nextProps.pokemonHasName) return false;
     if (prevProps.isMovesMode !== nextProps.isMovesMode) return false;
+    if (prevProps.isEmpty !== nextProps.isEmpty) return false; // Add comparison for isEmpty prop
     return true;
   }
 );

@@ -274,6 +274,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
             .map((pokemon, index) => {
               const radarId = `radar-${index}`; // ID único para cada radar
               const pokemonStatus = getPokemonStatus(pokemon); // Obtener el estado del Pokémon
+              const { hasAbility, hasItem } = isPokemonComplete(pokemon); // Verificar qué elementos faltan
 
               return (
                 <div key={pokemon.id || index} className="pokemon-detail-item">
@@ -287,7 +288,19 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                   )}
                   {pokemonStatus === "missing-requirements" && (
                     <Tippy
-                      content="Incomplete Pokémon (missing moves, ability, or item)"
+                      content={`Missing: ${!isPokemonComplete(pokemon).hasAllMoves ? "moves" : ""}${
+                        !isPokemonComplete(pokemon).hasAbility
+                          ? isPokemonComplete(pokemon).hasAllMoves
+                            ? "ability"
+                            : ", ability"
+                          : ""
+                      }${
+                        !isPokemonComplete(pokemon).hasItem
+                          ? isPokemonComplete(pokemon).hasAllMoves || !isPokemonComplete(pokemon).hasAbility
+                            ? ", item"
+                            : "item"
+                          : ""
+                      }`}
                       placement="top"
                       theme="danger"
                     >
@@ -304,7 +317,7 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                         pokemon.types.length > 1
                           ? `linear-gradient(to right, var(--type-${pokemon.types[0].toLowerCase()}), var(--type-${pokemon.types[1].toLowerCase()}))`
                           : `var(--type-${pokemon.types[0].toLowerCase()})`,
-                      opacity: 0.75,
+                      opacity: 0.4,
                     }}
                   ></div>
                   <h5>{pokemon.pokemon_name || "Unknown Pokémon"}</h5>
@@ -343,7 +356,13 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                             : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.4)`,
                       }}
                     >
-                      <span className="info-value">
+                      <span
+                        className="info-value"
+                        style={{
+                          color: !hasItem ? "var(--danger)" : "inherit",
+                          fontWeight: !hasItem ? "500" : "inherit",
+                        }}
+                      >
                         {pokemon.item_id ? (
                           <>
                             <img
@@ -360,23 +379,38 @@ const TeamAdditionalInfo = ({ teams, selectedTeamId, onSelectTeam }) => {
                           "No item"
                         )}
                       </span>
-                      <span className="info-value">{formatName(pokemon.abilityName)}</span>
+                      <span
+                        className="info-value"
+                        style={{
+                          color: !hasAbility ? "var(--danger)" : "inherit",
+                          fontWeight: !hasItem ? "500" : "inherit",
+                        }}
+                      >
+                        {formatName(pokemon.abilityName)}
+                      </span>
                     </div>
                     <div className="moves-section">
                       <div className="moveInputsContainer">
                         {/* Always show 4 move slots, with placeholders for empty ones */}
                         {Array.from({ length: 4 }, (_, moveIndex) => {
                           const move = pokemon.moveData?.[moveIndex] || null;
+                          const isEmpty =
+                            !move || !pokemon.moves?.[moveIndex] || pokemon.moves[moveIndex].trim() === "";
+                          console.log(`Move at index ${moveIndex}:`, move);
+                          // Si el movimiento es nulo o vacío, mostrar un botón de placeholder
+
                           return (
-                            <MoveButton
-                              key={moveIndex}
-                              move={move}
-                              index={moveIndex}
-                              isSelected={false}
-                              pokemonHasName={!!pokemon.pokemon_name}
-                              isMovesMode={false}
-                              onClick={() => {}}
-                            />
+                            <div key={moveIndex}>
+                              <MoveButton
+                                move={move}
+                                index={moveIndex}
+                                isSelected={false}
+                                pokemonHasName={!!pokemon.pokemon_name}
+                                isMovesMode={false}
+                                onClick={() => {}}
+                                isEmpty={isEmpty}
+                              />
+                            </div>
                           );
                         })}
                       </div>

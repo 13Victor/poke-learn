@@ -8,6 +8,12 @@
   position: relative;
 }
 
+.teams-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
 .separator-line {
   height: 100%;
   width: 2px;
@@ -19,6 +25,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-sm);
+  overflow: auto;
 }
 
 .team-card {
@@ -266,7 +273,7 @@
 }
 
 .teams-additional-info .pokemonCurrentLevel {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.75);
   border-radius: var(--radius-sm);
 }
 
@@ -309,6 +316,7 @@
   margin-inline: auto;
   padding: 2px var(--spacing-sm);
   border-radius: var(--radius-full);
+  height: 24px;
 }
 
 .pokemon-types {
@@ -419,14 +427,38 @@
 }
 
 .pokemon-error-icon, .pokemon-warning-icon {
-  top: 38px;
+  top: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 24px;
   width: 24px;
   border-radius: var(--radius-full);
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, .75);
+
+}
+
+.pokemon-error-icon svg, .pokemon-warning-icon svg {
+  font-size: 18px;
+}
+
+.team-error-icon svg, .team-warning-icon svg {
+  animation: pulse-opacity 2s infinite;
+}
+
+@keyframes pulse-opacity {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: .75;
+    transform: scale(.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .pokemon-warning-icon {
