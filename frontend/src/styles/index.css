@@ -125,6 +125,7 @@
   --type-dark-bs: rgba(80, 65, 63, 0.3);
   --type-steel-bs: rgba(96, 161, 184, 0.3);
   --type-fairy-bs: rgba(239, 112, 239, 0.3);
+  --type-show-all-bs: rgba(0, 0, 0, 0.3);
 
   /* Tipos Pokémon oscurecidos para hover */
   --type-normal-dark: rgb(117, 119, 117);

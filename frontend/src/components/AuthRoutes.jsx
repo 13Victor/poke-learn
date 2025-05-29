@@ -7,6 +7,7 @@ import User from "./User";
 import TeamMaker from "./TeamMaker/TeamMaker";
 import Teams from "./Teams/Teams";
 import Battle from "./Battle/Combat";
+import Pokedex from "./Pokedex/Pokedex";
 import { useAuth } from "../contexts/AuthContext";
 
 function AuthRoutes() {
@@ -46,6 +47,7 @@ function AuthRoutes() {
       {/* Rutas protegidas - solo accesibles si está autenticado */}
       <Route element={<ProtectedRoute />}>
         <Route path="/user" element={<User />} />
+        <Route path="/pokedex" element={<Pokedex />} />
         <Route path="/teammaker" element={<TeamMaker />} />
         <Route path="/teammaker/:teamId" element={<TeamMaker />} />
         <Route path="/teams" element={<Teams />} />
