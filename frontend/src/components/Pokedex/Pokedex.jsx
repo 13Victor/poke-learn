@@ -3,7 +3,7 @@ import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/Pokedex.css";
 
 const Pokedex = () => {
-  const { getPokemons, pokemonsLoaded } = usePokemonData();
+  const { getAllPokemons, allPokemonsLoaded } = usePokemonData();
   const [pokemons, setPokemons] = useState([]);
   const [displayedPokemons, setDisplayedPokemons] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -11,19 +11,26 @@ const Pokedex = () => {
   const [showModal, setShowModal] = useState(false);
   const [activeFilters, setActiveFilters] = useState(new Set(["show-all"]));
 
-  const pageSize = 15;
+  const pageSize = 1025;
   const pokemonListRef = useRef(null);
 
   // Cargar pokémon desde la API
   useEffect(() => {
     const loadPokemons = async () => {
-      if (pokemonsLoaded) {
+      if (allPokemonsLoaded) {
         try {
-          const pokemonData = await getPokemons();
-          setPokemons(pokemonData);
+          const pokemonData = await getAllPokemons();
+
+          // Filtrar Pokémon regionales (que tienen baseSpecies)
+          const filteredPokemons = pokemonData.filter((pokemon) => !pokemon.baseSpecies);
+
+          setPokemons(filteredPokemons);
           // Mostrar los primeros 15 pokémon
-          setDisplayedPokemons(pokemonData.slice(0, pageSize));
+          setDisplayedPokemons(filteredPokemons.slice(0, pageSize));
           setCurrentPage(1);
+
+          console.log(`Total Pokémon cargados: ${pokemonData.length}`);
+          console.log(`Pokémon mostrados (sin regionales): ${filteredPokemons.length}`);
         } catch (error) {
           console.error("Error loading Pokémon:", error);
         }
@@ -31,11 +38,85 @@ const Pokedex = () => {
     };
 
     loadPokemons();
-  }, [pokemonsLoaded, getPokemons]);
+  }, [allPokemonsLoaded, getAllPokemons]);
 
   // Formatear ID del pokémon
   const formatPokemonId = (id) => {
     return id.toString().padStart(3, "0");
+  };
+
+  // Formatear ID del pokémon para las nuevas imágenes (4 dígitos)
+  const formatPokemonIdForImage = (id) => {
+    return id.toString().padStart(4, "0");
+  };
+
+  // Formatear nombre del pokémon para las nuevas imágenes
+  const formatPokemonNameForImage = (pokemon, includeBaseForme = true) => {
+    let name = pokemon.name;
+
+    // Reemplazar guiones y dos puntos con espacios
+    name = name.replace(/[-:]/g, " ");
+
+    // Si el Pokémon tiene baseForme y se solicita incluirlo, añadirlo al nombre
+    if (includeBaseForme && pokemon.baseForme) {
+      name = `${name} ${pokemon.baseForme}`;
+    }
+
+    // Capitalizar la primera letra y mantener el resto
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
+
+  // Función para codificar nombres de archivo de forma segura
+  const encodeFileName = (fileName) => {
+    // Reemplazar caracteres problemáticos para URLs pero mantener la estructura de ruta
+    return fileName
+      .replace(/%/g, "%25") // % debe codificarse primero
+      .replace(/ /g, "%20") // Espacios
+      .replace(/\?/g, "%3F") // Signos de interrogación
+      .replace(/#/g, "%23") // Almohadillas
+      .replace(/&/g, "%26"); // Ampersands
+  };
+
+  // Generar ruta de imagen del pokémon con fallback
+  const generatePokemonImagePath = (pokemon, isModal = false) => {
+    const formattedId = formatPokemonIdForImage(pokemon.num);
+
+    // Intentar primero con baseForme si existe
+    const formattedNameWithForme = formatPokemonNameForImage(pokemon, true);
+    const fileName = `${formattedId} ${formattedNameWithForme}.png`;
+    const primaryPath = `./assets/official-artwork-pokemon/${encodeFileName(fileName)}`;
+
+    // Debug: mostrar la ruta generada para Pokémon con baseForme
+    if (pokemon.baseForme) {
+      console.log(`Pokémon con baseForme - ${pokemon.name}:`);
+      console.log(`  Ruta generada: ${primaryPath}`);
+      console.log(`  baseForme: ${pokemon.baseForme}`);
+    }
+
+    return primaryPath;
+  };
+
+  // Función para manejar error de imagen y usar fallback
+  const handleImageError = (event, pokemon) => {
+    const img = event.target;
+    const formattedId = formatPokemonIdForImage(pokemon.num);
+
+    // Si la imagen actual incluye baseForme, intentar sin baseForme
+    if (pokemon.baseForme && img.src.includes(encodeFileName(pokemon.baseForme))) {
+      const formattedNameWithoutForme = formatPokemonNameForImage(pokemon, false);
+      const fileName = `${formattedId} ${formattedNameWithoutForme}.png`;
+      const fallbackPath = `./assets/official-artwork-pokemon/${encodeFileName(fileName)}`;
+
+      console.log(`Imagen con baseForme falló: ${img.src}`);
+      console.log(`Intentando fallback: ${fallbackPath}`);
+
+      img.src = fallbackPath;
+    } else {
+      // Si ya es el fallback o no tiene baseForme, mostrar imagen por defecto
+      console.log(`Imagen fallback también falló: ${img.src}`);
+      // Puedes poner aquí una imagen por defecto si quieres
+      // img.src = './assets/pokemon-placeholder.png';
+    }
   };
 
   // Formatear tipos del pokémon
@@ -47,6 +128,7 @@ const Pokedex = () => {
   const createPokemonCard = (pokemon) => {
     const pokemonId = formatPokemonId(pokemon.num);
     const pokemonTypes = formatPokemonTypes(pokemon.types);
+    const pokemonImagePath = generatePokemonImagePath(pokemon);
 
     console.log(pokemon);
 
@@ -62,7 +144,7 @@ const Pokedex = () => {
           #{pokemonId}
         </p>
         <div className="pokedex-pokemon-img">
-          <img src={`./assets/pokemon-small-hd-sprites-webp/${pokemon.image}`} alt={pokemon.name} />
+          <img src={pokemonImagePath} alt={pokemon.name} onError={(e) => handleImageError(e, pokemon)} />
         </div>
         <div className="pokemon-info">
           <div className="name-container">
@@ -245,7 +327,7 @@ const Pokedex = () => {
                               fillRule="evenodd"
                               clipRule="evenodd"
                               d="M 7.15 10.286 L 0.122 10.286 C 0.953 4.47 5.955 0 12 0 C 18.045 0 23.047 4.47 23.879 10.286 L 16.85 10.286 C 16.144 8.288 14.239 6.857 12 6.857 C 9.761 6.857 7.856 8.288 7.15 10.286 Z"
-                              fill={`var(--type-${selectedPokemon.types[0]})`}
+                              fill={`var(--type-${selectedPokemon.types[0].toLowerCase()})`}
                             />
                             <path
                               d="M14.8571 12C14.8571 13.578 13.578 14.8571 12 14.8571C10.422 14.8571 9.14286 13.578 9.14286 12C9.14286 10.422 10.422 9.14286 12 9.14286C13.578 9.14286 14.8571 10.422 14.8571 12Z"
@@ -255,13 +337,16 @@ const Pokedex = () => {
                               fillRule="evenodd"
                               clipRule="evenodd"
                               d="M 12 24 C 18.045 24 23.047 19.53 23.879 13.714 L 16.85 13.714 C 16.144 15.712 14.239 17.143 12 17.143 C 9.761 17.143 7.856 15.712 7.15 13.714 L 0.122 13.714 C 0.953 19.53 5.955 24 12 24 Z"
-                              fill={`var(--type-${selectedPokemon.types[1] || selectedPokemon.types[0]})`}
+                              fill={`var(--type-${(
+                                selectedPokemon.types[1] || selectedPokemon.types[0]
+                              ).toLowerCase()})`}
                             />
                           </svg>
                           <img
-                            src={`./img/pokemon/${selectedPokemon.image}`}
+                            src={generatePokemonImagePath(selectedPokemon, true)}
                             alt={selectedPokemon.name}
                             className="pokemon-image-modal"
+                            onError={(e) => handleImageError(e, selectedPokemon)}
                           />
                         </div>
 

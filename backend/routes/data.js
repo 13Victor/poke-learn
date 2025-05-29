@@ -9,8 +9,8 @@ const router = express.Router();
 const data = require("../data/dataLoader");
 
 /**
- * Procesa el Pokédex para filtrar y dar formato a los datos
- * @returns {Array} - Pokémon filtrados y formateados
+ * Procesa el Pokédex para filtrar y dar formato a los datos (versión competitiva)
+ * @returns {Array} - Pokémon filtrados y formateados para competitivo
  */
 const processPokedex = () => {
   const bannedTiers = ["Uber", "AG", "Illegal", "Unknown"];
@@ -56,6 +56,59 @@ const processPokedex = () => {
       abilities: Object.values(pokemonData.abilities),
       baseStats: pokemonData.baseStats,
       tier: formatData.tier || "Unknown",
+      baseSpecies: pokemonData.baseSpecies || null,
+      baseForme: pokemonData.baseForme || null,
+    };
+  });
+};
+
+/**
+ * Procesa TODOS los Pokémon excepto CAP
+ * @returns {Array} - Todos los Pokémon filtrados y formateados
+ */
+const processAllPokemons = () => {
+  // Solo filtrar CAP, mantener todo lo demás
+  const validPokemon = Object.keys(data.pokedex.Pokedex).filter((pokemon) => {
+    const formatData = data.formatsData.FormatsData[pokemon] || {};
+    const isNonstandard = formatData.isNonstandard || "";
+
+    // Solo excluir CAP
+    return isNonstandard !== "CAP";
+  });
+
+  const groupedByNum = validPokemon.reduce((acc, pokemon) => {
+    const num = data.pokedex.Pokedex[pokemon].num;
+    if (!acc[num]) acc[num] = [];
+    acc[num].push(pokemon);
+    return acc;
+  }, {});
+
+  const cleanName = (name) => name.toLowerCase().replace(/[-\s]/g, "");
+
+  return validPokemon.map((pokemon) => {
+    const pokemonData = data.pokedex.Pokedex[pokemon];
+    const formatData = data.formatsData.FormatsData[pokemon] || {};
+    const num = pokemonData.num;
+
+    const variantIndex = groupedByNum[num].indexOf(pokemon);
+    const imageName =
+      variantIndex === 0
+        ? `${String(num).padStart(4, "0")}.webp`
+        : `${String(num).padStart(4, "0")}_${String(variantIndex).padStart(2, "0")}.webp`;
+
+    return {
+      num,
+      name: pokemonData.name,
+      id: pokemon,
+      image: imageName,
+      level: 100,
+      changesFrom: pokemonData.changesFrom ? cleanName(pokemonData.changesFrom) : "",
+      types: pokemonData.types,
+      abilities: Object.values(pokemonData.abilities),
+      baseStats: pokemonData.baseStats,
+      tier: formatData.tier || "Unknown",
+      baseSpecies: pokemonData.baseSpecies || null, // Incluir baseSpecies para identificar regionales
+      baseForme: pokemonData.baseForme || null, // Incluir baseForme para formas base
     };
   });
 };
@@ -203,7 +256,7 @@ const processMoveDescriptions = () => {
 
 /**
  * @route GET /data/availablePokemons
- * @desc Obtener Pokémon disponibles filtrados
+ * @desc Obtener Pokémon disponibles filtrados para competitivo
  */
 router.get("/availablePokemons", async (req, res) => {
   try {
@@ -212,6 +265,20 @@ router.get("/availablePokemons", async (req, res) => {
   } catch (error) {
     console.error("Error al procesar Pokémon disponibles:", error);
     res.status(500).json(formatResponse(false, "Error al procesar Pokémon disponibles"));
+  }
+});
+
+/**
+ * @route GET /data/allPokemons
+ * @desc Obtener TODOS los Pokémon (excepto CAP) para la Pokédex
+ */
+router.get("/allPokemons", async (req, res) => {
+  try {
+    const allPokemons = processAllPokemons();
+    res.json(formatResponse(true, "Todos los Pokémon", allPokemons));
+  } catch (error) {
+    console.error("Error al procesar todos los Pokémon:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar todos los Pokémon"));
   }
 });
 

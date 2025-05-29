@@ -177,9 +177,18 @@ class ApiService {
 
   // MÉTODOS DE DATOS POKÉMON
 
-  // Obtener pokémon disponibles
+  // Obtener pokémon disponibles para competitivo
   async getAvailablePokemons() {
     return this.fetchData("/data/availablePokemons", {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
+
+  // Obtener TODOS los pokémon para la Pokédex
+  async getAllPokemons() {
+    return this.fetchData("/data/allPokemons", {
       method: "GET",
       headers: this.getHeaders(),
       requiresAuth: true,

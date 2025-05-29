@@ -6,7 +6,7 @@ import apiService from "../services/apiService";
 const PokemonDataContext = createContext(null);
 
 // Constantes para definir los recursos disponibles
-const RESOURCE_KEYS = ["pokemons", "moves", "movesDesc", "learnsets", "items", "abilities", "types"];
+const RESOURCE_KEYS = ["pokemons", "allPokemons", "moves", "movesDesc", "learnsets", "items", "abilities", "types"];
 
 // Utility for tracking loaded resources
 const createResourceTracker = () => {
@@ -15,7 +15,7 @@ const createResourceTracker = () => {
     resources[key] = {
       loaded: false,
       loading: false,
-      data: key === "pokemons" ? [] : {},
+      data: key === "pokemons" || key === "allPokemons" ? [] : {},
       error: null,
     };
   });
@@ -38,7 +38,7 @@ export const PokemonDataProvider = ({ children }) => {
     async (resourceName) => {
       // Si no está autenticado, no cargar datos
       if (!isAuthenticated) {
-        return Promise.resolve(resourceName === "pokemons" ? [] : {});
+        return Promise.resolve(resourceName === "pokemons" || resourceName === "allPokemons" ? [] : {});
       }
 
       // Skip if already loaded or loading
@@ -64,6 +64,9 @@ export const PokemonDataProvider = ({ children }) => {
         switch (resourceName) {
           case "pokemons":
             data = await apiService.getAvailablePokemons();
+            break;
+          case "allPokemons":
+            data = await apiService.getAllPokemons();
             break;
           case "moves":
             data = await apiService.getMoves();
@@ -108,7 +111,7 @@ export const PokemonDataProvider = ({ children }) => {
         return data.data;
       } catch (error) {
         console.error(`❌ Error loading ${resourceName}:`, error);
-        const defaultValue = resourceName === "pokemons" ? [] : {};
+        const defaultValue = resourceName === "pokemons" || resourceName === "allPokemons" ? [] : {};
 
         setResources((prev) => ({
           ...prev,
@@ -129,7 +132,7 @@ export const PokemonDataProvider = ({ children }) => {
   const createResourceGetter = (resourceName) => {
     return useCallback(() => {
       if (!isAuthenticated) {
-        return Promise.resolve(resourceName === "pokemons" ? [] : {});
+        return Promise.resolve(resourceName === "pokemons" || resourceName === "allPokemons" ? [] : {});
       }
 
       return resources[resourceName].loaded
@@ -140,6 +143,7 @@ export const PokemonDataProvider = ({ children }) => {
 
   // Specific getters for each resource
   const getPokemons = createResourceGetter("pokemons");
+  const getAllPokemons = createResourceGetter("allPokemons");
   const getLearnsets = createResourceGetter("learnsets");
   const getItems = createResourceGetter("items");
   const getAbilities = createResourceGetter("abilities");
@@ -243,6 +247,7 @@ export const PokemonDataProvider = ({ children }) => {
         // Preparar las promesas para cargar los datos
         const promises = [
           apiService.getAvailablePokemons(),
+          apiService.getAllPokemons(),
           apiService.getMoves(),
           apiService.getMovesDesc(),
           apiService.getLearnsets(),
@@ -263,7 +268,7 @@ export const PokemonDataProvider = ({ children }) => {
         // Procesar cada resultado
         RESOURCE_KEYS.forEach((key, index) => {
           const result = results[index];
-          const defaultValue = key === "pokemons" ? [] : {};
+          const defaultValue = key === "pokemons" || key === "allPokemons" ? [] : {};
 
           if (result.status === "fulfilled" && result.value.success) {
             newResources[key] = {
@@ -274,8 +279,8 @@ export const PokemonDataProvider = ({ children }) => {
             };
 
             const logMessage =
-              key === "pokemons"
-                ? `✅ Successfully loaded ${result.value.data.length} Pokémon`
+              key === "pokemons" || key === "allPokemons"
+                ? `✅ Successfully loaded ${result.value.data.length} ${key}`
                 : `✅ Successfully loaded ${key}`;
             console.log(logMessage);
           } else {
@@ -322,6 +327,7 @@ export const PokemonDataProvider = ({ children }) => {
     // Datos básicos con getters
     const value = {
       getPokemons,
+      getAllPokemons,
       getMoves,
       getMovesDesc,
       getLearnsets,
