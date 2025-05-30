@@ -45,6 +45,9 @@ const Pokedex = () => {
 
   // Actualizar Pokémon mostrados cuando cambien los filtrados
   useEffect(() => {
+    // Reset del estado de carga cuando cambian los filtros
+    setIsLoading(false);
+
     if (filteredPokemons.length > 0) {
       setDisplayedPokemons(filteredPokemons.slice(0, pageSize));
       setCurrentPage(1);
@@ -52,47 +55,70 @@ const Pokedex = () => {
       setDisplayedPokemons([]);
       setCurrentPage(0);
     }
+
+    // Scroll al inicio cuando cambian los filtros
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
   }, [filteredPokemons, pageSize]);
 
   // Cargar más pokémon
   const loadMorePokemons = useCallback(() => {
-    if (isLoading) return;
+    // Verificar si ya estamos cargando o si no hay más pokémon que cargar
+    if (isLoading || displayedPokemons.length >= filteredPokemons.length) return;
 
-    const start = currentPage * pageSize;
-    const newPokemons = filteredPokemons.slice(start, start + pageSize);
+    setIsLoading(true);
+
+    // Usar el estado actual de displayedPokemons para calcular el siguiente lote
+    const currentDisplayedCount = displayedPokemons.length;
+    const newPokemons = filteredPokemons.slice(currentDisplayedCount, currentDisplayedCount + pageSize);
 
     if (newPokemons.length > 0) {
-      setIsLoading(true);
-
       // Simular un pequeño delay para evitar cargas muy rápidas
       setTimeout(() => {
-        setDisplayedPokemons((prev) => [...prev, ...newPokemons]);
+        setDisplayedPokemons((prev) => {
+          // Verificar que no se dupliquen pokémon
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNewPokemons = newPokemons.filter((p) => !existingIds.has(p.id));
+          return [...prev, ...uniqueNewPokemons];
+        });
         setCurrentPage((prev) => prev + 1);
         setIsLoading(false);
-      }, 200);
+      }, 150); // Reducido a 150ms para mejor respuesta
+    } else {
+      setIsLoading(false);
     }
-  }, [currentPage, pageSize, filteredPokemons, isLoading]);
+  }, [displayedPokemons.length, pageSize, filteredPokemons, isLoading]);
 
-  // Detectar cuando el usuario está cerca del final del scroll
+  // Detectar cuando el usuario está cerca del final del scroll con throttling
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
+    let ticking = false;
 
-      // Cargar más cuando estés a 200px del final
-      if (scrollHeight - scrollTop <= clientHeight + 200) {
-        loadMorePokemons();
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const { scrollTop, scrollHeight, clientHeight } = container;
+
+          // Cargar más cuando estés a 300px del final y no estés ya cargando
+          if (scrollHeight - scrollTop <= clientHeight + 300 && !isLoading) {
+            loadMorePokemons();
+          }
+
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    container.addEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
     };
-  }, [loadMorePokemons]);
+  }, [loadMorePokemons, isLoading]);
 
   // Manejar clic en pokémon (por ahora solo log)
   const handlePokemonClick = (pokemon) => {
