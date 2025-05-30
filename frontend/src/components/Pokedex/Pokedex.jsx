@@ -54,8 +54,8 @@ const Pokedex = () => {
   const formatPokemonNameForImage = (pokemon, includeBaseForme = true) => {
     let name = pokemon.name;
 
-    // Reemplazar guiones y dos puntos con espacios
-    name = name.replace(/[-:]/g, " ");
+    // Reemplazar guiones con espacios y dos puntos con nada
+    name = name.replace(/-/g, " ").replace(/:/g, "");
 
     // Si el Pokémon tiene baseForme y se solicita incluirlo, añadirlo al nombre
     if (includeBaseForme && pokemon.baseForme) {

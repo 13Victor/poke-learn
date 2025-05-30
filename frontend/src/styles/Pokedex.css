@@ -94,25 +94,25 @@ main {
   gap: 1rem;
 }
 
-@media screen and (min-width: 470px) {
+@media screen and (min-width: 680px) {
   .all-pokemons {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media screen and (min-width: 700px) {
+@media screen and (min-width: 955px) {
   .all-pokemons {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
-@media screen and (min-width: 1000px) {
+@media screen and (min-width: 1350px) {
   .all-pokemons {
     grid-template-columns: 1fr 1fr 1fr 1fr;
   }
 }
 
-@media screen and (min-width: 1400px) {
+@media screen and (min-width: 1650px) {
   .all-pokemons {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   }
