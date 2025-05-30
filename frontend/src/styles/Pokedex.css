@@ -1,26 +1,15 @@
-:root {
-  --clr-black: #1c1c1c;
-  --clr-gray: #ececec;
-  --clr-white: #f7f7f7;
-}
-
 .pokedex-container {
   height: 100vh;
+  flex-direction: column;
+  padding: var(--spacing-xl);
 }
 
 ul {
   list-style-type: none;
 }
 
-button {
-  background-color: transparent;
-  border: 0;
-  border-radius: 0;
-}
-
 body {
   min-height: 100vh;
-  background-color: var(--clr-gray);
 }
 
 header {
@@ -49,7 +38,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--clr-gray);
+  background-color: var(--white-smoke);
   padding: var(--spacing-xs);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -84,7 +73,7 @@ nav {
 }
 
 main {
-  padding: 2rem;
+  padding: var(--spacing-xl);
   max-width: 1800px;
   margin: 0 auto;
 }
@@ -121,7 +110,7 @@ main {
 
 .pokedex-container .pokemon {
   border-radius: var(--radius-md);
-  background-color: var(--clr-white);
+  background-color: var(--white);
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0.07rem 0.2rem 0px;
   padding: var(--spacing-sm) 0;
   text-transform: uppercase;
@@ -152,7 +141,7 @@ main {
   font-size: 8rem;
   font-weight: 800;
   z-index: -1;
-  background-image: linear-gradient(0deg, var(--clr-gray), var(--clr-gray));
+  background-image: linear-gradient(0deg, var(--white-smoke), var(--white-smoke));
   color: transparent;
   background-clip: text;
 }
@@ -225,7 +214,7 @@ main {
 }
 
 .stat {
-  background-color: var(--clr-gray);
+  background-color: var(--white-smoke);
   padding: 0.25rem 0.5rem;
   border-radius: 100vmax;
 }
@@ -315,7 +304,7 @@ main {
 
 .bar-container {
   flex: 1;
-  background-color: var(--clr-gray);
+  background-color: var(--white-smoke);
   height: 0.5rem;
   border-radius: 1000px;
 }
@@ -339,7 +328,6 @@ main {
   padding: 0.625rem 1.25rem;
   font-size: 1rem;
   background-color: var(--clr-white);
-  color: var(--clr-black);
   border-radius: 0.25rem;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0.07rem 0.2rem 0px;
   cursor: pointer;

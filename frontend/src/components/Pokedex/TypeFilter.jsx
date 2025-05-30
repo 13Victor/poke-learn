@@ -5,7 +5,6 @@ const TypeFilter = ({ onFilterClick, activeFilters }) => {
   return (
     <header>
       <nav>
-        <img src="./img/pokedex-logo.png" alt="Logo Pokédex" width="200px" />
         <ul className="nav-list">
           <li className="nav-item">
             <button
