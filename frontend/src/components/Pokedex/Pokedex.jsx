@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import PokemonCard from "./PokemonCard";
 import TypeFilter from "./TypeFilter";
@@ -11,9 +11,10 @@ const Pokedex = () => {
   const [displayedPokemons, setDisplayedPokemons] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [activeFilters, setActiveFilters] = useState(createInitialFilters());
+  const [isLoading, setIsLoading] = useState(false);
 
   const pageSize = 60;
-  const pokemonListRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Cargar pokémon desde la API
   useEffect(() => {
@@ -54,15 +55,44 @@ const Pokedex = () => {
   }, [filteredPokemons, pageSize]);
 
   // Cargar más pokémon
-  const loadMorePokemons = () => {
+  const loadMorePokemons = useCallback(() => {
+    if (isLoading) return;
+
     const start = currentPage * pageSize;
     const newPokemons = filteredPokemons.slice(start, start + pageSize);
 
     if (newPokemons.length > 0) {
-      setDisplayedPokemons((prev) => [...prev, ...newPokemons]);
-      setCurrentPage((prev) => prev + 1);
+      setIsLoading(true);
+
+      // Simular un pequeño delay para evitar cargas muy rápidas
+      setTimeout(() => {
+        setDisplayedPokemons((prev) => [...prev, ...newPokemons]);
+        setCurrentPage((prev) => prev + 1);
+        setIsLoading(false);
+      }, 200);
     }
-  };
+  }, [currentPage, pageSize, filteredPokemons, isLoading]);
+
+  // Detectar cuando el usuario está cerca del final del scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+
+      // Cargar más cuando estés a 200px del final
+      if (scrollHeight - scrollTop <= clientHeight + 200) {
+        loadMorePokemons();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [loadMorePokemons]);
 
   // Manejar clic en pokémon (por ahora solo log)
   const handlePokemonClick = (pokemon) => {
@@ -90,18 +120,26 @@ const Pokedex = () => {
       <TypeFilter onFilterClick={handleFilterClick} activeFilters={activeFilters} />
 
       <main>
-        <div id="container">
-          <div className="all-pokemons" id="pokemon-list" ref={pokemonListRef}>
+        <div id="container" ref={containerRef}>
+          <div className="all-pokemons" id="pokemon-list">
             {displayedPokemons.map((pokemon) => (
               <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handlePokemonClick} />
             ))}
           </div>
 
-          {displayedPokemons.length < filteredPokemons.length && (
-            <button id="load-more" onClick={loadMorePokemons}>
-              <i className="fa-regular fa-magnifying-glass"></i>
-              Discover more Pokémons
-            </button>
+          {/* Mostrar indicador de carga cuando esté cargando más */}
+          {isLoading && (
+            <div className="loading-indicator">
+              <div className="loading-spinner"></div>
+              <p>Cargando más Pokémon...</p>
+            </div>
+          )}
+
+          {/* Mostrar cuando se han cargado todos los Pokémon */}
+          {displayedPokemons.length >= filteredPokemons.length && filteredPokemons.length > 0 && (
+            <div className="end-message">
+              <p>¡Has visto todos los Pokémon disponibles!</p>
+            </div>
           )}
 
           {filteredPokemons.length === 0 && pokemons.length > 0 && (
