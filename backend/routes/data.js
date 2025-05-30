@@ -67,13 +67,15 @@ const processPokedex = () => {
  * @returns {Array} - Todos los Pokémon filtrados y formateados
  */
 const processAllPokemons = () => {
-  // Solo filtrar CAP, mantener todo lo demás
+  // Solo filtrar CAP y Pokémon con num <= 0
   const validPokemon = Object.keys(data.pokedex.Pokedex).filter((pokemon) => {
+    const pokemonData = data.pokedex.Pokedex[pokemon];
     const formatData = data.formatsData.FormatsData[pokemon] || {};
     const isNonstandard = formatData.isNonstandard || "";
+    const num = pokemonData.num;
 
-    // Solo excluir CAP
-    return isNonstandard !== "CAP";
+    // Solo excluir CAP y Pokémon con num <= 0
+    return isNonstandard !== "CAP" && num > 0;
   });
 
   const groupedByNum = validPokemon.reduce((acc, pokemon) => {

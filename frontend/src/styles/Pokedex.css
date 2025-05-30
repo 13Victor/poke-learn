@@ -79,6 +79,7 @@ nav {
 .btn-header.shrink {
   transform: scale(0.9);
   filter: grayscale(1);
+  box-shadow: none !important;
   border-radius: 100%;
 }
 
@@ -240,55 +241,6 @@ main {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(6.3px);
   z-index: 999;
-}
-
-#pokemon-more-info {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  width: 1000px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  flex-direction: column;
-  align-items: center;
-}
-
-#pokemon-more-info .close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.modal-content {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 7fr;
-  grid-column-gap: 0px;
-  grid-row-gap: 0px;
-
-  font-size: 18px;
-  text-align: center;
-}
-
-.modal-content .modal-content-title {
-  display: flex;
-}
-
-.modal-content-info {
-  display: grid;
-  grid-template-columns: 1.5fr 2fr;
-  grid-template-rows: 1.5fr repeat(2, 2fr);
-  grid-column-gap: 1rem;
-  grid-row-gap: 1rem;
 }
 
 .pokemon-detail-image {
