@@ -19,23 +19,23 @@ h6 {
 }
 
 h1 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-2xl) !important;
 }
 
 h2 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-xl) !important;
 }
 
 h3 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-lg) !important;
 }
 
 h4 {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-md) !important;
 }
 
 h5 {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-sm) !important;
 }
 
 .flex {

@@ -179,7 +179,7 @@ main {
   content: var(--pokemon-id, "");
   inset: 0;
   z-index: -2;
-  opacity: 0.15;
+  opacity: 0.1;
   transition: opacity 0.2s linear;
   font-size: 8rem;
   color: transparent;
@@ -475,4 +475,171 @@ main {
   font-size: var(--font-size-md);
   inset: auto;
   opacity: 0.5;
+}
+
+.detail-section {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.detail-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pokemon-details {
+  padding-inline: var(--spacing-xl);
+}
+
+.pokemon-details * {
+  font-size: var(--font-size-sm);
+}
+
+.pokedex-description {
+  padding-left: 6px;
+  border-radius: var(--radius-xs);
+}
+
+.pokedex-description p {
+  background-color: white;
+  padding-left: var(--spacing-xs);
+}
+
+.measurements {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.pop-item {
+  display: grid;
+  grid-template-columns: 1fr 3.2fr;
+  grid-template-rows: repeat(2, 1fr);
+  grid-row-gap: 0px;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white-smoke);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.pop-item .detail-label {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pop-item .detail-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pop-item svg {
+  grid-area: 1 / 1 / 3 / 2;
+  font-size: 22px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.side-panel h4 {
+  color: var(--eerie-black);
+}
+
+.side-panel #separatorLine {
+  margin-top: 0;
+}
+
+.male {
+  background-color: rgba(109, 186, 236, 0.8);
+}
+
+.female {
+  background-color: rgba(250, 132, 132, 0.85);
+}
+
+.stats-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-name {
+  text-transform: uppercase;
+}
+
+.stat-bar-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.stat-progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: var(--white-smoke);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.stat-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease-in-out;
+  position: relative;
+}
+
+.stat-progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--radius-full);
+}
+
+.stat-number,
+.stat-name {
+  font-weight: 500;
+  color: var(--eerie-black);
+  min-width: 35px;
+  text-align: right;
+}
+
+.stat-number {
+  text-align: left;
+}
+
+.total-stats {
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+  background-color: var(--white-smoke);
+  padding-inline: var(--spacing-md) 0;
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+}
+
+.total-stats .stat-name {
+  text-transform: capitalize;
 }

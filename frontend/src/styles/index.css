@@ -13,7 +13,7 @@
   --gray: #dcdcdcff;
   --silver: #c0c0c0ff;
   --battleship-gray: #898989ff;
-  --eerie-black: #1f1f1fff;
+  --eerie-black: rgb(60, 60, 60);
   --black: #000000ff;
 
   /* Primary palette */
@@ -51,6 +51,7 @@
   --spacing-2xl: 32px; /* 32px */
 
   /* Border radius */
+  --radius-xs: 3px;
   --radius-sm: 4px; /* 4px */
   --radius-md: 8px; /* 8px */
   --radius-lg: 12px; /* 12px */

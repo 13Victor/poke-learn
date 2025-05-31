@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { formatPokemonId, generatePokemonImagePath } from "../../utils/pokemonUtils";
 import { handleImageError, formatPokemonTypesIcon } from "../../utils/imageUtils";
 import apiService from "../../services/apiService";
+import { FaRulerVertical, FaWeightHanging } from "react-icons/fa";
+import { PiGenderMaleBold, PiGenderFemaleBold } from "react-icons/pi";
+import { PiRulerBold } from "react-icons/pi";
+import { LuWeight } from "react-icons/lu";
 
 // Función para formatear el ratio de género
 const formatGenderRatio = (pokemon) => {
@@ -85,7 +89,7 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
             style={{
               background:
                 pokemon.types.length > 1
-                  ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
+                  ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
                   : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
             }}
           >
@@ -101,7 +105,7 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
                 style={{
                   background:
                     pokemon.types.length > 1
-                      ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
+                      ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
                       : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
                   color: "rgba(0,0,0,.75)",
                 }}
@@ -119,9 +123,17 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
 
         <div className="pokemon-details">
           {/* Descripción de la Pokédex */}
-          <div className="detail-section">
-            <h3>Description</h3>
-            <div className="pokedex-description">
+          <div className="">
+            <hr id="separatorLine" />
+            <div
+              className="pokedex-description"
+              style={{
+                background:
+                  pokemon.types.length > 1
+                    ? `linear-gradient(180deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
+                    : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
+              }}
+            >
               {isLoadingEntry ? (
                 <div className="loading-description">
                   <div className="loading-dots">
@@ -139,37 +151,38 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
 
           {/* Información Básica */}
           <div className="detail-section">
-            <h3>Basic Information</h3>
-            <div className="detail-grid">
-              <div className="detail-item">
-                <span className="detail-label">Height</span>
-                <span className="detail-value">{pokemon.height} m</span>
+            <div className="detailContainer">
+              <h4>Measurements</h4>
+              <hr id="separatorLine" />
+              <div className="detail-grid">
+                {/* Measurements */}
+                <div className="detail-item pop-item">
+                  <PiRulerBold />
+                  <span className="detail-label">Height</span>
+                  <span className="detail-value">{pokemon.height} m</span>
+                </div>
+                <div className="detail-item pop-item">
+                  <LuWeight />
+                  <span className="detail-label">Weight</span>
+                  <span className="detail-value">{pokemon.weight} kg</span>
+                </div>
               </div>
-              <div className="detail-item">
-                <span className="detail-label">Weight</span>
-                <span className="detail-value">{pokemon.weight} kg</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Gender Ratio</span>
-                <div className="gender-ratio">
-                  {genderInfo.genderless ? (
-                    <span className="genderless">Genderless</span>
-                  ) : (
-                    <div className="gender-breakdown">
-                      <div className="gender-item">
-                        <span className="gender-icon male">♂</span>
-                        <span className="gender-percent">
-                          {genderInfo.male % 1 === 0 ? genderInfo.male : genderInfo.male.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="gender-item">
-                        <span className="gender-icon female">♀</span>
-                        <span className="gender-percent">
-                          {genderInfo.female % 1 === 0 ? genderInfo.female : genderInfo.female.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  )}
+            </div>
+
+            <div className="detailContainer">
+              <h4>Gender</h4>
+              <hr id="separatorLine" />
+              <div className="detail-grid">
+                {/* Gender Ratio */}
+                <div className="detail-item pop-item male">
+                  <PiGenderMaleBold />
+                  <span className="detail-label">Male</span>
+                  <span className="detail-value">{genderInfo.genderless ? "—" : `${genderInfo.male}%`}</span>
+                </div>
+                <div className="detail-item pop-item female">
+                  <PiGenderFemaleBold />
+                  <span className="detail-label">Female</span>
+                  <span className="detail-value">{genderInfo.genderless ? "—" : `${genderInfo.female}%`}</span>
                 </div>
               </div>
             </div>
@@ -191,53 +204,54 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
 
           {/* Estadísticas Base */}
           {pokemon.baseStats && (
-            <div className="detail-section">
-              <h3>Base Stats</h3>
-              <div className="stats-container">
-                {Object.entries(pokemon.baseStats).map(([statName, value]) => (
-                  <div key={statName} className="stat-row">
-                    <span className="stat-name">
-                      {statName === "hp"
-                        ? "HP"
-                        : statName === "atk"
-                        ? "Attack"
-                        : statName === "def"
-                        ? "Defense"
-                        : statName === "spa"
-                        ? "Sp. Atk"
-                        : statName === "spd"
-                        ? "Sp. Def"
-                        : statName === "spe"
-                        ? "Speed"
-                        : statName}
-                    </span>
-                    <div className="stat-bar">
-                      <div
-                        className="stat-fill"
-                        style={{
-                          width: `${(value / 255) * 100}%`,
-                          backgroundColor: value > 100 ? "#4CAF50" : value > 70 ? "#FF9800" : "#F44336",
-                        }}
-                      ></div>
+            <div className="stats-section">
+              <div className="detailContainer">
+                <h4>Base Stats</h4>
+                <hr id="separatorLine" />
+                <div className="stats-container">
+                  {Object.entries(pokemon.baseStats).map(([statName, value]) => (
+                    <div key={statName} className="stat-row">
+                      <div className="stat-bar-container">
+                        <span className="stat-name">
+                          {statName === "hp"
+                            ? "HP"
+                            : statName === "atk"
+                            ? "Atk"
+                            : statName === "def"
+                            ? "Def"
+                            : statName === "spa"
+                            ? "SpA"
+                            : statName === "spd"
+                            ? "SpD"
+                            : statName === "spe"
+                            ? "Spe"
+                            : statName}
+                        </span>
+                        <div className="stat-progress-bar">
+                          <div
+                            className="stat-progress-fill"
+                            style={{
+                              width: `${Math.min((value / 255) * 100, 100)}%`,
+                              background:
+                                pokemon.types.length > 1
+                                  ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), .5))`
+                                  : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5)`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="stat-number">{value}</span>
+                      </div>
                     </div>
-                    <span className="stat-value">{value}</span>
+                  ))}
+                  {/* Total de estadísticas */}
+                  <div className="stat-row total-stats">
+                    <span className="stat-name total">Total:</span>
+                    <div className="stat-bar-container">
+                      <span className="stat-number total">
+                        {Object.values(pokemon.baseStats).reduce((a, b) => a + b, 0)}
+                      </span>
+                    </div>
                   </div>
-                ))}
-                {/* Total de estadísticas */}
-                <div className="stat-row total-stats">
-                  <span className="stat-name total">Total</span>
-                  <div className="stat-bar">
-                    <div
-                      className="stat-fill total"
-                      style={{
-                        width: `${(Object.values(pokemon.baseStats).reduce((a, b) => a + b, 0) / 720) * 100}%`,
-                        backgroundColor: "#6c5ce7",
-                      }}
-                    ></div>
-                  </div>
-                  <span className="stat-value total">
-                    {Object.values(pokemon.baseStats).reduce((a, b) => a + b, 0)}
-                  </span>
                 </div>
               </div>
             </div>
