@@ -103,7 +103,7 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
                     pokemon.types.length > 1
                       ? `linear-gradient(to right, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
                       : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
-                  color: "rgba(0,0,0,.6)",
+                  color: "rgba(0,0,0,.75)",
                 }}
               >
                 #{pokemon.num}

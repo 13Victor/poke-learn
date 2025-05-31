@@ -437,7 +437,7 @@ main {
   transform: translate(-50%, -50%);
   font-size: 11rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(0, 0, 0, 0.1);
   background-clip: text;
 }
 
@@ -452,17 +452,27 @@ main {
 }
 
 .blank p {
-  font-family: Rubik, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: Rubik, sans-serif;
   padding-inline: var(--spacing-md);
-  border-radius: var(--radius-full);
   font-weight: 700;
   font-size: var(--font-size-md);
   min-height: 20px;
   position: absolute;
   bottom: 0;
+  border-radius: var(--radius-full);
   right: 0;
+  z-index: 1000;
   margin-right: var(--spacing-sm);
+  left: auto;
+  top: auto;
+  transform: translate(0);
+}
+
+.blank p::before {
+  font-size: var(--font-size-md);
+  inset: auto;
+  opacity: 0.5;
 }
