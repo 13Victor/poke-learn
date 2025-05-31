@@ -245,8 +245,31 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
                   ))}
                   {/* Total de estadísticas */}
                   <div className="stat-row total-stats">
-                    <span className="stat-name total">Total:</span>
-                    <div className="stat-bar-container">
+                    <div
+                      className="stat-bar-container"
+                      style={{
+                        background:
+                          pokemon.types.length > 1
+                            ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), .5))`
+                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5)`,
+                      }}
+                    >
+                      <span className="stat-name total">Tot</span>
+                      <div className="stat-progress-bar">
+                        <div
+                          className="stat-progress-fill total"
+                          style={{
+                            width: `${Math.min(
+                              (Object.values(pokemon.baseStats).reduce((a, b) => a + b, 0) / 720) * 100,
+                              100
+                            )}%`,
+                            background:
+                              pokemon.types.length > 1
+                                ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 1), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 1))`
+                                : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 1)`,
+                          }}
+                        ></div>
+                      </div>
                       <span className="stat-number total">
                         {Object.values(pokemon.baseStats).reduce((a, b) => a + b, 0)}
                       </span>

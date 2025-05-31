@@ -630,16 +630,23 @@ main {
   text-align: left;
 }
 
-.total-stats {
-  flex-direction: row;
-  align-items: center;
-  justify-content: end;
-  background-color: var(--white-smoke);
-  padding-inline: var(--spacing-md) 0;
-  border-radius: var(--radius-sm);
-  margin-left: auto;
+.total-stats .stat-name {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.75);
 }
 
-.total-stats .stat-name {
-  text-transform: capitalize;
+.total-stats .stat-number {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.stats-container .total-stats .stat-bar-container {
+  border-radius: var(--radius-sm);
+}
+
+.stats-container .total-stats .stat-progress-bar {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.stats-container .total-stats .stat-progress-fill::after {
+  background-color: rgb(0, 0, 0, 0.2);
 }
