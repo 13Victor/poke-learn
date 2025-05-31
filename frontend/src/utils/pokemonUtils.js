@@ -87,9 +87,9 @@ export const generatePokemonImagePath = (pokemon) => {
 export const generateTypeBackground = (types) => {
   const lowerCaseTypes = types.map((type) => type.toLowerCase());
   if (lowerCaseTypes.length === 2) {
-    return `linear-gradient(90deg, var(--type-${lowerCaseTypes[0]}) 0%, var(--type-${lowerCaseTypes[1]}) 100%)`;
+    return `linear-gradient(45deg, var(--type-${lowerCaseTypes[0]}) 0%, var(--type-${lowerCaseTypes[1]}) 100%)`;
   } else if (lowerCaseTypes.length === 1) {
-    return `linear-gradient(90deg, var(--type-${lowerCaseTypes[0]}) 0%, var(--type-${lowerCaseTypes[0]}) 100%)`;
+    return `linear-gradient(45deg, var(--type-${lowerCaseTypes[0]}) 0%, var(--type-${lowerCaseTypes[0]}) 100%)`;
   }
   return "none";
 };

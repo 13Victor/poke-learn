@@ -236,7 +236,7 @@
   left: -100px;
   height: 200px;
   width: 500px;
-  transform: rotate(-5deg);
+  transform: rotate(-3deg);
 }
 
 /* Header de cada card (sprite + nombre + tipos) */

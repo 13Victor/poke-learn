@@ -61,6 +61,31 @@ class ApiService {
     }
   }
 
+  // NUEVO: Método para obtener descripción de la Pokédex desde PokeAPI
+  async getPokedexEntry(pokedexNumber) {
+    const url = `https://pokeapi.co/api/v2/pokemon-species/${pokedexNumber}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("No se pudo obtener el Pokémon");
+
+      const data = await response.json();
+
+      // Filtrar las entradas en inglés
+      const entriesEn = data.flavor_text_entries.filter((entry) => entry.language.name === "en");
+      if (entriesEn.length === 0) return "No English entry available";
+
+      // Tomar la última entrada (última en el array filtrado)
+      const lastEntry = entriesEn[entriesEn.length - 1].flavor_text;
+
+      // Limpiar saltos de línea y caracteres raros
+      const cleaned = lastEntry.replace(/\f/g, " ").replace(/\n/g, " ").trim();
+      return cleaned;
+    } catch (error) {
+      console.error("Error fetching Pokédex entry:", error);
+      throw new Error("Error al obtener la entrada de la Pokédex");
+    }
+  }
+
   // MÉTODOS DE AUTENTICACIÓN
 
   // Registro tradicional

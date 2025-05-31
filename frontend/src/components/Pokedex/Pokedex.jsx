@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import PokemonCard from "./PokemonCard";
 import TypeFilter from "./TypeFilter";
+import PokemonSidePanel from "./PokemonSidePanel";
 import { createInitialFilters, toggleShowAll, toggleType, filterPokemons } from "../../utils/filterUtils";
 import "../../styles/Pokedex.css";
 
@@ -12,6 +13,9 @@ const Pokedex = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [activeFilters, setActiveFilters] = useState(createInitialFilters());
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedPokemon, setSelectedPokemon] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const pageSize = 60;
   const containerRef = useRef(null);
@@ -123,7 +127,13 @@ const Pokedex = () => {
   // Manejar clic en pokémon (por ahora solo log)
   const handlePokemonClick = (pokemon) => {
     console.log("Pokémon clicked:", pokemon.name);
-    // Aquí puedes agregar la lógica que necesites para el clic
+    setSelectedPokemon(pokemon);
+    setIsPanelOpen(true);
+  };
+
+  const handlePanelClose = () => {
+    setIsPanelOpen(false);
+    setTimeout(() => setSelectedPokemon(null), 300); // Delay para la animación
   };
 
   // Manejar filtros
@@ -140,20 +150,25 @@ const Pokedex = () => {
     setActiveFilters(newFilters);
     console.log("Active filters:", Array.from(newFilters));
   };
-
   return (
     <div className="pokedex-container">
       <TypeFilter onFilterClick={handleFilterClick} activeFilters={activeFilters} />
 
-      <main>
-        <div id="container" ref={containerRef}>
-          <div className="all-pokemons" id="pokemon-list">
+      <main className={isPanelOpen ? "with-panel" : ""}>
+        {" "}
+        {/* CLASE CONDICIONAL AÑADIDA */}
+        <div
+          id="container"
+          ref={containerRef}
+          className={isPanelOpen ? "with-side-panel" : ""} // CLASE CONDICIONAL AÑADIDA
+        >
+          <div className={`all-pokemons ${isPanelOpen ? "with-side-panel" : ""}`} id="pokemon-list">
             {displayedPokemons.map((pokemon) => (
               <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handlePokemonClick} />
             ))}
           </div>
 
-          {/* Mostrar indicador de carga cuando esté cargando más */}
+          {/* Resto de los indicadores de carga existentes... */}
           {isLoading && (
             <div className="loading-indicator">
               <div className="loading-spinner"></div>
@@ -161,7 +176,6 @@ const Pokedex = () => {
             </div>
           )}
 
-          {/* Mostrar cuando se han cargado todos los Pokémon */}
           {displayedPokemons.length >= filteredPokemons.length && filteredPokemons.length > 0 && (
             <div className="end-message">
               <p>¡Has visto todos los Pokémon disponibles!</p>
@@ -174,6 +188,8 @@ const Pokedex = () => {
             </div>
           )}
         </div>
+        {/* NUEVO COMPONENTE - Panel Lateral */}
+        <PokemonSidePanel pokemon={selectedPokemon} isOpen={isPanelOpen} onClose={handlePanelClose} />
       </main>
     </div>
   );

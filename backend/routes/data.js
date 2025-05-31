@@ -58,6 +58,11 @@ const processPokedex = () => {
       tier: formatData.tier || "Unknown",
       baseSpecies: pokemonData.baseSpecies || null,
       baseForme: pokemonData.baseForme || null,
+
+      genderRatio: pokemonData.genderRatio || undefined, // Para casos como { M: 0.875, F: 0.125 }
+      gender: pokemonData.gender || undefined, // Para casos como "M", "F", "N"
+      height: pokemonData.heightm || 0, // altura en metros
+      weight: pokemonData.weightkg || 0, // peso en kg
     };
   });
 };
@@ -109,8 +114,13 @@ const processAllPokemons = () => {
       abilities: Object.values(pokemonData.abilities),
       baseStats: pokemonData.baseStats,
       tier: formatData.tier || "Unknown",
-      baseSpecies: pokemonData.baseSpecies || null, // Incluir baseSpecies para identificar regionales
-      baseForme: pokemonData.baseForme || null, // Incluir baseForme para formas base
+      baseSpecies: pokemonData.baseSpecies || null,
+      baseForme: pokemonData.baseForme || null,
+
+      genderRatio: pokemonData.genderRatio || undefined, // Para casos como { M: 0.875, F: 0.125 }
+      gender: pokemonData.gender || undefined, // Para casos como "M", "F", "N"
+      height: pokemonData.heightm || 0, // altura en metros
+      weight: pokemonData.weightkg || 0, // peso en kg
     };
   });
 };

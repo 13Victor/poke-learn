@@ -11,7 +11,6 @@ const MoveButton = memo(
           style={{
             backgroundColor: `var(--white-smoke)`,
             textTransform: "none",
-            fontWeight: "400",
             color: isEmpty ? "var(--danger)" : "var(--black)",
             fontWeight: isEmpty ? "500" : "400",
           }}

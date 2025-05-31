@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   padding: 0; /* Remover padding para usar toda la altura */
+
+  padding: var(--spacing-xl);
 }
 
 ul {
@@ -76,20 +78,17 @@ nav {
 }
 
 main {
-  flex: 1; /* Ocupar todo el espacio restante */
-  overflow: hidden; /* Evitar scroll en main */
-  max-width: 1800px;
+  flex: 1;
+  overflow: hidden;
   margin: 0 auto;
   width: 100%;
   display: flex;
-  flex-direction: column;
 }
 
 #container {
   flex: 1; /* Ocupar todo el espacio disponible en main */
   overflow-y: auto; /* Permitir scroll vertical */
-  padding-inline: var(--spacing-sm); /* Mover el padding aquí */
-  margin-block: var(--spacing-xl);
+  padding-right: var(--spacing-sm); /* Mover el padding aquí */
   display: flex;
   flex-direction: column;
 }
@@ -97,31 +96,44 @@ main {
 .all-pokemons {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: var(--spacing-md);
   flex: 1; /* Para que ocupe el espacio disponible */
 }
 
 @media screen and (min-width: 680px) {
   .all-pokemons {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .all-pokemons.with-side-panel {
+    grid-template-columns: 1fr;
   }
 }
 
 @media screen and (min-width: 955px) {
   .all-pokemons {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .all-pokemons.with-side-panel {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media screen and (min-width: 1350px) {
   .all-pokemons {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .all-pokemons.with-side-panel {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media screen and (min-width: 1650px) {
   .all-pokemons {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .all-pokemons.with-side-panel {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -130,7 +142,6 @@ main {
   background-color: var(--white);
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0.07rem 0.2rem 0px;
   padding: var(--spacing-sm) 0;
-  text-transform: uppercase;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -168,7 +179,7 @@ main {
   content: var(--pokemon-id, "");
   inset: 0;
   z-index: -2;
-  opacity: 0;
+  opacity: 0.15;
   transition: opacity 0.2s linear;
   font-size: 8rem;
   color: transparent;
@@ -177,7 +188,7 @@ main {
 }
 
 .pokemon:hover .pokemon-id-back::before {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 .pokemon:hover .pokedex-pokemon-img img {
@@ -311,14 +322,6 @@ main {
   gap: 10px;
 }
 
-.stat-name,
-.stat-value {
-  font-size: 0.75rem;
-  font-weight: 500;
-  width: 70px;
-  text-align: right;
-}
-
 .bar-container {
   flex: 1;
   background-color: var(--white-smoke);
@@ -398,4 +401,68 @@ main {
   color: var(--battleship-gray);
   font-size: var(--font-size-sm);
   font-weight: 500;
+}
+
+.side-panel {
+  min-width: 500px;
+  width: 500px;
+  background: var(--white);
+}
+
+.pokemon-image-large .large-image {
+  height: 200px;
+  margin-top: var(--spacing-md);
+  filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.2));
+  z-index: 99;
+}
+
+.pokemon-image-large {
+  display: flex;
+}
+
+.blank {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(-3deg, white 12%, transparent 13%);
+  position: relative;
+}
+
+.pokemon-id {
+  font-family: Rubik, "sans-serif";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.65);
+  background-clip: text;
+}
+
+.pokemon-name-large {
+  text-align: center;
+}
+
+.blank .pokemon-types {
+  left: 0;
+  top: 0;
+  margin: var(--spacing-sm);
+}
+
+.blank p {
+  font-family: Rubik, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  min-height: 20px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin-right: var(--spacing-sm);
 }

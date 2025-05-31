@@ -42,3 +42,14 @@ export const formatPokemonTypes = (types) => {
     })
   );
 };
+
+export const formatPokemonTypesIcon = (types) => {
+  return types.map((type, index) =>
+    React.createElement("img", {
+      className: `type-icon`,
+      key: `${type}-${index}`,
+      src: `./assets/type-icons/${type}.png`,
+      alt: type,
+    })
+  );
+};
