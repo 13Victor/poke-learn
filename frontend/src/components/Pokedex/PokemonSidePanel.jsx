@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { formatPokemonId, generatePokemonImagePath } from "../../utils/pokemonUtils";
 import { handleImageError, formatPokemonTypesIcon } from "../../utils/imageUtils";
+import { getCompleteEvolutionLine, hasEvolutionLine } from "../../utils/evolutionUtils";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 import apiService from "../../services/apiService";
-import { FaRulerVertical, FaWeightHanging } from "react-icons/fa";
+import EvolutionLine from "./EvolutionLine";
 import { PiGenderMaleBold, PiGenderFemaleBold } from "react-icons/pi";
 import { PiRulerBold } from "react-icons/pi";
 import { LuWeight } from "react-icons/lu";
@@ -38,9 +40,11 @@ const formatGenderRatio = (pokemon) => {
   return { male: 50, female: 50, genderless: false };
 };
 
-const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
+const PokemonSidePanel = ({ pokemon, isOpen, onClose, onPokemonChange }) => {
+  const { allPokemons } = usePokemonData();
   const [pokedexEntry, setPokedexEntry] = useState("Loading description...");
   const [isLoadingEntry, setIsLoadingEntry] = useState(false);
+  const [evolutionLine, setEvolutionLine] = useState([]);
 
   // ✅ HOOKS SIEMPRE PRIMERO - antes de cualquier return early
 
@@ -64,12 +68,30 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
     }
   }, [pokemon]);
 
+  // Cargar línea evolutiva cuando cambie el Pokémon o se carguen todos los Pokémon
+  useEffect(() => {
+    if (pokemon && pokemon.id && allPokemons && allPokemons.length > 0) {
+      const line = getCompleteEvolutionLine(pokemon.id, allPokemons);
+      setEvolutionLine(line);
+    }
+  }, [pokemon, allPokemons]);
+
   // ✅ AHORA sí podemos hacer return early después de todos los hooks
   if (!pokemon) return null;
 
   const pokemonId = formatPokemonId(pokemon.num);
   const pokemonImagePath = generatePokemonImagePath(pokemon);
   const genderInfo = formatGenderRatio(pokemon); // Ahora pasamos todo el pokemon
+
+  const handleEvolutionPokemonClick = (evolutionPokemon) => {
+    if (onPokemonChange && evolutionPokemon.id !== pokemon.id) {
+      // Buscar el Pokémon completo en allPokemons para tener todos los datos
+      const fullPokemonData = allPokemons.find((p) => p.id === evolutionPokemon.id);
+      if (fullPokemonData) {
+        onPokemonChange(fullPokemonData);
+      }
+    }
+  };
 
   return (
     <div className={`side-panel ${isOpen ? "open" : ""}`}>
@@ -190,7 +212,7 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
 
           {pokemon.abilities && (
             <div className="ability-section">
-              <div class="text-with-lines">
+              <div className="text-with-lines">
                 <h4>Abilities</h4>
               </div>
               <div className="abilities-list">
@@ -279,6 +301,15 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Línea Evolutiva */}
+          {evolutionLine.length > 1 && (
+            <EvolutionLine
+              evolutionLine={evolutionLine}
+              currentPokemon={pokemon}
+              onPokemonClick={handleEvolutionPokemonClick}
+            />
           )}
         </div>
       </div>

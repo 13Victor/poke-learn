@@ -121,6 +121,14 @@ const processAllPokemons = () => {
       gender: pokemonData.gender || undefined, // Para casos como "M", "F", "N"
       height: pokemonData.heightm || 0, // altura en metros
       weight: pokemonData.weightkg || 0, // peso en kg
+
+      prevo: pokemonData.prevo || null, // Pokémon del que evoluciona
+      evos: pokemonData.evos || null, // Array de Pokémon a los que puede evolucionar
+      evoType: pokemonData.evoType || null, // Tipo de evolución (levelUp, useItem, trade, etc.)
+      evoLevel: pokemonData.evoLevel || null, // Nivel requerido para evolución
+      evoItem: pokemonData.evoItem || null, // Item requerido para evolución
+      evoCondition: pokemonData.evoCondition || null, // Condición especial para evolución
+      evoMove: pokemonData.evoMove || null, // Movimiento requerido para evolución
     };
   });
 };

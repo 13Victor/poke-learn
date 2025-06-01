@@ -124,11 +124,17 @@ const Pokedex = () => {
     };
   }, [loadMorePokemons, isLoading]);
 
-  // Manejar clic en pokémon (por ahora solo log)
+  // Manejar clic en pokémon
   const handlePokemonClick = (pokemon) => {
     console.log("Pokémon clicked:", pokemon.name);
     setSelectedPokemon(pokemon);
     setIsPanelOpen(true);
+  };
+
+  // Manejar cambio de Pokémon desde la línea evolutiva
+  const handlePokemonChange = (newPokemon) => {
+    console.log("Pokémon changed to:", newPokemon.name);
+    setSelectedPokemon(newPokemon);
   };
 
   const handlePanelClose = () => {
@@ -150,25 +156,20 @@ const Pokedex = () => {
     setActiveFilters(newFilters);
     console.log("Active filters:", Array.from(newFilters));
   };
+
   return (
     <div className="pokedex-container">
       <TypeFilter onFilterClick={handleFilterClick} activeFilters={activeFilters} />
 
       <main className={isPanelOpen ? "with-panel" : ""}>
-        {" "}
-        {/* CLASE CONDICIONAL AÑADIDA */}
-        <div
-          id="container"
-          ref={containerRef}
-          className={isPanelOpen ? "with-side-panel" : ""} // CLASE CONDICIONAL AÑADIDA
-        >
+        <div id="container" ref={containerRef} className={isPanelOpen ? "with-side-panel" : ""}>
           <div className={`all-pokemons ${isPanelOpen ? "with-side-panel" : ""}`} id="pokemon-list">
             {displayedPokemons.map((pokemon) => (
               <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handlePokemonClick} />
             ))}
           </div>
 
-          {/* Resto de los indicadores de carga existentes... */}
+          {/* Indicadores de carga */}
           {isLoading && (
             <div className="loading-indicator">
               <div className="loading-spinner"></div>
@@ -188,8 +189,14 @@ const Pokedex = () => {
             </div>
           )}
         </div>
-        {/* NUEVO COMPONENTE - Panel Lateral */}
-        <PokemonSidePanel pokemon={selectedPokemon} isOpen={isPanelOpen} onClose={handlePanelClose} />
+
+        {/* Panel Lateral */}
+        <PokemonSidePanel
+          pokemon={selectedPokemon}
+          isOpen={isPanelOpen}
+          onClose={handlePanelClose}
+          onPokemonChange={handlePokemonChange}
+        />
       </main>
     </div>
   );
