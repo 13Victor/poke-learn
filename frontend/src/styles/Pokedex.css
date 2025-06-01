@@ -494,6 +494,8 @@ main {
 }
 
 .pokemon-details {
+  display: flex;
+  flex-direction: column;
   padding-inline: var(--spacing-xl);
 }
 
@@ -649,4 +651,44 @@ main {
 
 .stats-container .total-stats .stat-progress-fill::after {
   background-color: rgb(0, 0, 0, 0.2);
+}
+
+.ability-section {
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  border: 2px dashed var(--silver);
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+  gap: var(--spacing-xs);
+  padding-block: var(--spacing-xs) var(--spacing-sm);
+}
+
+.text-with-lines {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.text-with-lines::before,
+.text-with-lines::after {
+  content: "";
+  flex: 1; /* Hace que las líneas se expandan */
+  height: 1px; /* Grosor de la línea */
+  background-color: var(--silver); /* Color de la línea */
+  margin: 0 var(--spacing-sm);
+}
+
+.abilities-list {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-inline: var(--spacing-sm);
+}
+
+.ability-tag {
+  background-color: var(--white-smoke);
+  padding: 2px var(--spacing-md);
+  border-radius: var(--radius-full);
 }

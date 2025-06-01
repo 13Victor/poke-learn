@@ -188,10 +188,11 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Habilidades */}
           {pokemon.abilities && (
-            <div className="detail-section">
-              <h3>Abilities</h3>
+            <div className="ability-section">
+              <div class="text-with-lines">
+                <h4>Abilities</h4>
+              </div>
               <div className="abilities-list">
                 {pokemon.abilities.map((ability, index) => (
                   <span key={index} className="ability-tag">
@@ -250,8 +251,8 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose }) => {
                       style={{
                         background:
                           pokemon.types.length > 1
-                            ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), .5))`
-                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .5)`,
+                            ? `linear-gradient(45deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .35), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), .35))`
+                            : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), .35)`,
                       }}
                     >
                       <span className="stat-name total">Tot</span>
