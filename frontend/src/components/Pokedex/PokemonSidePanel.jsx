@@ -147,27 +147,29 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose, onPokemonChange }) => {
           {/* Descripción de la Pokédex */}
           <div className="">
             <hr id="separatorLine" />
-            <div
-              className="pokedex-description"
-              style={{
-                background:
-                  pokemon.types.length > 1
-                    ? `linear-gradient(180deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
-                    : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
-              }}
-            >
-              {isLoadingEntry ? (
-                <div className="loading-description">
-                  <div className="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            <div className="pokedex-description-container">
+              <div
+                className="pokedex-description"
+                style={{
+                  background:
+                    pokemon.types.length > 1
+                      ? `linear-gradient(180deg, rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5), rgba(var(--type-${pokemon.types[1].toLowerCase()}-rgb), 0.5))`
+                      : `rgba(var(--type-${pokemon.types[0].toLowerCase()}-rgb), 0.5)`,
+                }}
+              >
+                {isLoadingEntry ? (
+                  <div className="loading-description">
+                    <div className="loading-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <p>Loading description...</p>
                   </div>
-                  <p>Loading description...</p>
-                </div>
-              ) : (
-                <p>{pokedexEntry}</p>
-              )}
+                ) : (
+                  <p>{pokedexEntry}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -304,12 +306,20 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose, onPokemonChange }) => {
           )}
 
           {/* Línea Evolutiva */}
-          {evolutionLine.length > 1 && (
+          {evolutionLine.length > 1 ? (
             <EvolutionLine
               evolutionLine={evolutionLine}
               currentPokemon={pokemon}
               onPokemonClick={handleEvolutionPokemonClick}
             />
+          ) : (
+            <div className="evolution-section">
+              <h4>Evolution Line</h4>
+              <hr id="separatorLine" />
+              <div className="evolution-chain">
+                <p>This pokemon doesn't evolve</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
