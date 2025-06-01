@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import ItemRow from "./ItemRow";
+import SearchInput from "../common/SearchInput";
 
 // Definir altura de filas constante para todo el componente
 const ROW_HEIGHT = 40;
@@ -49,8 +50,17 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
   }, [items, itemsLoaded, isProcessingItems]);
 
   // Handle search functionality
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value.toLowerCase());
+  const handleSearchChange = useCallback((value) => {
+    setSearchTerm(value.toLowerCase());
+    setVisibleRange({ start: 0, end: 50 });
+
+    if (tableRef.current) {
+      tableRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchTerm("");
     setVisibleRange({ start: 0, end: 50 });
 
     if (tableRef.current) {
@@ -134,15 +144,13 @@ const ItemTable = ({ onItemSelect, selectedPokemon, selectedSlot }) => {
 
   return (
     <div className="table-container item-table">
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search by name or description..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
-      </div>
+      <SearchInput
+        value={searchTerm}
+        onChange={handleSearchChange}
+        onClear={handleSearchClear}
+        placeholder="Search by name or description..."
+        className="compact"
+      />
 
       <div ref={tableRef} className="table-wrapper">
         <table>

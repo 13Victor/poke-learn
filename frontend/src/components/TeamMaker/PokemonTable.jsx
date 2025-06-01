@@ -1,5 +1,6 @@
 import React, { useState, useCallback, memo, useMemo, useEffect, useRef } from "react";
 import PokemonRow from "./PokemonRow";
+import SearchInput from "../common/SearchInput";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 
@@ -32,12 +33,11 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   const scrollRAF = useRef(null);
   const [processedData, setProcessedData] = useState([]);
   const [isProcessingData, setIsProcessingData] = useState(false);
-  const processedRef = useRef(false); // Nuevo ref para rastrear si los datos han sido procesados
-  const [sortConfig, setSortConfig] = useState({ key: "tier", direction: "ascending" }); // Default sort by tier ascending
+  const processedRef = useRef(false);
+  const [sortConfig, setSortConfig] = useState({ key: "tier", direction: "ascending" });
 
   // Load pokemon data if not already loaded
   useEffect(() => {
-    // Load pokemon data if not already loaded
     const loadData = async () => {
       if (!pokemonsLoaded && !pokemonsLoading) {
         console.log("🔄 Intentando cargar datos de Pokémon...");
@@ -66,7 +66,7 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
       processed: processedRef.current,
       processedDataLength: processedData.length,
     });
-    // Solo procesamos los datos si no se han procesado antes o si los datos de Pokémon han cambiado
+
     if (
       pokemonsLoaded &&
       pokemons.length > 0 &&
@@ -74,9 +74,8 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
       (!processedRef.current || processedData.length === 0 || processedData[0]?.id !== pokemons[0]?.id)
     ) {
       setIsProcessingData(true);
-      processedRef.current = true; // Marcamos que los datos están siendo procesados
+      processedRef.current = true;
 
-      // Use setTimeout to prevent UI blocking during processing
       setTimeout(() => {
         const processedData = pokemons.map((pokemon) => ({
           ...pokemon,
@@ -92,8 +91,17 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
   }, [pokemons, pokemonsLoaded, isProcessingData, processedData]);
 
   // Search functionality
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value.toLowerCase());
+  const handleSearchChange = useCallback((value) => {
+    setSearchTerm(value.toLowerCase());
+    setVisibleRange({ start: 0, end: 50 });
+
+    if (tableRef.current) {
+      tableRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchTerm("");
     setVisibleRange({ start: 0, end: 50 });
 
     if (tableRef.current) {
@@ -269,15 +277,13 @@ const PokemonTable = memo(({ onPokemonSelect }) => {
 
   return (
     <div className="table-container pokemon-table">
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search by name, type, ability..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
-      </div>
+      <SearchInput
+        value={searchTerm}
+        onChange={handleSearchChange}
+        onClear={handleSearchClear}
+        placeholder="Search by name, type, ability..."
+        className="compact"
+      />
       <div ref={tableRef} className="table-wrapper">
         <table>
           <thead>

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 
 import MoveRow from "./MoveRow";
+import SearchInput from "../common/SearchInput";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import { useTeam } from "../../contexts/TeamContext";
 import "../../styles/MoveTable.css";
@@ -26,7 +27,7 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
   const tableRef = useRef(null);
   const [pokemonMoves, setPokemonMoves] = useState([]);
   const [isProcessingMoves, setIsProcessingMoves] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Added search term state
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Load necessary data if not already loaded
   useEffect(() => {
@@ -116,8 +117,17 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
   }, [selectedPokemon?.id]);
 
   // Handle search functionality
-  const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value.toLowerCase());
+  const handleSearchChange = useCallback((value) => {
+    setSearchTerm(value.toLowerCase());
+    setVisibleRange({ start: 0, end: 50 });
+
+    if (tableRef.current) {
+      tableRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchTerm("");
     setVisibleRange({ start: 0, end: 50 });
 
     if (tableRef.current) {
@@ -199,15 +209,13 @@ const MoveTable = ({ onMoveSelect, selectedPokemon, selectedSlot, selectedMoveIn
 
   return (
     <div className="table-container move-table">
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search moves by name, type, or description..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="search-input"
-        />
-      </div>
+      <SearchInput
+        value={searchTerm}
+        onChange={handleSearchChange}
+        onClear={handleSearchClear}
+        placeholder="Search moves by name, type, or description..."
+        className="compact"
+      />
 
       <div ref={tableRef} className="table-wrapper">
         <table>

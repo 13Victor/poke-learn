@@ -3,6 +3,7 @@ import { usePokemonData } from "../../contexts/PokemonDataContext";
 import PokemonCard from "./PokemonCard";
 import TypeFilter from "./TypeFilter";
 import PokemonSidePanel from "./PokemonSidePanel";
+import SearchInput from "../common/SearchInput";
 import { createInitialFilters, toggleShowAll, toggleType, filterPokemons } from "../../utils/filterUtils";
 import "../../styles/Pokedex.css";
 
@@ -12,6 +13,7 @@ const Pokedex = () => {
   const [displayedPokemons, setDisplayedPokemons] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [activeFilters, setActiveFilters] = useState(createInitialFilters());
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [selectedPokemon, setSelectedPokemon] = useState(null);
@@ -42,10 +44,29 @@ const Pokedex = () => {
     loadPokemons();
   }, [allPokemonsLoaded, getAllPokemons]);
 
-  // Aplicar filtros cuando cambien los Pokémon o los filtros activos
+  // Función para filtrar por término de búsqueda
+  const filterBySearch = useCallback((pokemonList, term) => {
+    if (!term.trim()) return pokemonList;
+
+    const searchLower = term.toLowerCase().trim();
+    return pokemonList.filter((pokemon) => {
+      return (
+        pokemon.name.toLowerCase().includes(searchLower) ||
+        pokemon.types.some((type) => type.toLowerCase().includes(searchLower)) ||
+        (pokemon.abilities && pokemon.abilities.some((ability) => ability.toLowerCase().includes(searchLower))) ||
+        pokemon.id.toString().includes(searchLower)
+      );
+    });
+  }, []);
+
+  // Aplicar filtros cuando cambien los Pokémon, los filtros activos o el término de búsqueda
   const filteredPokemons = useMemo(() => {
-    return filterPokemons(pokemons, activeFilters);
-  }, [pokemons, activeFilters]);
+    // Primero aplicar filtros de tipo
+    const typeFiltered = filterPokemons(pokemons, activeFilters);
+
+    // Luego aplicar filtro de búsqueda
+    return filterBySearch(typeFiltered, searchTerm);
+  }, [pokemons, activeFilters, searchTerm, filterBySearch]);
 
   // Actualizar Pokémon mostrados cuando cambien los filtrados
   useEffect(() => {
@@ -157,9 +178,37 @@ const Pokedex = () => {
     console.log("Active filters:", Array.from(newFilters));
   };
 
+  // Manejar búsqueda
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
+  const handleSearchClear = () => {
+    setSearchTerm("");
+  };
+
   return (
     <div className="pokedex-container">
-      <TypeFilter onFilterClick={handleFilterClick} activeFilters={activeFilters} />
+      {/* Header con buscador */}
+      <div className="pokedex-header">
+        <div className="header-content">
+          <h1 className="pokedex-title">Pokédex</h1>
+        </div>
+      </div>
+
+      <nav>
+        <div className="search-section">
+          <SearchInput
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onClear={handleSearchClear}
+            placeholder="Buscar Pokémon por nombre, tipo, habilidad o número..."
+            className="pokedex-search"
+            icon="fa-search"
+          />
+        </div>
+        <TypeFilter onFilterClick={handleFilterClick} activeFilters={activeFilters} />
+      </nav>
 
       <main className={isPanelOpen ? "with-panel" : ""}>
         <div id="container" ref={containerRef} className={isPanelOpen ? "with-side-panel" : ""}>
@@ -185,7 +234,21 @@ const Pokedex = () => {
 
           {filteredPokemons.length === 0 && pokemons.length > 0 && (
             <div className="no-results">
-              <p>No se encontraron Pokémon con los filtros seleccionados.</p>
+              {searchTerm ? (
+                <div className="no-search-results">
+                  <i className="fas fa-search-minus"></i>
+                  <p>
+                    No se encontraron Pokémon que coincidan con "<strong>{searchTerm}</strong>"
+                  </p>
+                  <p className="suggestion">Intenta buscar por nombre, tipo, habilidad o número del Pokémon</p>
+                  <button className="clear-search-btn" onClick={handleSearchClear}>
+                    <i className="fas fa-times"></i>
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              ) : (
+                <p>No se encontraron Pokémon con los filtros seleccionados.</p>
+              )}
             </div>
           )}
         </div>
