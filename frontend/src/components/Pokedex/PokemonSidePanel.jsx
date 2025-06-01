@@ -158,13 +158,8 @@ const PokemonSidePanel = ({ pokemon, isOpen, onClose, onPokemonChange }) => {
                 }}
               >
                 {isLoadingEntry ? (
-                  <div className="loading-description">
-                    <div className="loading-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <p>Loading description...</p>
+                  <div className="loading-container">
+                    <p>Loading pokedex entry...</p>
                   </div>
                 ) : (
                   <p>{pokedexEntry}</p>
