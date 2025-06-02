@@ -467,3 +467,7 @@
 .pokemon-warning-icon {
   border-radius: var(--radius-sm);
 }
+
+.teams-section:first-child {
+  background-color:rgba(255, 208, 0, .33) ;
+}

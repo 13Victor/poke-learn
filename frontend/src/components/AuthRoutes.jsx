@@ -9,6 +9,7 @@ import Teams from "./Teams/Teams";
 import Battle from "./Battle/Combat";
 import Pokedex from "./Pokedex/Pokedex";
 import { useAuth } from "../contexts/AuthContext";
+import BattleSetup from "./Battle/BattleSetup";
 
 function AuthRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -51,7 +52,7 @@ function AuthRoutes() {
         <Route path="/teammaker" element={<TeamMaker />} />
         <Route path="/teammaker/:teamId" element={<TeamMaker />} />
         <Route path="/teams" element={<Teams />} />
-        <Route path="/battle" element={<Battle />} />
+        <Route path="/battle" element={<BattleSetup />} />
       </Route>
 
       {/* Ruta 404 - cuando ninguna otra ruta coincide */}

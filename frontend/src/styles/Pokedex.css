@@ -204,11 +204,11 @@ main {
   background-image: var(--pokemon-background, none);
 }
 
-.pokemon:hover .pokemon-id-back::before {
+.pokedex-container .pokemon:hover .pokemon-id-back::before {
   opacity: 0.5;
 }
 
-.pokemon:hover .pokedex-pokemon-img img {
+.pokedex-container .pokemon:hover .pokedex-pokemon-img img {
   transform: scale(1.1);
   filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.4));
 }
@@ -890,7 +890,7 @@ main {
 }
 
 /* Hover mejorado */
-.pokemon:hover {
+.pokedex-container .pokemon:hover {
   transform: translateY(-5px);
   box-shadow: rgba(0, 0, 0, 0.15) 0px 8px 25px;
   transition: all 0.3s ease;

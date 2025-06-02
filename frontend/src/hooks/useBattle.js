@@ -1,14 +1,6 @@
 // src/hooks/useBattle.js
-import { useState, useEffect } from "react";
-import axios from "axios";
-
-// Configurar axios para que apunte al backend
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { useState } from "react";
+import apiService from "../services/apiService";
 
 export function useBattle() {
   const [battleId, setBattleId] = useState(null);
@@ -31,19 +23,35 @@ export function useBattle() {
       setPlayerForceSwitch(false);
       setCpuForceSwitch(false);
 
-      // Paso 1: Crear la batalla
-      const createResponse = await API.post("/battle/start", { format });
-      const { battleId } = createResponse.data;
-      setBattleId(battleId);
+      // Verificar autenticación antes de hacer la llamada
+      if (!apiService.isAuthenticated()) {
+        throw new Error("No estás autenticado. Por favor, inicia sesión.");
+      }
+
+      // Paso 1: Crear la batalla usando apiService
+      const createResponse = await apiService.fetchData("/battle/start", {
+        method: "POST",
+        headers: apiService.getHeaders(),
+        body: JSON.stringify({ format }),
+        requiresAuth: true,
+      });
+
+      const { battleId: newBattleId } = createResponse.data || createResponse;
+      setBattleId(newBattleId);
 
       // Paso 2: Inicializar la batalla
-      const initResponse = await API.post(`/battle/initialize/${battleId}`);
+      const initResponse = await apiService.fetchData(`/battle/initialize/${newBattleId}`, {
+        method: "POST",
+        headers: apiService.getHeaders(),
+        requiresAuth: true,
+      });
 
-      setBattleLogs(initResponse.data.logs || []);
-      setBattleState(initResponse.data.state === "active" ? "active" : "completed");
+      const initData = initResponse.data || initResponse;
+      setBattleLogs(initData.logs || []);
+      setBattleState(initData.state === "active" ? "active" : "completed");
 
       // Procesar los logs para encontrar los datos de request
-      processLogs(initResponse.data.logs || []);
+      processLogs(initData.logs || []);
     } catch (err) {
       console.error("Error al iniciar batalla:", err);
       setError("No se pudo iniciar la batalla. Intenta nuevamente.");
@@ -153,22 +161,35 @@ export function useBattle() {
       setError(null);
       setIsProcessingCommand(true);
 
+      // Verificar autenticación
+      if (!apiService.isAuthenticated()) {
+        throw new Error("No estás autenticado. Por favor, inicia sesión.");
+      }
+
       // Añadir log de comando enviado para feedback visual inmediato
       setBattleLogs((prevLogs) => [...prevLogs, `Enviando comando: ${command}`]);
 
-      // Enviar el comando al servidor
-      const response = await API.post(`/battle/command/${battleId}`, { command });
-      console.log("Respuesta del servidor:", response.data);
+      // Enviar el comando al servidor usando apiService
+      const response = await apiService.fetchData(`/battle/command/${battleId}`, {
+        method: "POST",
+        headers: apiService.getHeaders(),
+        body: JSON.stringify({ command }),
+        requiresAuth: true,
+      });
+
+      console.log("Respuesta del servidor:", response);
+
+      const responseData = response.data || response;
 
       // Añadir los nuevos logs a los existentes
-      if (response.data.logs && response.data.logs.length > 0) {
-        console.log(`Añadiendo ${response.data.logs.length} nuevos logs:`, response.data.logs);
+      if (responseData.logs && responseData.logs.length > 0) {
+        console.log(`Añadiendo ${responseData.logs.length} nuevos logs:`, responseData.logs);
 
         // Agregar los nuevos logs
-        setBattleLogs((prevLogs) => [...prevLogs, ...response.data.logs]);
+        setBattleLogs((prevLogs) => [...prevLogs, ...responseData.logs]);
 
         // Procesar los nuevos logs
-        processLogs(response.data.logs);
+        processLogs(responseData.logs);
       } else {
         console.warn("No se recibieron nuevos logs del servidor");
 
@@ -190,14 +211,26 @@ export function useBattle() {
             const cpuCommand = ">p2 move 1";
             setBattleLogs((prevLogs) => [...prevLogs, `Enviando comando automático: ${cpuCommand}`]);
 
-            const cpuResponse = await API.post(`/battle/command/${battleId}`, { command: cpuCommand });
+            const cpuResponse = await apiService.fetchData(`/battle/command/${battleId}`, {
+              method: "POST",
+              headers: apiService.getHeaders(),
+              body: JSON.stringify({ command: cpuCommand }),
+              requiresAuth: true,
+            });
 
-            if (cpuResponse.data.logs && cpuResponse.data.logs.length > 0) {
-              setBattleLogs((prevLogs) => [...prevLogs, ...cpuResponse.data.logs]);
-              processLogs(cpuResponse.data.logs);
+            if (cpuResponse.logs && cpuResponse.logs.length > 0) {
+              setBattleLogs((prevLogs) => [...prevLogs, ...cpuResponse.logs]);
+              processLogs(cpuResponse.logs);
               console.log("Comando automático de CPU exitoso");
             } else {
-              setBattleLogs((prevLogs) => [...prevLogs, "No se recibió respuesta al comando automático de CPU."]);
+              const cpuResponseData = cpuResponse.data || cpuResponse;
+              if (cpuResponseData.logs && cpuResponseData.logs.length > 0) {
+                setBattleLogs((prevLogs) => [...prevLogs, ...cpuResponseData.logs]);
+                processLogs(cpuResponseData.logs);
+                console.log("Comando automático de CPU exitoso");
+              } else {
+                setBattleLogs((prevLogs) => [...prevLogs, "No se recibió respuesta al comando automático de CPU."]);
+              }
             }
           } catch (cpuErr) {
             console.error("Error al enviar comando automático de CPU:", cpuErr);
@@ -207,7 +240,7 @@ export function useBattle() {
       }
 
       // Verificar si la batalla ha terminado
-      if (response.data.state === "completed") {
+      if (responseData.state === "completed") {
         setBattleState("completed");
       }
 

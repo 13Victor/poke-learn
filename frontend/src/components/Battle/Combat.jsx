@@ -8,8 +8,9 @@ import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
+import BattleSetup from "../Battle/BattleSetup";
 import "../../styles/Battle/Combat.css";
-import "../../styles/Battle/BattleField.css"; // Importamos los estilos simplificados del campo de batalla
+import "../../styles/Battle/BattleField.css";
 
 const Combat = () => {
   const {
@@ -31,23 +32,42 @@ const Combat = () => {
   // Estado para alternar entre la vista de campo de batalla y logs (para debugging)
   const [showLogs, setShowLogs] = useState(false);
 
+  // Estado para manejar la configuración de batalla seleccionada
+  const [battleConfig, setBattleConfig] = useState(null);
+
+  // Función para manejar el inicio de batalla desde BattleSetup
+  const handleStartBattle = (config) => {
+    setBattleConfig(config);
+    // Guardar la configuración para usar más adelante si es necesario
+    console.log("Configuración de batalla seleccionada:", config);
+
+    // Iniciar la batalla
+    startBattle();
+  };
+
+  // Si no hay batalla activa ni completada, mostrar la pantalla de configuración
+  if (battleState === "idle") {
+    return (
+      <div className="combat-container">
+        <BattleSetup onStartBattle={handleStartBattle} format={format} setFormat={setFormat} />
+      </div>
+    );
+  }
+
+  // Resto del componente para cuando la batalla está activa
   return (
     <div className="combat-container">
       <h1>Simulador de Batalla Pokémon</h1>
 
       <div className="battle-status">
-        <div className="format-selector">
-          <label htmlFor="format-select">Formato: </label>
-          <select
-            id="format-select"
-            value={format}
-            onChange={(e) => setFormat(e.target.value)}
-            disabled={battleState === "active" || battleState === "loading"}
-          >
-            <option value="gen7randombattle">Gen 7 Random Battle</option>
-            <option value="gen8randombattle">Gen 8 Random Battle</option>
-            <option value="gen9randombattle">Gen 9 Random Battle</option>
-          </select>
+        <div className="battle-info">
+          <span>Formato: {format}</span>
+          {battleConfig && (
+            <>
+              <span>Equipo: {battleConfig.team.name}</span>
+              <span>Dificultad: {battleConfig.difficulty === "easy" ? "Fácil" : battleConfig.difficulty}</span>
+            </>
+          )}
         </div>
 
         <button className="start-button" onClick={startBattle} disabled={battleState === "loading"}>
@@ -114,7 +134,10 @@ const Combat = () => {
       {battleState === "completed" && (
         <div className="battle-complete">
           <p>¡La batalla ha finalizado!</p>
-          <button onClick={startBattle}>Iniciar Nueva Batalla</button>
+          <div className="battle-complete-actions">
+            <button onClick={() => window.location.reload()}>Configurar Nueva Batalla</button>
+            <button onClick={startBattle}>Repetir con Misma Configuración</button>
+          </div>
         </div>
       )}
     </div>
