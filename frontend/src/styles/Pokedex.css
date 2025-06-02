@@ -449,9 +449,6 @@ main {
 
 .pokemon-image-large {
   display: flex;
-  border-top-left-radius: var(--radius-md);
-
-  border-top-right-radius: var(--radius-md);
 }
 
 .blank {
@@ -841,4 +838,240 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* ===== NUEVAS ANIMACIONES PARA POKEMON CARDS ===== */
+
+/* Modificación de la clase existente .pokemon para mejorar animaciones */
+.pokedex-container .pokemon {
+  /* Mantener los estilos existentes y agregar: */
+  will-change: transform, opacity;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Nuevas clases para animaciones de entrada */
+.pokemon.animate-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.pokemon.animate-out {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+}
+
+.pokemon:active {
+  transform: translateY(-2px) scale(0.98);
+  transition: all 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ===== ANIMACIONES DEL PANEL LATERAL ===== */
+
+/* Modificar la clase existente .side-panel */
+.side-panel {
+  /* Mantener todos los estilos existentes y agregar: */
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  z-index: 1000;
+  border-radius: 0px !important;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow-y: auto;
+  box-shadow: -2px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.side-panel.open {
+  transform: translateX(0);
+}
+
+/* Animación del contenido del panel */
+.side-panel-content {
+  /* Mantener estilos existentes y agregar: */
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
+}
+
+.side-panel.open .side-panel-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ===== AJUSTE SUAVE DEL CONTENIDO PRINCIPAL ===== */
+
+/* Modificar main para transiciones suaves */
+main {
+  /* Mantener estilos existentes y agregar: */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+main.with-panel {
+  padding-right: 488px; /* Ajustar según el ancho de tu panel */
+}
+
+/* Transición suave del container */
+#container {
+  /* Mantener estilos existentes y agregar: */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#container.with-side-panel {
+  width: calc(100% - 500px);
+}
+
+/* Transición suave del grid de pokemon */
+.all-pokemons {
+  /* Mantener estilos existentes y agregar: */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ===== ANIMACIONES DE LAS ESTADÍSTICAS ===== */
+
+/* Mejorar la animación de las barras de progreso */
+.stat-progress-fill {
+  /* Mantener estilos existentes y modificar transition: */
+  transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s;
+}
+
+/* Animación para las barras cuando se abre el panel */
+.side-panel.open .stat-progress-fill {
+  animation: progressBarFill 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
+}
+
+@keyframes progressBarFill {
+  from {
+    width: 0 !important;
+  }
+}
+
+/* ===== ANIMACIONES ESCALONADAS ===== 
+
+/* ===== OVERLAY SUTIL CUANDO EL PANEL ESTÁ ABIERTO ===== */
+
+.pokedex-container::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  pointer-events: none;
+  transition: background 0.3s ease;
+  z-index: 999;
+  opacity: 0;
+}
+
+.pokedex-container.with-panel::after {
+  background: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+/* ===== RESPONSIVE PARA MÓVILES ===== */
+
+@media (max-width: 768px) {
+  .side-panel {
+    width: 100vw;
+    min-width: 100vw;
+  }
+
+  main.with-panel {
+    margin-right: 0;
+  }
+
+  #container.with-side-panel {
+    width: 100%;
+  }
+
+  .all-pokemons.with-side-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== MEJORAS ADICIONALES ===== */
+
+/* Animación para el botón de cerrar */
+.close-btn {
+  /* Mantener estilos existentes y agregar: */
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  /* Mantener estilos existentes y agregar: */
+  transform: scale(1.1);
+}
+
+/* Animación suave para las imágenes de pokemon */
+.pokedex-pokemon-img img,
+.large-image {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Animación para los tipos de pokemon */
+.pokemon-types-pokedex img {
+  transition: transform 0.2s ease;
+}
+
+/* ===== ANIMACIÓN DE ENTRADA GENERAL ===== */
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Clase para aplicar la animación de entrada */
+.pokemon-card-enter {
+  animation: slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ===== ANIMACIONES PARA BÚSQUEDA/FILTROS ===== */
+
+/* Transición suave cuando cambian los resultados */
+.all-pokemons {
+  animation: fadeInGrid 0.3s ease-out;
+}
+
+@keyframes fadeInGrid {
+  from {
+    opacity: 0.7;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+
+/* Optimización para animaciones suaves */
+.pokemon,
+.side-panel,
+.side-panel-content,
+main,
+#container,
+.all-pokemons {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Mejorar el rendimiento de las transformaciones */
+.pokemon:hover {
+  will-change: transform;
+}
+
+.side-panel {
+  will-change: transform;
+}
+
+.side-panel-content {
+  will-change: opacity, transform;
 }

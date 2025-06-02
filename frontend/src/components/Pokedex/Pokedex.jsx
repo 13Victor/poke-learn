@@ -18,6 +18,7 @@ const Pokedex = () => {
 
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isPanelVisible, setIsPanelVisible] = useState(false); // Para controlar la visibilidad del DOM
 
   const pageSize = 60;
   const containerRef = useRef(null);
@@ -44,18 +45,44 @@ const Pokedex = () => {
     loadPokemons();
   }, [allPokemonsLoaded, getAllPokemons]);
 
-  // Función para filtrar por término de búsqueda
+  // Función mejorada para filtrar por término de búsqueda (incluyendo números)
   const filterBySearch = useCallback((pokemonList, term) => {
     if (!term.trim()) return pokemonList;
 
     const searchLower = term.toLowerCase().trim();
+
+    // Verificar si el término es numérico
+    const isNumericSearch = /^\d+$/.test(searchLower);
+
     return pokemonList.filter((pokemon) => {
-      return (
+      // Búsqueda por nombre, tipos y habilidades (como antes)
+      const textMatch =
         pokemon.name.toLowerCase().includes(searchLower) ||
         pokemon.types.some((type) => type.toLowerCase().includes(searchLower)) ||
-        (pokemon.abilities && pokemon.abilities.some((ability) => ability.toLowerCase().includes(searchLower))) ||
-        pokemon.id.toString().includes(searchLower)
-      );
+        (pokemon.abilities && pokemon.abilities.some((ability) => ability.toLowerCase().includes(searchLower)));
+
+      // Búsqueda numérica mejorada
+      if (isNumericSearch) {
+        const pokemonNum = pokemon.num.toString();
+        const pokemonId = pokemon.id.toString();
+
+        // Búsqueda exacta por número
+        if (pokemonNum === searchLower || pokemonId === searchLower) {
+          return true;
+        }
+
+        // Búsqueda por números que empiecen con el término
+        if (pokemonNum.startsWith(searchLower) || pokemonId.startsWith(searchLower)) {
+          return true;
+        }
+
+        // También incluir la búsqueda textual por si escriben el número como string
+        if (pokemonNum.includes(searchLower) || pokemonId.includes(searchLower)) {
+          return true;
+        }
+      }
+
+      return textMatch;
     });
   }, []);
 
@@ -149,7 +176,11 @@ const Pokedex = () => {
   const handlePokemonClick = (pokemon) => {
     console.log("Pokémon clicked:", pokemon.name);
     setSelectedPokemon(pokemon);
-    setIsPanelOpen(true);
+    setIsPanelVisible(true); // Primero hacemos visible el panel en el DOM
+    // Pequeño delay para que el DOM se actualice antes de aplicar la animación
+    setTimeout(() => {
+      setIsPanelOpen(true);
+    }, 10);
   };
 
   // Manejar cambio de Pokémon desde la línea evolutiva
@@ -159,8 +190,12 @@ const Pokedex = () => {
   };
 
   const handlePanelClose = () => {
-    setIsPanelOpen(false);
-    setTimeout(() => setSelectedPokemon(null), 300); // Delay para la animación
+    setIsPanelOpen(false); // Primero quitamos la clase que hace la animación
+    // Después de que termine la animación, quitamos del DOM
+    setTimeout(() => {
+      setIsPanelVisible(false);
+      setSelectedPokemon(null);
+    }, 300); // 300ms coincide con la duración de la animación CSS
   };
 
   // Manejar filtros
@@ -213,8 +248,13 @@ const Pokedex = () => {
       <main className={isPanelOpen ? "with-panel" : ""}>
         <div id="container" ref={containerRef} className={isPanelOpen ? "with-side-panel" : ""}>
           <div className={`all-pokemons ${isPanelOpen ? "with-side-panel" : ""}`} id="pokemon-list">
-            {displayedPokemons.map((pokemon) => (
-              <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handlePokemonClick} />
+            {displayedPokemons.map((pokemon, index) => (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                onClick={handlePokemonClick}
+                animationDelay={index * 50} // Añadimos delay escalonado para la animación
+              />
             ))}
           </div>
 
@@ -253,13 +293,15 @@ const Pokedex = () => {
           )}
         </div>
 
-        {/* Panel Lateral */}
-        <PokemonSidePanel
-          pokemon={selectedPokemon}
-          isOpen={isPanelOpen}
-          onClose={handlePanelClose}
-          onPokemonChange={handlePokemonChange}
-        />
+        {/* Panel Lateral - Solo se renderiza si está visible */}
+        {isPanelVisible && (
+          <PokemonSidePanel
+            pokemon={selectedPokemon}
+            isOpen={isPanelOpen}
+            onClose={handlePanelClose}
+            onPokemonChange={handlePokemonChange}
+          />
+        )}
       </main>
     </div>
   );
