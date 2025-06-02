@@ -249,12 +249,7 @@ const Pokedex = () => {
         <div id="container" ref={containerRef} className={isPanelOpen ? "with-side-panel" : ""}>
           <div className={`all-pokemons ${isPanelOpen ? "with-side-panel" : ""}`} id="pokemon-list">
             {displayedPokemons.map((pokemon, index) => (
-              <PokemonCard
-                key={pokemon.id}
-                pokemon={pokemon}
-                onClick={handlePokemonClick}
-                animationDelay={index * 50} // Añadimos delay escalonado para la animación
-              />
+              <PokemonCard key={pokemon.id} pokemon={pokemon} onClick={handlePokemonClick} />
             ))}
           </div>
 
@@ -276,15 +271,10 @@ const Pokedex = () => {
             <div className="no-results">
               {searchTerm ? (
                 <div className="no-search-results">
-                  <i className="fas fa-search-minus"></i>
                   <p>
                     No se encontraron Pokémon que coincidan con "<strong>{searchTerm}</strong>"
                   </p>
                   <p className="suggestion">Intenta buscar por nombre, tipo, habilidad o número del Pokémon</p>
-                  <button className="clear-search-btn" onClick={handleSearchClear}>
-                    <i className="fas fa-times"></i>
-                    Limpiar búsqueda
-                  </button>
                 </div>
               ) : (
                 <p>No se encontraron Pokémon con los filtros seleccionados.</p>
