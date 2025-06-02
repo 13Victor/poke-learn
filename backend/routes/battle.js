@@ -18,33 +18,55 @@ const activeBattles = new Map();
  */
 router.post("/start", verifyToken, async (req, res) => {
   try {
-    const { format = "gen7randombattle" } = req.body;
+    const { format = "gen7randombattle", playerTeam = null, rivalTeamExport = null, useCustomTeams = false } = req.body;
 
-    // Crear un ID único para la batalla
     const battleId = Date.now().toString();
 
-    // Generar equipos aleatorios
-    const playerTeam = Teams.pack(Teams.generate(format));
-    const aiTeam = Teams.pack(Teams.generate(format));
+    let finalPlayerTeam, finalAiTeam;
 
-    // Configuración de la batalla
+    if (useCustomTeams && playerTeam && rivalTeamExport) {
+      console.log("🎯 Using custom teams for battle");
+
+      // Player team is already in JSON format
+      finalPlayerTeam = Teams.pack(playerTeam);
+
+      // Convert rival team from export format to packed format
+      try {
+        const rivalTeamJson = Teams.import(rivalTeamExport);
+        finalAiTeam = Teams.pack(rivalTeamJson);
+
+        console.log("✅ Custom teams processed successfully");
+        console.log("Player team (packed):", finalPlayerTeam);
+        console.log("AI team (packed):", finalAiTeam);
+      } catch (error) {
+        console.error("❌ Error processing rival team:", error);
+        throw new Error("Error al procesar el equipo rival: " + error.message);
+      }
+    } else {
+      console.log("🎲 Using random teams for battle");
+      // Generate random teams as before
+      finalPlayerTeam = Teams.pack(Teams.generate(format));
+      finalAiTeam = Teams.pack(Teams.generate(format));
+    }
+
     const battleSetup = {
       battleId,
       format,
-      playerTeam,
-      aiTeam,
+      playerTeam: finalPlayerTeam,
+      aiTeam: finalAiTeam,
       logs: [],
       state: "setup",
       lastInputTurn: 0,
+      useCustomTeams,
     };
 
-    // Guardar en batallas activas
     activeBattles.set(battleId, battleSetup);
 
     res.json(
       formatResponse(true, "Batalla creada correctamente", {
         battleId,
         format,
+        useCustomTeams,
       })
     );
   } catch (error) {

@@ -192,11 +192,6 @@ const BattleSetup = () => {
       const completeTeams = filterCompleteTeams(teamsData);
       setTeams(completeTeams);
 
-      // Si hay equipos completos, seleccionar el primero por defecto
-      if (completeTeams.length > 0) {
-        setSelectedTeam(completeTeams[0]);
-      }
-
       setError(null);
     } catch (err) {
       console.error("Error al cargar equipos:", err);
@@ -212,16 +207,85 @@ const BattleSetup = () => {
       return;
     }
 
-    // Guardar la configuración en localStorage para usar en Combat
+    // Convert team to Showdown format
+    const playerTeamShowdown = convertTeamToShowdownFormat(selectedTeam);
+
+    // Rival team in export format (will be converted)
+    const rivalTeamExport = `
+Kyurem @ Loaded Dice  
+Ability: Pressure  
+Tera Type: Electric  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Adamant Nature  
+- Dragon Dance  
+- Icicle Spear  
+- Tera Blast  
+- Scale Shot  
+
+Iron Moth @ Booster Energy  
+Ability: Quark Drive  
+Tera Type: Fairy  
+EVs: 124 Def / 132 SpA / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Fiery Dance  
+- Sludge Wave  
+- Dazzling Gleam  
+- Psychic  
+
+Kingambit (M) @ Leftovers  
+Ability: Supreme Overlord  
+Tera Type: Ghost  
+EVs: 200 HP / 252 Atk / 56 Spe  
+Adamant Nature  
+- Iron Head  
+- Sucker Punch  
+- Low Kick  
+- Swords Dance  
+
+Landorus-Therian (M) @ Rocky Helmet  
+Ability: Intimidate  
+Tera Type: Water  
+EVs: 252 HP / 4 Def / 252 Spe  
+Jolly Nature  
+- Stealth Rock  
+- Earthquake  
+- Stone Edge  
+- Grass Knot  
+
+Hatterene (F) @ Custap Berry  
+Ability: Magic Bounce  
+Tera Type: Water  
+EVs: 252 HP / 204 Def / 52 Spe  
+Bold Nature  
+- Healing Wish  
+- Dazzling Gleam  
+- Psychic Noise  
+- Nuzzle  
+
+Zamazenta @ Leftovers  
+Ability: Dauntless Shield  
+Tera Type: Fire  
+EVs: 104 HP / 124 Atk / 96 Def / 184 Spe  
+Jolly Nature  
+- Iron Defense  
+- Body Press  
+- Crunch  
+- Substitute`;
+
+    console.log("🎯 Player team in Showdown JSON format:");
+    console.log(JSON.stringify(playerTeamShowdown, null, 2));
+
+    // Save battle configuration
     const battleConfig = {
       team: selectedTeam,
+      playerTeamShowdown: playerTeamShowdown,
+      rivalTeamExport: rivalTeamExport,
       difficulty,
-      format: "gen9randombattle", // Formato fijo
+      format: "gen9randombattle",
     };
 
     localStorage.setItem("battleConfig", JSON.stringify(battleConfig));
-
-    // Navegar a la batalla
     navigate("/battle/combat");
   };
 

@@ -273,6 +273,61 @@ class ApiService {
       requiresAuth: true,
     });
   }
+
+  async startBattle(battleData) {
+    return this.fetchData("/battle/start", {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(battleData),
+      requiresAuth: true,
+    });
+  }
+
+  // Inicializar batalla
+  async initializeBattle(battleId) {
+    return this.fetchData(`/battle/initialize/${battleId}`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
+
+  // Enviar comando a batalla
+  async sendBattleCommand(battleId, command) {
+    return this.fetchData(`/battle/command/${battleId}`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify({ command }),
+      requiresAuth: true,
+    });
+  }
+
+  // Obtener estado de batalla
+  async getBattleStatus(battleId) {
+    return this.fetchData(`/battle/status/${battleId}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
+
+  // Finalizar batalla
+  async endBattle(battleId) {
+    return this.fetchData(`/battle/end/${battleId}`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
+
+  // Obtener formatos disponibles
+  async getBattleFormats() {
+    return this.fetchData("/battle/formats", {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
 }
 
 // Exportar una única instancia para usar en toda la aplicación

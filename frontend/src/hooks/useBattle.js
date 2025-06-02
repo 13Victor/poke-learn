@@ -14,7 +14,7 @@ export function useBattle() {
   const [format, setFormat] = useState("gen7randombattle");
 
   // Iniciar una nueva batalla
-  const startBattle = async () => {
+  const startBattle = async (battleConfig = null) => {
     try {
       setBattleState("loading");
       setError(null);
@@ -23,23 +23,37 @@ export function useBattle() {
       setPlayerForceSwitch(false);
       setCpuForceSwitch(false);
 
-      // Verificar autenticación antes de hacer la llamada
       if (!apiService.isAuthenticated()) {
         throw new Error("No estás autenticado. Por favor, inicia sesión.");
       }
 
-      // Paso 1: Crear la batalla usando apiService
+      // Get battle config from localStorage if not provided
+      const config = battleConfig || JSON.parse(localStorage.getItem("battleConfig") || "{}");
+
+      // Prepare request body
+      const requestBody = { format };
+
+      // Add custom teams if available
+      if (config.playerTeamShowdown && config.rivalTeamExport) {
+        requestBody.playerTeam = config.playerTeamShowdown;
+        requestBody.rivalTeamExport = config.rivalTeamExport;
+        requestBody.useCustomTeams = true;
+      }
+
+      console.log("🚀 Starting battle with config:", requestBody);
+
+      // Step 1: Create battle
       const createResponse = await apiService.fetchData("/battle/start", {
         method: "POST",
         headers: apiService.getHeaders(),
-        body: JSON.stringify({ format }),
+        body: JSON.stringify(requestBody),
         requiresAuth: true,
       });
 
       const { battleId: newBattleId } = createResponse.data || createResponse;
       setBattleId(newBattleId);
 
-      // Paso 2: Inicializar la batalla
+      // Step 2: Initialize battle
       const initResponse = await apiService.fetchData(`/battle/initialize/${newBattleId}`, {
         method: "POST",
         headers: apiService.getHeaders(),
@@ -50,7 +64,6 @@ export function useBattle() {
       setBattleLogs(initData.logs || []);
       setBattleState(initData.state === "active" ? "active" : "completed");
 
-      // Procesar los logs para encontrar los datos de request
       processLogs(initData.logs || []);
     } catch (err) {
       console.error("Error al iniciar batalla:", err);
