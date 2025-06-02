@@ -4,7 +4,16 @@ import { FaExclamationCircle, FaExclamationTriangle, FaStar, FaRegStar } from "r
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 
-const TeamCard = ({ team, onEdit, onDelete, onToggleFavorite, loadingAction, onSelectTeam, isSelected }) => {
+const TeamCard = ({
+  team,
+  onEdit,
+  onDelete,
+  onToggleFavorite,
+  loadingAction,
+  onSelectTeam,
+  isSelected,
+  hideBattleActions = false, // Nueva prop para ocultar botones en modo batalla
+}) => {
   // Función para validar si un Pokémon está completo
   const isPokemonComplete = (pokemon) => {
     const hasAllMoves =
@@ -17,6 +26,8 @@ const TeamCard = ({ team, onEdit, onDelete, onToggleFavorite, loadingAction, onS
 
     return { hasAllMoves, hasAbility, hasItem, hasAllEvs };
   };
+
+  console.log(team);
 
   // Función para verificar si el equipo está completo
   const getTeamStatus = () => {
@@ -52,21 +63,24 @@ const TeamCard = ({ team, onEdit, onDelete, onToggleFavorite, loadingAction, onS
 
   return (
     <div className={`team-card ${isSelected ? "selected" : ""}`} onClick={() => onSelectTeam(team)}>
-      {/* Estrella de favorito */}
-
-      {teamStatus === "missing-evs" && (
-        <Tippy content="Missing EVs" placement="top" theme="warning">
-          <div className="team-warning-icon">
-            <FaExclamationTriangle />
-          </div>
-        </Tippy>
-      )}
-      {teamStatus === "missing-requirements" && (
-        <Tippy content="Incomplete Team" placement="top" theme="danger">
-          <div className="team-error-icon">
-            <FaExclamationCircle />
-          </div>
-        </Tippy>
+      {/* Solo mostrar íconos de warning/error cuando NO están ocultas las acciones de batalla */}
+      {!hideBattleActions && (
+        <>
+          {teamStatus === "missing-evs" && (
+            <Tippy content="Missing EVs" placement="top" theme="warning">
+              <div className="team-warning-icon">
+                <FaExclamationTriangle />
+              </div>
+            </Tippy>
+          )}
+          {teamStatus === "missing-requirements" && (
+            <Tippy content="Incomplete Team" placement="top" theme="danger">
+              <div className="team-error-icon">
+                <FaExclamationCircle />
+              </div>
+            </Tippy>
+          )}
+        </>
       )}
 
       <h5 className="team-title">{team.name}</h5>
@@ -103,44 +117,48 @@ const TeamCard = ({ team, onEdit, onDelete, onToggleFavorite, loadingAction, onS
           <p className="empty-team">No Pokémon in this team</p>
         )}
       </div>
-      <div className="team-actions">
-        <Tippy content={team.is_favorite ? "Remove from favorites" : "Add to favorites"} placement="top" theme="info">
-          <button
-            className="favorite-button"
-            onClick={handleFavoriteClick}
-            disabled={loadingAction}
-            style={{
-              color: team.is_favorite ? "#ffd000" : "",
-            }}
-          >
-            {team.is_favorite ? <FaStar /> : <FaRegStar />}
-          </button>
-        </Tippy>
-        <Tippy content="Edit Team" placement="top" theme="info">
-          <button
-            className="edit-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(team.id);
-            }}
-            disabled={loadingAction}
-          >
-            <RiEditLine />
-          </button>
-        </Tippy>
-        <Tippy content="Delete Team" placement="top" theme="danger">
-          <button
-            className="delete-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(team.id);
-            }}
-            disabled={loadingAction}
-          >
-            <HiOutlineTrash />
-          </button>
-        </Tippy>
-      </div>
+
+      {/* Solo mostrar botones de acciones cuando NO están ocultas las acciones de batalla */}
+      {!hideBattleActions && (
+        <div className="team-actions">
+          <Tippy content={team.is_favorite ? "Remove from favorites" : "Add to favorites"} placement="top" theme="info">
+            <button
+              className="favorite-button"
+              onClick={handleFavoriteClick}
+              disabled={loadingAction}
+              style={{
+                color: team.is_favorite ? "#ffd000" : "",
+              }}
+            >
+              {team.is_favorite ? <FaStar /> : <FaRegStar />}
+            </button>
+          </Tippy>
+          <Tippy content="Edit Team" placement="top" theme="info">
+            <button
+              className="edit-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(team.id);
+              }}
+              disabled={loadingAction}
+            >
+              <RiEditLine />
+            </button>
+          </Tippy>
+          <Tippy content="Delete Team" placement="top" theme="danger">
+            <button
+              className="delete-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(team.id);
+              }}
+              disabled={loadingAction}
+            >
+              <HiOutlineTrash />
+            </button>
+          </Tippy>
+        </div>
+      )}
     </div>
   );
 };

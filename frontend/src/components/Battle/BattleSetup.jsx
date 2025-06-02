@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/apiService";
 import TeamCard from "../Teams/TeamCard";
+import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/Battle/BattleSetup.css";
 import { FaCheck } from "react-icons/fa6";
 
@@ -20,10 +21,162 @@ const BattleSetup = () => {
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState(null);
 
+  // Obtener los datos de Pokémon del contexto
+  const { moves, abilities, items, isAllDataLoaded } = usePokemonData();
+
   // Cargar equipos del usuario al montar el componente
   useEffect(() => {
     loadUserTeams();
   }, []);
+
+  // Función para validar si un Pokémon está completo
+  const isPokemonComplete = (pokemon) => {
+    const hasAllMoves =
+      pokemon.moves && pokemon.moves.length === 4 && pokemon.moves.every((move) => move && move.trim() !== "");
+    const hasAbility = pokemon.ability_id && pokemon.ability_id.trim() !== "";
+    const hasItem = pokemon.item_id && pokemon.item_id.trim() !== "";
+    const evs = pokemon.evs || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    const totalEvs = Object.values(evs).reduce((sum, ev) => sum + (ev || 0), 0);
+    const hasAllEvs = totalEvs === 508;
+
+    return { hasAllMoves, hasAbility, hasItem, hasAllEvs };
+  };
+
+  // Función para verificar si el equipo está completo (sin warnings ni errors)
+  const getTeamStatus = (team) => {
+    if (!team.pokemon || team.pokemon.length === 0) {
+      return "incomplete"; // Equipo vacío
+    }
+
+    if (team.pokemon.length !== 6) {
+      return "incomplete"; // No tiene 6 Pokémon
+    }
+
+    let missingEvs = false;
+    let missingOtherRequirements = false;
+
+    team.pokemon.forEach((pokemon) => {
+      const { hasAllMoves, hasAbility, hasItem, hasAllEvs } = isPokemonComplete(pokemon);
+      if (!hasAllEvs) missingEvs = true;
+      if (!hasAllMoves || !hasAbility || !hasItem) missingOtherRequirements = true;
+    });
+
+    if (missingOtherRequirements) return "missing-requirements";
+    if (missingEvs) return "missing-evs";
+
+    return "complete"; // Equipo perfecto
+  };
+
+  // Función auxiliar para obtener el nombre de visualización de una habilidad a partir de su ID
+  const getDisplayNameForAbility = (abilityId) => {
+    let displayName = abilityId;
+
+    try {
+      for (const pokemonId in abilities) {
+        const pokemonAbilities = abilities[pokemonId];
+
+        if (pokemonAbilities?.abilities) {
+          for (const type in pokemonAbilities.abilities) {
+            const ability = pokemonAbilities.abilities[type];
+
+            if (Array.isArray(ability) && ability.length >= 3) {
+              const name = ability[0];
+              const id = ability[2];
+
+              if (id === abilityId) {
+                console.log(`Found ability display name: ${name} for ID: ${abilityId}`);
+                displayName = name;
+                return displayName;
+              }
+            }
+          }
+        }
+      }
+
+      console.log(`Using original ID as display name for ability: ${abilityId}`);
+      return displayName;
+    } catch (err) {
+      console.error(`Error getting display name for ability: ${abilityId}`, err);
+      return displayName;
+    }
+  };
+
+  // Función auxiliar para obtener el nombre de visualización de un item a partir de su ID
+  const getDisplayNameForItem = (itemId) => {
+    let displayName = itemId;
+
+    try {
+      if (items && items[itemId] && items[itemId].name) {
+        displayName = items[itemId].name;
+        console.log(`Found item display name: ${displayName} for ID: ${itemId}`);
+        return displayName;
+      }
+
+      console.log(`Using original ID as display name for item: ${itemId}`);
+      return displayName;
+    } catch (err) {
+      console.error(`Error getting display name for item: ${itemId}`, err);
+      return displayName;
+    }
+  };
+
+  // Función para filtrar solo equipos completos
+  const filterCompleteTeams = (teamsList) => {
+    return teamsList.filter((team) => getTeamStatus(team) === "complete");
+  };
+
+  // Función para convertir equipo a formato JSON de Pokémon Showdown
+  const convertTeamToShowdownFormat = (team) => {
+    if (!team.pokemon || team.pokemon.length === 0) {
+      return [];
+    }
+
+    return team.pokemon.map((pokemon) => {
+      // Convertir IDs de movimientos a nombres usando el contexto
+      const pokemonMoves =
+        pokemon.moves
+          ?.map((moveId) => {
+            if (!moveId || moveId.trim() === "") return null;
+
+            // Buscar el movimiento en los datos cargados
+            const move = moves[moveId];
+            return move ? move.name : moveId; // Si no encuentra el nombre, usar el ID
+          })
+          .filter(Boolean) || []; // Filtrar valores nulos/vacíos
+
+      // Convertir ID de habilidad a nombre
+      const abilityName = pokemon.ability_id ? getDisplayNameForAbility(pokemon.ability_id) : "";
+
+      // Convertir ID de item a nombre
+      const itemName = pokemon.item_id ? getDisplayNameForItem(pokemon.item_id) : "";
+
+      return {
+        name: "", // Nickname vacío por defecto
+        species: pokemon.pokemon_name || pokemon.name,
+        gender: "", // Por defecto vacío, podrías agregarlo si tienes esta info
+        item: itemName,
+        ability: abilityName,
+        evs: {
+          hp: pokemon.evs?.hp || 0,
+          atk: pokemon.evs?.atk || 0,
+          def: pokemon.evs?.def || 0,
+          spa: pokemon.evs?.spa || 0,
+          spd: pokemon.evs?.spd || 0,
+          spe: pokemon.evs?.spe || 0,
+        },
+        nature: pokemon.nature || "Hardy",
+        ivs: {
+          hp: pokemon.ivs?.hp || 31,
+          atk: pokemon.ivs?.atk || 31,
+          def: pokemon.ivs?.def || 31,
+          spa: pokemon.ivs?.spa || 31,
+          spd: pokemon.ivs?.spd || 31,
+          spe: pokemon.ivs?.spe || 31,
+        },
+        moves: pokemonMoves,
+      };
+    });
+  };
 
   const loadUserTeams = async () => {
     try {
@@ -34,11 +187,14 @@ const BattleSetup = () => {
       }
 
       const teamsData = response.data?.teams || [];
-      setTeams(teamsData);
 
-      // Si hay equipos, seleccionar el primero por defecto
-      if (teamsData.length > 0) {
-        setSelectedTeam(teamsData[0]);
+      // Filtrar solo equipos completos (sin warnings ni errors)
+      const completeTeams = filterCompleteTeams(teamsData);
+      setTeams(completeTeams);
+
+      // Si hay equipos completos, seleccionar el primero por defecto
+      if (completeTeams.length > 0) {
+        setSelectedTeam(completeTeams[0]);
       }
 
       setError(null);
@@ -101,6 +257,16 @@ const BattleSetup = () => {
 
   const handleSelectTeam = (team) => {
     setSelectedTeam(team);
+
+    // Solo hacer console.log si los datos están cargados
+    if (isAllDataLoaded) {
+      // Console.log del equipo en formato JSON de Pokémon Showdown
+      const showdownTeam = convertTeamToShowdownFormat(team);
+      console.log("🎯 Equipo seleccionado en formato JSON de Pokémon Showdown:");
+      console.log(JSON.stringify(showdownTeam, null, 2));
+    } else {
+      console.log("⏳ Datos aún cargando, esperando para mostrar el JSON del equipo...");
+    }
   };
 
   if (loading) {
@@ -125,8 +291,11 @@ const BattleSetup = () => {
 
           {teams.length === 0 ? (
             <div className="no-teams-message">
-              <p>No tienes equipos creados.</p>
-              <p>Ve a la sección de equipos para crear tu primer equipo antes de comenzar una batalla.</p>
+              <p>No tienes equipos completos listos para batalla.</p>
+              <p>Ve a la sección de equipos para completar tus equipos antes de comenzar una batalla.</p>
+              <p>
+                <small>Solo se muestran equipos con 6 Pokémon completos (movimientos, habilidad, objeto y EVs).</small>
+              </p>
               <button onClick={() => navigate("/teams")}>Ir a Equipos</button>
             </div>
           ) : (
@@ -146,6 +315,7 @@ const BattleSetup = () => {
                         loadingAction={loadingAction}
                         onSelectTeam={handleSelectTeam}
                         isSelected={selectedTeam?.id === team.id}
+                        hideBattleActions={true} // Nueva prop para ocultar botones
                       />
                     ))}
                   </div>
@@ -155,7 +325,7 @@ const BattleSetup = () => {
               {/* Sección de todos los equipos */}
               {regularTeams.length > 0 && (
                 <div className="teams-section">
-                  <h4 className="section-title">📂 Todos los Equipos ({regularTeams.length})</h4>
+                  <h4 className="section-title">📂 Equipos Completos ({regularTeams.length})</h4>
                   <div className="teams-grid">
                     {regularTeams.map((team) => (
                       <TeamCard
@@ -167,6 +337,7 @@ const BattleSetup = () => {
                         loadingAction={loadingAction}
                         onSelectTeam={handleSelectTeam}
                         isSelected={selectedTeam?.id === team.id}
+                        hideBattleActions={true} // Nueva prop para ocultar botones
                       />
                     ))}
                   </div>
