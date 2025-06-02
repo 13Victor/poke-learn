@@ -18,24 +18,24 @@ const Pokedex = () => {
 
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isPanelVisible, setIsPanelVisible] = useState(false); // Para controlar la visibilidad del DOM
+  const [isPanelVisible, setIsPanelVisible] = useState(false); // To control DOM visibility
 
   const pageSize = 60;
   const containerRef = useRef(null);
 
-  // Cargar pokémon desde la API
+  // Load pokémon from API
   useEffect(() => {
     const loadPokemons = async () => {
       if (allPokemonsLoaded) {
         try {
           const pokemonData = await getAllPokemons();
 
-          // Filtrar Pokémon regionales (que tienen baseSpecies)
+          // Filter regional Pokémon (those with baseSpecies)
           const filteredPokemons = pokemonData.filter((pokemon) => !pokemon.baseSpecies);
 
           setPokemons(filteredPokemons);
-          console.log(`Total Pokémon cargados: ${pokemonData.length}`);
-          console.log(`Pokémon mostrados (sin regionales): ${filteredPokemons.length}`);
+          console.log(`Total Pokémon loaded: ${pokemonData.length}`);
+          console.log(`Pokémon displayed (without regionals): ${filteredPokemons.length}`);
         } catch (error) {
           console.error("Error loading Pokémon:", error);
         }
@@ -45,38 +45,38 @@ const Pokedex = () => {
     loadPokemons();
   }, [allPokemonsLoaded, getAllPokemons]);
 
-  // Función mejorada para filtrar por término de búsqueda (incluyendo números)
+  // Improved function to filter by search term (including numbers)
   const filterBySearch = useCallback((pokemonList, term) => {
     if (!term.trim()) return pokemonList;
 
     const searchLower = term.toLowerCase().trim();
 
-    // Verificar si el término es numérico
+    // Check if the term is numeric
     const isNumericSearch = /^\d+$/.test(searchLower);
 
     return pokemonList.filter((pokemon) => {
-      // Búsqueda por nombre, tipos y habilidades (como antes)
+      // Search by name, types and abilities (as before)
       const textMatch =
         pokemon.name.toLowerCase().includes(searchLower) ||
         pokemon.types.some((type) => type.toLowerCase().includes(searchLower)) ||
         (pokemon.abilities && pokemon.abilities.some((ability) => ability.toLowerCase().includes(searchLower)));
 
-      // Búsqueda numérica mejorada
+      // Improved numeric search
       if (isNumericSearch) {
         const pokemonNum = pokemon.num.toString();
         const pokemonId = pokemon.id.toString();
 
-        // Búsqueda exacta por número
+        // Exact search by number
         if (pokemonNum === searchLower || pokemonId === searchLower) {
           return true;
         }
 
-        // Búsqueda por números que empiecen con el término
+        // Search by numbers that start with the term
         if (pokemonNum.startsWith(searchLower) || pokemonId.startsWith(searchLower)) {
           return true;
         }
 
-        // También incluir la búsqueda textual por si escriben el número como string
+        // Also include text search in case they write the number as a string
         if (pokemonNum.includes(searchLower) || pokemonId.includes(searchLower)) {
           return true;
         }
@@ -86,18 +86,18 @@ const Pokedex = () => {
     });
   }, []);
 
-  // Aplicar filtros cuando cambien los Pokémon, los filtros activos o el término de búsqueda
+  // Apply filters when Pokémon, active filters or search term change
   const filteredPokemons = useMemo(() => {
-    // Primero aplicar filtros de tipo
+    // First apply type filters
     const typeFiltered = filterPokemons(pokemons, activeFilters);
 
-    // Luego aplicar filtro de búsqueda
+    // Then apply search filter
     return filterBySearch(typeFiltered, searchTerm);
   }, [pokemons, activeFilters, searchTerm, filterBySearch]);
 
-  // Actualizar Pokémon mostrados cuando cambien los filtrados
+  // Update displayed Pokémon when filtered ones change
   useEffect(() => {
-    // Reset del estado de carga cuando cambian los filtros
+    // Reset loading state when filters change
     setIsLoading(false);
 
     if (filteredPokemons.length > 0) {
@@ -108,41 +108,41 @@ const Pokedex = () => {
       setCurrentPage(0);
     }
 
-    // Scroll al inicio cuando cambian los filtros
+    // Scroll to top when filters change
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
     }
   }, [filteredPokemons, pageSize]);
 
-  // Cargar más pokémon
+  // Load more pokémon
   const loadMorePokemons = useCallback(() => {
-    // Verificar si ya estamos cargando o si no hay más pokémon que cargar
+    // Check if we're already loading or if there are no more pokémon to load
     if (isLoading || displayedPokemons.length >= filteredPokemons.length) return;
 
     setIsLoading(true);
 
-    // Usar el estado actual de displayedPokemons para calcular el siguiente lote
+    // Use current state of displayedPokemons to calculate next batch
     const currentDisplayedCount = displayedPokemons.length;
     const newPokemons = filteredPokemons.slice(currentDisplayedCount, currentDisplayedCount + pageSize);
 
     if (newPokemons.length > 0) {
-      // Simular un pequeño delay para evitar cargas muy rápidas
+      // Simulate a small delay to avoid very fast loads
       setTimeout(() => {
         setDisplayedPokemons((prev) => {
-          // Verificar que no se dupliquen pokémon
+          // Check that pokémon are not duplicated
           const existingIds = new Set(prev.map((p) => p.id));
           const uniqueNewPokemons = newPokemons.filter((p) => !existingIds.has(p.id));
           return [...prev, ...uniqueNewPokemons];
         });
         setCurrentPage((prev) => prev + 1);
         setIsLoading(false);
-      }, 150); // Reducido a 150ms para mejor respuesta
+      }, 150); // Reduced to 150ms for better response
     } else {
       setIsLoading(false);
     }
   }, [displayedPokemons.length, pageSize, filteredPokemons, isLoading]);
 
-  // Detectar cuando el usuario está cerca del final del scroll con throttling
+  // Detect when user is near the end of scroll with throttling
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -154,7 +154,7 @@ const Pokedex = () => {
         requestAnimationFrame(() => {
           const { scrollTop, scrollHeight, clientHeight } = container;
 
-          // Cargar más cuando estés a 300px del final y no estés ya cargando
+          // Load more when you're 300px from the end and not already loading
           if (scrollHeight - scrollTop <= clientHeight + 300 && !isLoading) {
             loadMorePokemons();
           }
@@ -172,33 +172,33 @@ const Pokedex = () => {
     };
   }, [loadMorePokemons, isLoading]);
 
-  // Manejar clic en pokémon
+  // Handle pokémon click
   const handlePokemonClick = (pokemon) => {
     console.log("Pokémon clicked:", pokemon.name);
     setSelectedPokemon(pokemon);
-    setIsPanelVisible(true); // Primero hacemos visible el panel en el DOM
-    // Pequeño delay para que el DOM se actualice antes de aplicar la animación
+    setIsPanelVisible(true); // First make the panel visible in DOM
+    // Small delay for DOM to update before applying animation
     setTimeout(() => {
       setIsPanelOpen(true);
     }, 10);
   };
 
-  // Manejar cambio de Pokémon desde la línea evolutiva
+  // Handle Pokémon change from evolution line
   const handlePokemonChange = (newPokemon) => {
     console.log("Pokémon changed to:", newPokemon.name);
     setSelectedPokemon(newPokemon);
   };
 
   const handlePanelClose = () => {
-    setIsPanelOpen(false); // Primero quitamos la clase que hace la animación
-    // Después de que termine la animación, quitamos del DOM
+    setIsPanelOpen(false); // First remove the class that does the animation
+    // After animation ends, remove from DOM
     setTimeout(() => {
       setIsPanelVisible(false);
       setSelectedPokemon(null);
-    }, 300); // 300ms coincide con la duración de la animación CSS
+    }, 300); // 300ms matches CSS animation duration
   };
 
-  // Manejar filtros
+  // Handle filters
   const handleFilterClick = (filterId) => {
     console.log("Filter clicked:", filterId);
 
@@ -213,7 +213,7 @@ const Pokedex = () => {
     console.log("Active filters:", Array.from(newFilters));
   };
 
-  // Manejar búsqueda
+  // Handle search
   const handleSearchChange = (value) => {
     setSearchTerm(value);
   };
@@ -224,7 +224,7 @@ const Pokedex = () => {
 
   return (
     <div className="pokedex-container">
-      {/* Header con buscador */}
+      {/* Header with search */}
       <div className="pokedex-header">
         <div className="header-content">
           <h1 className="pokedex-title">Pokédex</h1>
@@ -237,7 +237,7 @@ const Pokedex = () => {
             value={searchTerm}
             onChange={handleSearchChange}
             onClear={handleSearchClear}
-            placeholder="Buscar Pokémon por nombre, tipo, habilidad o número..."
+            placeholder="Search Pokémon by name, type, ability or number..."
             className="pokedex-search"
             icon="fa-search"
           />
@@ -253,17 +253,17 @@ const Pokedex = () => {
             ))}
           </div>
 
-          {/* Indicadores de carga */}
+          {/* Loading indicators */}
           {isLoading && (
             <div className="loading-indicator">
               <div className="loading-spinner"></div>
-              <p>Cargando más Pokémon...</p>
+              <p>Loading more Pokémon...</p>
             </div>
           )}
 
           {displayedPokemons.length >= filteredPokemons.length && filteredPokemons.length > 0 && (
             <div className="end-message">
-              <p>¡Has visto todos los Pokémon disponibles!</p>
+              <p>You've seen all available Pokémon!</p>
             </div>
           )}
 
@@ -272,18 +272,18 @@ const Pokedex = () => {
               {searchTerm ? (
                 <div className="no-search-results">
                   <p>
-                    No se encontraron Pokémon que coincidan con "<strong>{searchTerm}</strong>"
+                    No Pokémon found matching "<strong>{searchTerm}</strong>"
                   </p>
-                  <p className="suggestion">Intenta buscar por nombre, tipo, habilidad o número del Pokémon</p>
+                  <p className="suggestion">Try searching by name, type, ability or Pokémon number</p>
                 </div>
               ) : (
-                <p>No se encontraron Pokémon con los filtros seleccionados.</p>
+                <p>No Pokémon found with the selected filters.</p>
               )}
             </div>
           )}
         </div>
 
-        {/* Panel Lateral - Solo se renderiza si está visible */}
+        {/* Side Panel - Only renders if visible */}
         {isPanelVisible && (
           <PokemonSidePanel
             pokemon={selectedPokemon}

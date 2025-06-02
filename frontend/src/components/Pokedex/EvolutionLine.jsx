@@ -6,10 +6,10 @@ import { handleImageError, formatPokemonTypesIcon } from "../../utils/imageUtils
 
 const EvolutionLine = ({ evolutionLine, currentPokemon, onPokemonClick }) => {
   if (!evolutionLine || evolutionLine.length <= 1) {
-    return null; // No mostrar si no hay evoluciones o solo hay un Pokémon
+    return null; // Don't show if there are no evolutions or only one Pokémon
   }
 
-  // Agrupar por stage para manejar evoluciones ramificadas
+  // Group by stage to handle branched evolutions
   const groupedByStage = evolutionLine.reduce((acc, pokemon) => {
     const stage = pokemon.stage || 1;
     if (!acc[stage]) acc[stage] = [];
@@ -54,14 +54,14 @@ const EvolutionLine = ({ evolutionLine, currentPokemon, onPokemonClick }) => {
                         />
                       </div>
 
-                      {/* Mostrar método de evolución si no es el primer stage */}
+                      {/* Show evolution method if not the first stage */}
                       {/* {stage > 1 && <div className="evolution-method">{pokemon.evolutionMethod}</div>} */}
                     </div>
                   );
                 })}
               </div>
 
-              {/* Flecha entre stages */}
+              {/* Arrow between stages */}
               {stageIndex < stages.length - 1 && (
                 <div className="evolution-arrow">
                   <FaCircleArrowRight />
