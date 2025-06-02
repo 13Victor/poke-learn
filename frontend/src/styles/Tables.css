@@ -98,9 +98,14 @@ tr.odd-row:hover {
 
 .search-input {
   width: 100%;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs);
   border-radius: var(--radius-sm);
   border: 1px solid var(--silver);
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--picton-blue);
+  outline-offset: -2px;
 }
 
 /* Optimizaciones de scroll */
