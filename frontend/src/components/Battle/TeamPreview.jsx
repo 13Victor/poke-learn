@@ -2,8 +2,7 @@
 import React, { useState } from "react";
 
 export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, isProcessingCommand }) {
-  const [selectedOrder, setSelectedOrder] = useState([1, 2, 3, 4, 5, 6]); // Default order
-  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [selectedLeader, setSelectedLeader] = useState(1); // Default to first Pokémon
 
   // Get player's team from request data or team preview data
   const playerTeam = requestData?.side?.pokemon || [];
@@ -22,58 +21,32 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
     return `https://play.pokemonshowdown.com/sprites/home/${formattedName}.png`;
   };
 
-  // Handle drag start
-  const handleDragStart = (e, index) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  // Handle drag over
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  // Handle drop
-  const handleDrop = (e, dropIndex) => {
-    e.preventDefault();
-
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-
-    const newOrder = [...selectedOrder];
-    const draggedItem = newOrder[draggedIndex];
-
-    // Remove dragged item
-    newOrder.splice(draggedIndex, 1);
-
-    // Insert at new position
-    newOrder.splice(dropIndex, 0, draggedItem);
-
-    setSelectedOrder(newOrder);
-    setDraggedIndex(null);
+  // Handle Pokémon selection as leader
+  const handleSelectLeader = (index) => {
+    setSelectedLeader(index + 1); // Convert to 1-based index
   };
 
   // Handle team confirmation
   const handleConfirmTeam = () => {
-    const teamString = selectedOrder.join("");
+    // Create team order with selected leader first, others in original order
+    const teamOrder = [selectedLeader];
+    for (let i = 1; i <= 6; i++) {
+      if (i !== selectedLeader) {
+        teamOrder.push(i);
+      }
+    }
+
+    const teamString = teamOrder.join("");
     const command = `>p1 team ${teamString}`;
     console.log("Enviando orden del equipo:", command);
     onSendCommand(command);
-  };
-
-  // Reset to default order
-  const handleResetOrder = () => {
-    setSelectedOrder([1, 2, 3, 4, 5, 6]);
   };
 
   return (
     <div className="team-preview-container">
       <div className="team-preview-header">
         <h2>🔍 Vista Previa de Equipos</h2>
-        <p>Organiza tu equipo arrastrando los Pokémon. El primer Pokémon será el que salga al campo.</p>
+        <p>Selecciona qué Pokémon quieres que salga primero al campo de batalla.</p>
       </div>
 
       <div className="teams-preview-grid">
@@ -81,23 +54,18 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
         <div className="team-preview-section player-section">
           <h3>🎮 Tu Equipo</h3>
           <div className="pokemon-grid">
-            {selectedOrder.map((pokemonIndex, displayIndex) => {
-              const pokemon = playerTeam[pokemonIndex - 1];
+            {playerTeam.map((pokemon, index) => {
               if (!pokemon) return null;
 
               const pokemonName = pokemon.details?.split(",")[0] || pokemon.species || "Unknown";
-              const isLeader = displayIndex === 0;
+              const isSelected = selectedLeader === index + 1;
 
               return (
                 <div
-                  key={`${pokemonIndex}-${displayIndex}`}
-                  className={`pokemon-preview-card ${isLeader ? "team-leader" : ""} ${
-                    draggedIndex === displayIndex ? "dragging" : ""
-                  }`}
-                  draggable={!isProcessingCommand}
-                  onDragStart={(e) => handleDragStart(e, displayIndex)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, displayIndex)}
+                  key={index}
+                  className={`pokemon-preview-card ${isSelected ? "selected-leader" : ""}`}
+                  onClick={() => handleSelectLeader(index)}
+                  style={{ cursor: isProcessingCommand ? "not-allowed" : "pointer" }}
                 >
                   <div className="pokemon-sprite">
                     <img
@@ -112,15 +80,16 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
                   <div className="pokemon-info">
                     <div className="pokemon-name">{pokemonName}</div>
                     <div className="pokemon-position">
-                      {isLeader && <span className="leader-badge">👑 Líder</span>}
-                      <span className="position-number">#{displayIndex + 1}</span>
+                      {isSelected && <span className="leader-badge">👑 Líder Seleccionado</span>}
+                      <span className="position-number">#{index + 1}</span>
                     </div>
                   </div>
                   {pokemon.item && (
                     <div className="item-indicator" title="Tiene objeto">
-                      📦
+                      <img src={`/assets/items/${pokemon.item}.webp`} alt="" srcset="" />
                     </div>
                   )}
+                  {isSelected && <div className="selection-glow"></div>}
                 </div>
               );
             })}
@@ -148,6 +117,9 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
                   </div>
                   <div className="pokemon-info">
                     <div className="pokemon-name">{pokemonName}</div>
+                    <div className="pokemon-position">
+                      <span className="position-number">#{index + 1}</span>
+                    </div>
                   </div>
                   {pokemon.hasItem && (
                     <div className="item-indicator" title="Tiene objeto">
@@ -162,25 +134,30 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
       </div>
 
       <div className="team-preview-controls">
-        <div className="order-display">
-          <span>Orden actual: {selectedOrder.join(" → ")}</span>
+        <div className="leader-display">
+          <h4>Pokémon Líder Seleccionado:</h4>
+          {playerTeam[selectedLeader - 1] && (
+            <div className="selected-leader-info">
+              <span className="leader-name">{playerTeam[selectedLeader - 1].details?.split(",")[0] || "Pokémon"}</span>
+              <span className="leader-position">#{selectedLeader}</span>
+            </div>
+          )}
         </div>
 
         <div className="control-buttons">
-          <button onClick={handleResetOrder} disabled={isProcessingCommand} className="reset-button">
-            🔄 Restaurar Orden
-          </button>
-
           <button onClick={handleConfirmTeam} disabled={isProcessingCommand} className="confirm-button">
-            {isProcessingCommand ? "Confirmando..." : "✅ Confirmar Equipo"}
+            {isProcessingCommand
+              ? "Confirmando..."
+              : `✅ Confirmar - ${playerTeam[selectedLeader - 1]?.details?.split(",")[0] || "Pokémon"} como Líder`}
           </button>
         </div>
 
         <div className="team-preview-tips">
           <p>
-            💡 <strong>Consejo:</strong> Coloca tu Pokémon más fuerte o estratégico en primera posición.
+            💡 <strong>Consejo:</strong> Haz clic en el Pokémon que quieras que salga primero.
           </p>
-          <p>🎯 El orden de tu equipo puede influir en la estrategia de tu oponente.</p>
+          <p>🎯 El resto de tu equipo mantendrá su orden original.</p>
+          <p>⚡ Elige estratégicamente según el equipo rival que puedes ver.</p>
         </div>
       </div>
     </div>
