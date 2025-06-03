@@ -5,6 +5,7 @@ import { useBattle } from "../../hooks/useBattle";
 import { BattleField } from "./BattleField";
 import { StatusMessages } from "../Battle/StatusMessages";
 import { BattleControls } from "../Battle/BattleControls";
+import { BattleMessages } from "../Battle/BattleMessages"; // Nuevo componente
 import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
@@ -213,6 +214,9 @@ const Combat = () => {
             teamPreviewPokemon={teamPreviewPokemon}
           />
 
+          {/* NUEVO: Componente de mensajes parseados */}
+          <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />
+
           {/* Controles de la CPU para testing - solo si no estamos en team preview */}
           {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
 
@@ -235,6 +239,10 @@ const Combat = () => {
       {battleState === "completed" && (
         <div className="battle-complete">
           <p>¡La batalla ha finalizado!</p>
+
+          {/* Mostrar mensajes finales incluso cuando la batalla haya terminado */}
+          <BattleMessages logs={battleLogs} isTeamPreview={false} />
+
           <div className="battle-complete-actions">
             <button onClick={goBackToSetup}>Configurar Nueva Batalla</button>
             <button onClick={() => handleStartBattle(battleConfig)}>Repetir con Misma Configuración</button>
