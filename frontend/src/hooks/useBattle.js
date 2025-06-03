@@ -11,7 +11,9 @@ export function useBattle() {
   const [cpuForceSwitch, setCpuForceSwitch] = useState(false);
   const [isProcessingCommand, setIsProcessingCommand] = useState(false);
   const [error, setError] = useState(null);
-  const [format, setFormat] = useState("gen7randombattle");
+  const [format, setFormat] = useState("gen9ou"); // Changed to gen9ou
+  const [isTeamPreview, setIsTeamPreview] = useState(false);
+  const [teamPreviewPokemon, setTeamPreviewPokemon] = useState({ p1: [], p2: [] });
 
   // Iniciar una nueva batalla
   const startBattle = async (battleConfig = null) => {
@@ -22,6 +24,8 @@ export function useBattle() {
       setRequestData(null);
       setPlayerForceSwitch(false);
       setCpuForceSwitch(false);
+      setIsTeamPreview(false);
+      setTeamPreviewPokemon({ p1: [], p2: [] });
 
       if (!apiService.isAuthenticated()) {
         throw new Error("No estás autenticado. Por favor, inicia sesión.");
@@ -72,7 +76,7 @@ export function useBattle() {
     }
   };
 
-  // Procesar logs en busca de datos de request
+  // Procesar logs en busca de datos de request y team preview
   const processLogs = (logs) => {
     console.log("Procesando logs:", logs);
 
@@ -80,6 +84,10 @@ export function useBattle() {
       console.warn("No hay logs para procesar");
       return;
     }
+
+    // Check for team preview
+    let isTeamPreviewActive = false;
+    const teamPreviewData = { p1: [], p2: [] };
 
     // Mantener un registro de si encontramos requests para p1 y p2
     let p1RequestFound = false;
@@ -90,6 +98,31 @@ export function useBattle() {
       // Si el log es un string vacío o no es un string, lo saltamos
       if (!log || typeof log !== "string") {
         continue;
+      }
+
+      // Check for team preview start
+      if (log.includes("|teampreview")) {
+        isTeamPreviewActive = true;
+        console.log("🎯 Team Preview detectado!");
+        setIsTeamPreview(true);
+      }
+
+      // Extract team preview pokemon
+      if (isTeamPreviewActive) {
+        const lines = log.split("\n");
+        for (const line of lines) {
+          const pokeMatch = line.match(/\|poke\|(p[12])\|([^|]+)\|(.*)$/);
+          if (pokeMatch) {
+            const [, player, details, item] = pokeMatch;
+            const pokemon = {
+              details,
+              hasItem: item === "item",
+              species: details.split(",")[0].trim(),
+            };
+            teamPreviewData[player].push(pokemon);
+            console.log(`Team Preview ${player}:`, pokemon);
+          }
+        }
       }
 
       // Dividir por líneas para buscar el request en cualquier parte del mensaje
@@ -114,6 +147,12 @@ export function useBattle() {
 
             const request = JSON.parse(requestJson);
             console.log("REQUEST parseado:", request);
+
+            // Check if this is a team preview request
+            if (request.teamPreview) {
+              console.log("🎯 Team Preview request detectado");
+              setIsTeamPreview(true);
+            }
 
             if (isP1Message) {
               p1RequestFound = true;
@@ -141,6 +180,20 @@ export function useBattle() {
             console.error("Error al procesar request:", e, "en línea:", line);
           }
         }
+      }
+    }
+
+    // Update team preview data if we found any
+    if (teamPreviewData.p1.length > 0 || teamPreviewData.p2.length > 0) {
+      setTeamPreviewPokemon(teamPreviewData);
+    }
+
+    // Check for battle start (end of team preview)
+    for (const log of logs) {
+      if (typeof log === "string" && log.includes("|start")) {
+        setIsTeamPreview(false);
+        console.log("🚀 Batalla iniciada - Team Preview terminado");
+        break;
       }
     }
 
@@ -213,15 +266,15 @@ export function useBattle() {
         ]);
 
         // Si el comando era del jugador (p1) y no hay respuesta, probablemente necesitamos un comando de CPU
-        if (command.includes("p1") && !playerForceSwitch && !cpuForceSwitch) {
+        if (command.includes("p1") && !playerForceSwitch && !cpuForceSwitch && !isTeamPreview) {
           console.log("Comando del jugador sin respuesta, probando con comando automático de CPU");
 
           // Esperar un momento para que el frontend se actualice
           await new Promise((resolve) => setTimeout(resolve, 500));
 
-          // Enviar un comando automático para la CPU
+          // Enviar un comando automático para la CPU (si no es team preview)
           try {
-            const cpuCommand = ">p2 move 1";
+            const cpuCommand = isTeamPreview ? ">p2 team 123456" : ">p2 move 1";
             setBattleLogs((prevLogs) => [...prevLogs, `Enviando comando automático: ${cpuCommand}`]);
 
             const cpuResponse = await apiService.fetchData(`/battle/command/${battleId}`, {
@@ -283,5 +336,7 @@ export function useBattle() {
     startBattle,
     sendCommand,
     setError,
+    isTeamPreview,
+    teamPreviewPokemon,
   };
 }

@@ -210,30 +210,20 @@ const BattleSetup = () => {
     // Convert team to Showdown format
     const playerTeamShowdown = convertTeamToShowdownFormat(selectedTeam);
 
-    // Rival team in export format (will be converted)
+    // Rival team in export format for gen9ou (more competitive team)
     const rivalTeamExport = `
-Kyurem @ Loaded Dice  
-Ability: Pressure  
-Tera Type: Electric  
-EVs: 252 Atk / 4 SpD / 252 Spe  
-Adamant Nature  
-- Dragon Dance  
-- Icicle Spear  
-- Tera Blast  
-- Scale Shot  
-
-Iron Moth @ Booster Energy  
-Ability: Quark Drive  
-Tera Type: Fairy  
-EVs: 124 Def / 132 SpA / 252 Spe  
+Gholdengo @ Choice Specs  
+Ability: Good as Gold  
+Tera Type: Fighting  
+EVs: 252 SpA / 4 SpD / 252 Spe  
 Timid Nature  
 IVs: 0 Atk  
-- Fiery Dance  
-- Sludge Wave  
-- Dazzling Gleam  
-- Psychic  
+- Shadow Ball  
+- Make It Rain  
+- Focus Blast  
+- Trick  
 
-Kingambit (M) @ Leftovers  
+Kingambit @ Leftovers  
 Ability: Supreme Overlord  
 Tera Type: Ghost  
 EVs: 200 HP / 252 Atk / 56 Spe  
@@ -243,35 +233,47 @@ Adamant Nature
 - Low Kick  
 - Swords Dance  
 
-Landorus-Therian (M) @ Rocky Helmet  
-Ability: Intimidate  
-Tera Type: Water  
-EVs: 252 HP / 4 Def / 252 Spe  
+Great Tusk @ Booster Energy  
+Ability: Protosynthesis  
+Tera Type: Ice  
+EVs: 252 Atk / 4 Def / 252 Spe  
 Jolly Nature  
-- Stealth Rock  
-- Earthquake  
-- Stone Edge  
-- Grass Knot  
+- Headlong Rush  
+- Ice Spinner  
+- Knock Off  
+- Rapid Spin  
 
-Hatterene (F) @ Custap Berry  
-Ability: Magic Bounce  
+Dragapult @ Choice Band  
+Ability: Clear Body  
+Tera Type: Ghost  
+EVs: 252 Atk / 4 SpA / 252 Spe  
+Naive Nature  
+- Dragon Darts  
+- Tera Blast  
+- U-turn  
+- Phantom Force  
+
+Toxapex @ Black Sludge  
+Ability: Regenerator  
 Tera Type: Water  
-EVs: 252 HP / 204 Def / 52 Spe  
+EVs: 252 HP / 252 Def / 4 SpD  
 Bold Nature  
-- Healing Wish  
-- Dazzling Gleam  
-- Psychic Noise  
-- Nuzzle  
+IVs: 0 Atk  
+- Scald  
+- Recover  
+- Haze  
+- Toxic Spikes  
 
-Zamazenta @ Leftovers  
-Ability: Dauntless Shield  
-Tera Type: Fire  
-EVs: 104 HP / 124 Atk / 96 Def / 184 Spe  
-Jolly Nature  
-- Iron Defense  
-- Body Press  
-- Crunch  
-- Substitute`;
+Raging Bolt @ Leftovers  
+Ability: Protosynthesis  
+Tera Type: Grass  
+EVs: 252 HP / 4 SpA / 252 SpD  
+Calm Nature  
+IVs: 0 Atk  
+- Thunderbolt  
+- Draco Meteor  
+- Calm Mind  
+- Protect`;
 
     console.log("🎯 Player team in Showdown JSON format:");
     console.log(JSON.stringify(playerTeamShowdown, null, 2));
@@ -282,7 +284,7 @@ Jolly Nature
       playerTeamShowdown: playerTeamShowdown,
       rivalTeamExport: rivalTeamExport,
       difficulty,
-      format: "gen9randombattle",
+      format: "gen9ou", // Changed to gen9ou
     };
 
     localStorage.setItem("battleConfig", JSON.stringify(battleConfig));
@@ -426,6 +428,8 @@ Jolly Nature
           <h1>Configuración de Batalla</h1>
           <p className="setup-description">
             Configura tu batalla seleccionando un equipo y la dificultad del oponente.
+            <br />
+            <strong>Formato: Gen 9 OU</strong> - Batalla competitiva con vista previa de equipos.
           </p>
         </div>
 
@@ -494,7 +498,7 @@ Jolly Nature
             onClick={handleStartBattle}
             disabled={!selectedTeam || teams.length === 0}
           >
-            {!selectedTeam || teams.length === 0 ? "Selecciona un equipo para continuar" : "Comenzar Batalla"}
+            {!selectedTeam || teams.length === 0 ? "Selecciona un equipo para continuar" : "Comenzar Batalla Gen 9 OU"}
           </button>
         </div>
       </div>

@@ -106,13 +106,17 @@ export function BattleField({ logs, requestData, isLoading }) {
     return "red";
   };
 
-  // Función para cargar sprites de Pokémon
+  // Función para cargar sprites de Pokémon usando la nueva URL
   const getPokemonSprite = (pokemonName) => {
     if (!pokemonName) return null;
 
-    // Formatear el nombre para la URL
-    const formattedName = pokemonName.toLowerCase().replace(/\s+/g, "");
-    return `https://img.pokemondb.net/sprites/home/normal/${formattedName}.png`;
+    // Formatear el nombre para la URL de Pokémon Showdown
+    const formattedName = pokemonName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "") // Remove special characters
+      .replace(/\s+/g, ""); // Remove spaces
+
+    return `https://play.pokemonshowdown.com/sprites/home/${formattedName}.png`;
   };
 
   if (isLoading) {

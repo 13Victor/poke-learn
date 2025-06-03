@@ -18,7 +18,7 @@ const activeBattles = new Map();
  */
 router.post("/start", verifyToken, async (req, res) => {
   try {
-    const { format = "gen7randombattle", playerTeam = null, rivalTeamExport = null, useCustomTeams = false } = req.body;
+    const { format = "gen9ou", playerTeam = null, rivalTeamExport = null, useCustomTeams = false } = req.body;
 
     const battleId = Date.now().toString();
 
@@ -97,12 +97,19 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     battle.logs = [];
     battle.turnCount = 0;
     battle.pendingCommands = [];
+    battle.teamPreviewPhase = true; // Add team preview phase flag
 
     // Manejar la salida del stream
     const streamHandler = async () => {
       for await (const chunk of battleStream) {
         console.log("Mensaje del simulador:", chunk);
         battle.logs.push(chunk);
+
+        // Detectar el final de team preview
+        if (chunk.includes("|start")) {
+          battle.teamPreviewPhase = false;
+          console.log("🚀 Team preview finalizado, batalla iniciada");
+        }
 
         // Detectar el inicio de un nuevo turno
         if (chunk.includes("|turn|")) {
@@ -116,6 +123,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
         // Si la batalla ha terminado, actualizamos el estado
         if (chunk.includes("|win|") || chunk.includes("|tie|")) {
           battle.state = "completed";
+          battle.teamPreviewPhase = false;
         }
       }
     };
@@ -139,7 +147,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     await battleStream.write(`>player p2 {"name":"CPU","team":${JSON.stringify(battle.aiTeam)}}`);
 
     // Esperamos más tiempo para que se procesen los mensajes iniciales
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     res.json(
       formatResponse(true, "Batalla inicializada correctamente", {
@@ -147,6 +155,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
         logs: battle.logs,
         state: battle.state,
         turnCount: battle.turnCount,
+        teamPreviewPhase: battle.teamPreviewPhase,
       })
     );
   } catch (error) {
@@ -198,14 +207,51 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
       await battle.stream.write(command);
 
       // Esperar para que el comando se procese completamente
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Team preview commands need less time
+      const waitTime = command.includes("team") ? 1000 : 2000;
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
 
       // Obtener los nuevos logs después del comando
       const newLogs = battle.logs.slice(preCommandLogLength);
       console.log(`Se generaron ${newLogs.length} nuevos logs después del comando:`, newLogs);
 
+      // Handle team preview phase differently
+      if (battle.teamPreviewPhase && command.includes("p1 team")) {
+        console.log("🎯 Team preview command from player, sending CPU team command");
+
+        // Automatically send CPU team command
+        const cpuTeamCommand = ">p2 team 123456";
+        battle.pendingCommands.push(cpuTeamCommand);
+
+        await battle.stream.write(cpuTeamCommand);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Get all logs after both commands
+        const allNewLogs = battle.logs.slice(preCommandLogLength);
+        console.log(`Logs después de comandos de team preview: ${allNewLogs.length}`, allNewLogs);
+
+        return res.json(
+          formatResponse(true, "Comando de team preview ejecutado", {
+            battleId,
+            logs: allNewLogs,
+            state: battle.state,
+            turnCount: battle.turnCount,
+            teamPreviewPhase: battle.teamPreviewPhase,
+            debug: {
+              commandsExecuted: [command, cpuTeamCommand],
+              initialLogCount: preCommandLogLength,
+              newLogCount: allNewLogs.length,
+            },
+          })
+        );
+      }
+
       // Si no hay nuevos logs pero el comando debería generar acción, intentamos con comando de CPU también
-      if (newLogs.length === 0 && (command.includes("move") || command.includes("switch"))) {
+      if (
+        newLogs.length === 0 &&
+        (command.includes("move") || command.includes("switch")) &&
+        !battle.teamPreviewPhase
+      ) {
         console.log("No se detectaron logs, probando con comando de CPU adicional...");
 
         // Determinar si es comando del jugador
@@ -241,6 +287,7 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
               logs: allNewLogs,
               state: battle.state,
               turnCount: battle.turnCount,
+              teamPreviewPhase: battle.teamPreviewPhase,
               debug: {
                 commandsExecuted: battle.pendingCommands,
                 initialLogCount: preCommandLogLength,
@@ -264,6 +311,7 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
           logs: newLogs,
           state: battle.state,
           turnCount: battle.turnCount,
+          teamPreviewPhase: battle.teamPreviewPhase,
           debug: {
             commandExecuted: command,
             initialLogCount: preCommandLogLength,
@@ -304,6 +352,7 @@ router.get("/status/:battleId", verifyToken, async (req, res) => {
         logs: battle.logs,
         state: battle.state,
         turnCount: battle.turnCount,
+        teamPreviewPhase: battle.teamPreviewPhase,
         pendingCommands: battle.pendingCommands || [],
       })
     );
@@ -352,7 +401,7 @@ router.get("/formats", async (req, res) => {
   try {
     res.json(
       formatResponse(true, "Formatos disponibles", {
-        formats: ["gen7randombattle", "gen8randombattle", "gen9randombattle"],
+        formats: ["gen9ou", "gen8ou", "gen7ou", "gen9randombattle"],
       })
     );
   } catch (error) {

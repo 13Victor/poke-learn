@@ -2,8 +2,29 @@
 import React from "react";
 import { MoveButton } from "./MoveButton";
 import { SwitchButton } from "./SwitchButton";
+import { TeamPreview } from "./TeamPreview";
 
-export function BattleControls({ requestData, playerForceSwitch, cpuForceSwitch, isProcessingCommand, onSendCommand }) {
+export function BattleControls({
+  requestData,
+  playerForceSwitch,
+  cpuForceSwitch,
+  isProcessingCommand,
+  onSendCommand,
+  isTeamPreview,
+  teamPreviewPokemon,
+}) {
+  // Si estamos en team preview, mostrar el componente de team preview
+  if (isTeamPreview || requestData?.teamPreview) {
+    return (
+      <TeamPreview
+        requestData={requestData}
+        teamPreviewPokemon={teamPreviewPokemon}
+        onSendCommand={onSendCommand}
+        isProcessingCommand={isProcessingCommand}
+      />
+    );
+  }
+
   // Verificar si los controles deben estar deshabilitados
   const areControlsDisabled = cpuForceSwitch || isProcessingCommand;
 
@@ -19,13 +40,6 @@ export function BattleControls({ requestData, playerForceSwitch, cpuForceSwitch,
           ? "Debes realizar la acción para la CPU"
           : "Elige tu próxima acción"}
       </div>
-
-      {/* Botones de team preview si estamos en esa fase */}
-      {requestData && requestData.teamPreview && (
-        <div className="control-row">
-          <button onClick={() => onSendCommand(">p1 team 123456")}>Team Preview (123456)</button>
-        </div>
-      )}
 
       {/* Botones de movimientos solo si no estamos forzados a cambiar */}
       {!playerForceSwitch && requestData?.active?.[0]?.moves && (

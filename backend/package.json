@@ -18,6 +18,6 @@
     "firebase-admin": "^13.3.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.12.0",
-    "pokemon-showdown": "^0.11.9"
+    "pokemon-showdown": "^0.11.10"
   }
 }

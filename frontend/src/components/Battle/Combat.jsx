@@ -28,6 +28,8 @@ const Combat = () => {
     startBattle,
     sendCommand,
     setError,
+    isTeamPreview,
+    teamPreviewPokemon,
   } = useBattle();
 
   // Estado para alternar entre la vista de campo de batalla y logs (para debugging)
@@ -145,6 +147,7 @@ const Combat = () => {
               </span>
             </>
           )}
+          {isTeamPreview && <span className="team-preview-indicator">🔍 Vista Previa de Equipos</span>}
         </div>
 
         <div className="battle-actions">
@@ -172,7 +175,7 @@ const Combat = () => {
         </span>
 
         {/* Botón para alternar entre vista de campo y logs */}
-        {battleState === "active" && (
+        {battleState === "active" && !isTeamPreview && (
           <button className="toggle-view-button" onClick={() => setShowLogs(!showLogs)}>
             {showLogs ? "Ver Campo de Batalla" : "Ver Logs (Debug)"}
           </button>
@@ -186,8 +189,13 @@ const Combat = () => {
         isProcessingCommand={isProcessingCommand}
       />
 
-      {/* Mostrar el campo de batalla o los logs según el estado */}
-      {showLogs ? (
+      {/* Mostrar el campo de batalla, team preview o los logs según el estado */}
+      {isTeamPreview ? (
+        // Team Preview se maneja dentro de BattleControls
+        <div className="team-preview-area">
+          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
+        </div>
+      ) : showLogs ? (
         <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />
       ) : (
         <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />
@@ -201,20 +209,26 @@ const Combat = () => {
             cpuForceSwitch={cpuForceSwitch}
             isProcessingCommand={isProcessingCommand}
             onSendCommand={sendCommand}
+            isTeamPreview={isTeamPreview}
+            teamPreviewPokemon={teamPreviewPokemon}
           />
 
-          {/* Controles de la CPU para testing */}
-          {cpuForceSwitch && <CPUControls onSendCommand={sendCommand} />}
+          {/* Controles de la CPU para testing - solo si no estamos en team preview */}
+          {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
 
-          <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />
+          {/* Input de comando personalizado - solo si no estamos en team preview */}
+          {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />}
 
-          <DebugPanel
-            requestData={requestData}
-            battleLogs={battleLogs}
-            playerForceSwitch={playerForceSwitch}
-            cpuForceSwitch={cpuForceSwitch}
-            isProcessingCommand={isProcessingCommand}
-          />
+          {/* Panel de debug - solo si no estamos en team preview */}
+          {!isTeamPreview && (
+            <DebugPanel
+              requestData={requestData}
+              battleLogs={battleLogs}
+              playerForceSwitch={playerForceSwitch}
+              cpuForceSwitch={cpuForceSwitch}
+              isProcessingCommand={isProcessingCommand}
+            />
+          )}
         </div>
       )}
 
