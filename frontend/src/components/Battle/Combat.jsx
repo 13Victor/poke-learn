@@ -5,13 +5,14 @@ import { useBattle } from "../../hooks/useBattle";
 import { BattleField } from "./BattleField";
 import { StatusMessages } from "../Battle/StatusMessages";
 import { BattleControls } from "../Battle/BattleControls";
-import { BattleMessages } from "../Battle/BattleMessages"; // Nuevo componente
+import { BattleMessages } from "../Battle/BattleMessages"; // Componente mejorado
 import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
 import "../../styles/Battle/Combat.css";
 import "../../styles/Battle/BattleField.css";
+import "../../styles/Battle/BattleMessages.css"; // Nuevos estilos
 
 const Combat = () => {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ const Combat = () => {
 
   // Estado para alternar entre la vista de campo de batalla y logs (para debugging)
   const [showLogs, setShowLogs] = useState(false);
+  // Nuevo estado para alternar entre vista de campo y mensajes parseados
+  const [viewMode, setViewMode] = useState("field"); // "field", "messages", "logs"
 
   // Estado para manejar la configuración de batalla seleccionada
   const [battleConfig, setBattleConfig] = useState(null);
@@ -65,7 +68,7 @@ const Combat = () => {
         navigate("/battle");
       }
     }
-  }, [battleState, navigate]); // Dependencias para re-ejecutar cuando cambie el estado
+  }, [battleState, navigate]);
 
   // Función para manejar el inicio de batalla
   const handleStartBattle = (config) => {
@@ -90,6 +93,11 @@ const Combat = () => {
     // Limpiar configuración guardada
     localStorage.removeItem("battleConfig");
     navigate("/battle");
+  };
+
+  // Función para cambiar el modo de vista
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
   };
 
   // Si estamos cargando, mostrar estado de carga
@@ -126,6 +134,27 @@ const Combat = () => {
       </div>
     );
   }
+
+  // Función para renderizar el contenido principal según el modo de vista
+  const renderMainContent = () => {
+    if (isTeamPreview) {
+      return (
+        <div className="team-preview-area">
+          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
+        </div>
+      );
+    }
+
+    switch (viewMode) {
+      case "messages":
+        return <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />;
+      case "logs":
+        return <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />;
+      case "field":
+      default:
+        return <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />;
+    }
+  };
 
   // Resto del componente para cuando la batalla está activa o completada
   return (
@@ -175,11 +204,28 @@ const Combat = () => {
             : "Finalizada"}
         </span>
 
-        {/* Botón para alternar entre vista de campo y logs */}
+        {/* Botones mejorados para alternar entre vistas */}
         {battleState === "active" && !isTeamPreview && (
-          <button className="toggle-view-button" onClick={() => setShowLogs(!showLogs)}>
-            {showLogs ? "Ver Campo de Batalla" : "Ver Logs (Debug)"}
-          </button>
+          <div className="view-mode-selector">
+            <button
+              className={`view-button ${viewMode === "field" ? "active" : ""}`}
+              onClick={() => handleViewModeChange("field")}
+            >
+              🏟️ Campo
+            </button>
+            <button
+              className={`view-button ${viewMode === "messages" ? "active" : ""}`}
+              onClick={() => handleViewModeChange("messages")}
+            >
+              📜 Mensajes
+            </button>
+            <button
+              className={`view-button ${viewMode === "logs" ? "active" : ""}`}
+              onClick={() => handleViewModeChange("logs")}
+            >
+              🔧 Debug
+            </button>
+          </div>
         )}
       </div>
 
@@ -190,17 +236,8 @@ const Combat = () => {
         isProcessingCommand={isProcessingCommand}
       />
 
-      {/* Mostrar el campo de batalla, team preview o los logs según el estado */}
-      {isTeamPreview ? (
-        // Team Preview se maneja dentro de BattleControls
-        <div className="team-preview-area">
-          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
-        </div>
-      ) : showLogs ? (
-        <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />
-      ) : (
-        <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />
-      )}
+      {/* Renderizar el contenido principal según el modo seleccionado */}
+      {renderMainContent()}
 
       {battleState === "active" && (
         <div className="battle-controls">
@@ -214,17 +251,14 @@ const Combat = () => {
             teamPreviewPokemon={teamPreviewPokemon}
           />
 
-          {/* NUEVO: Componente de mensajes parseados */}
-          <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />
-
           {/* Controles de la CPU para testing - solo si no estamos en team preview */}
           {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
 
           {/* Input de comando personalizado - solo si no estamos en team preview */}
           {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />}
 
-          {/* Panel de debug - solo si no estamos en team preview */}
-          {!isTeamPreview && (
+          {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
+          {!isTeamPreview && viewMode === "logs" && (
             <DebugPanel
               requestData={requestData}
               battleLogs={battleLogs}
@@ -238,7 +272,7 @@ const Combat = () => {
 
       {battleState === "completed" && (
         <div className="battle-complete">
-          <p>¡La batalla ha finalizado!</p>
+          <h2>¡La batalla ha finalizado!</h2>
 
           {/* Mostrar mensajes finales incluso cuando la batalla haya terminado */}
           <BattleMessages logs={battleLogs} isTeamPreview={false} />

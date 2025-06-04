@@ -1,16 +1,29 @@
-import React, { useEffect, useRef } from "react";
+// src/components/Battle/BattleMessages.jsx
+import React, { useEffect, useRef, useState } from "react";
 import { BattleMessageParser } from "../../utils/BattleMessageParser";
 
 export function BattleMessages({ logs, isTeamPreview }) {
   const messagesEndRef = useRef(null);
   const parser = useRef(new BattleMessageParser());
+  const [autoScroll, setAutoScroll] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const messagesContainerRef = useRef(null);
 
-  // Auto-scroll to the end when there are new messages
+  // Auto-scroll to the end when there are new messages (if enabled)
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && autoScroll) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [logs]);
+  }, [logs, autoScroll]);
+
+  // Handle manual scrolling to disable auto-scroll
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setAutoScroll(isNearBottom);
+    }
+  };
 
   // Don't show messages during team preview
   if (isTeamPreview) {
@@ -18,12 +31,15 @@ export function BattleMessages({ logs, isTeamPreview }) {
       <div className="battle-messages">
         <div className="messages-header">
           <h4>📜 Battle Log</h4>
+          <div className="messages-status">Team Preview</div>
         </div>
         <div className="messages-content">
           <div className="message team-preview-message">
-            🔍 <strong>Team Preview</strong>
-            <br />
-            <span className="message-detail">Select your team order to begin the battle.</span>
+            <div className="message-icon">🔍</div>
+            <div className="message-content">
+              <strong>Team Preview Phase</strong>
+              <div className="message-detail">Select your team order to begin the battle.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -33,30 +49,119 @@ export function BattleMessages({ logs, isTeamPreview }) {
   // Parse logs to get readable messages
   const parsedMessages = parser.current.parseMessages(logs);
 
+  // Filter messages based on selected filter
+  const filteredMessages = parsedMessages.filter((message) => {
+    if (filter === "all") return true;
+
+    const messageType = getMessageType(message);
+    switch (filter) {
+      case "moves":
+        return [
+          "move",
+          "damage",
+          "heal",
+          "critical",
+          "super-effective",
+          "not-very-effective",
+          "blocked",
+          "failed",
+        ].includes(messageType);
+      case "switches":
+        return ["switch", "faint"].includes(messageType);
+      case "status":
+        return ["status-effect", "status-cure", "stat-boost", "stat-drop"].includes(messageType);
+      case "field":
+        return ["weather", "field-effect", "side-effect"].includes(messageType);
+      case "important":
+        return ["turn-start", "victory", "tie", "faint", "critical", "super-effective"].includes(messageType);
+      default:
+        return true;
+    }
+  });
+
+  // Get turn statistics
+  const getTurnStats = () => {
+    const turnMessages = parsedMessages.filter((msg) => msg.includes("TURN"));
+    const currentTurn = turnMessages.length;
+    const totalMessages = parsedMessages.length;
+    return { currentTurn, totalMessages };
+  };
+
+  const { currentTurn, totalMessages } = getTurnStats();
+
   return (
     <div className="battle-messages">
       <div className="messages-header">
-        <h4>📜 Battle Log</h4>
-        <span className="messages-count">
-          {parsedMessages.length} event{parsedMessages.length !== 1 ? "s" : ""}
-        </span>
+        <div className="messages-title">
+          <h4>📜 Battle Log</h4>
+          <div className="messages-stats">
+            Turn {currentTurn} • {filteredMessages.length} events
+          </div>
+        </div>
+
+        <div className="messages-controls">
+          <div className="filter-controls">
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
+              <option value="all">All Events</option>
+              <option value="important">Important</option>
+              <option value="moves">Moves & Damage</option>
+              <option value="switches">Switches & Faints</option>
+              <option value="status">Status Effects</option>
+              <option value="field">Field Effects</option>
+            </select>
+          </div>
+
+          <div className="scroll-controls">
+            <button
+              onClick={() => setAutoScroll(!autoScroll)}
+              className={`auto-scroll-btn ${autoScroll ? "active" : ""}`}
+              title={autoScroll ? "Auto-scroll enabled" : "Auto-scroll disabled"}
+            >
+              {autoScroll ? "📌" : "📍"}
+            </button>
+
+            <button
+              onClick={() => {
+                if (messagesEndRef.current) {
+                  messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+                  setAutoScroll(true);
+                }
+              }}
+              className="scroll-to-bottom-btn"
+              title="Scroll to bottom"
+            >
+              ⬇️
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="messages-content">
-        {parsedMessages.length === 0 ? (
+      <div className="messages-content" ref={messagesContainerRef} onScroll={handleScroll}>
+        {filteredMessages.length === 0 ? (
           <div className="message welcome-message">
-            🎮 <strong>Battle started</strong>
-            <br />
-            <span className="message-detail">Battle events will appear here.</span>
+            <div className="message-icon">🎮</div>
+            <div className="message-content">
+              <strong>Battle Ready</strong>
+              <div className="message-detail">
+                {filter === "all"
+                  ? "Battle events will appear here."
+                  : `No ${filter} events to show. Try changing the filter.`}
+              </div>
+            </div>
           </div>
         ) : (
-          parsedMessages.map((message, index) => {
-            // Determine message type for styling
+          filteredMessages.map((message, index) => {
             const messageType = getMessageType(message);
+            const { icon, className } = getMessageTypeInfo(messageType);
 
             return (
-              <div key={index} className={`message ${messageType}`}>
-                <span className="message-text" dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
+              <div key={index} className={`message ${className}`}>
+                <div className="message-icon">{icon}</div>
+                <div className="message-content">
+                  <div className="message-text" dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
+                  {messageType === "turn-start" && <div className="turn-separator"></div>}
+                </div>
+                <div className="message-time">{index < 10 ? `0${index}` : index}</div>
               </div>
             );
           })
@@ -65,11 +170,37 @@ export function BattleMessages({ logs, isTeamPreview }) {
         {/* Invisible element for auto-scroll */}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Bottom status bar */}
+      <div className="messages-footer">
+        <div className="current-conditions">
+          {parser.current.activeWeather && <span className="condition weather">☁️ {parser.current.activeWeather}</span>}
+          {parser.current.fieldConditions.map((condition) => (
+            <span key={condition} className="condition field">
+              🌍 {condition}
+            </span>
+          ))}
+          {parser.current.sideConditions.p1.map((condition) => (
+            <span key={`p1-${condition}`} className="condition side-p1">
+              🛡️ P1: {condition}
+            </span>
+          ))}
+          {parser.current.sideConditions.p2.map((condition) => (
+            <span key={`p2-${condition}`} className="condition side-p2">
+              🛡️ P2: {condition}
+            </span>
+          ))}
+        </div>
+
+        <div className="scroll-indicator">
+          {!autoScroll && <span className="new-messages-indicator">📬 New messages below</span>}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Helper function to determine message type
+// Enhanced helper function to determine message type
 function getMessageType(message) {
   if (message.includes("===") && message.includes("TURN")) return "turn-start";
   if (message.includes("🏆")) return "victory";
@@ -91,12 +222,66 @@ function getMessageType(message) {
   if (message.includes("🌦️") || message.includes("🌤️")) return "weather";
   if (message.includes("🌍")) return "field-effect";
   if (message.includes("🛡️")) return "side-effect";
+  if (message.includes("⭐")) return "ability";
+  if (message.includes("🎒")) return "item";
+  if (message.includes("🌟")) return "transformation";
+  if (message.includes("👤")) return "player-info";
+  if (message.includes("📊") || message.includes("🎮") || message.includes("🏆") || message.includes("📋"))
+    return "game-info";
 
   return "normal";
 }
 
-// Helper function to format the message
+// Get message type information for styling
+function getMessageTypeInfo(messageType) {
+  const typeMap = {
+    "turn-start": { icon: "🎯", className: "turn-start" },
+    victory: { icon: "🏆", className: "victory" },
+    tie: { icon: "🤝", className: "tie" },
+    faint: { icon: "💀", className: "faint" },
+    move: { icon: "⚔️", className: "move" },
+    switch: { icon: "🔄", className: "switch" },
+    damage: { icon: "💥", className: "damage" },
+    heal: { icon: "💚", className: "heal" },
+    critical: { icon: "💫", className: "critical" },
+    "super-effective": { icon: "⚡", className: "super-effective" },
+    "not-very-effective": { icon: "🛡️", className: "not-very-effective" },
+    blocked: { icon: "🚫", className: "blocked" },
+    failed: { icon: "❌", className: "failed" },
+    "stat-boost": { icon: "📈", className: "stat-boost" },
+    "stat-drop": { icon: "📉", className: "stat-drop" },
+    "status-effect": { icon: "🔥", className: "status-effect" },
+    "status-cure": { icon: "✨", className: "status-cure" },
+    weather: { icon: "🌦️", className: "weather" },
+    "field-effect": { icon: "🌍", className: "field-effect" },
+    "side-effect": { icon: "🛡️", className: "side-effect" },
+    ability: { icon: "⭐", className: "ability" },
+    item: { icon: "🎒", className: "item" },
+    transformation: { icon: "🌟", className: "transformation" },
+    "player-info": { icon: "👤", className: "player-info" },
+    "game-info": { icon: "📋", className: "game-info" },
+    normal: { icon: "📝", className: "normal" },
+  };
+
+  return typeMap[messageType] || typeMap.normal;
+}
+
+// Helper function to format the message with enhanced formatting
 function formatMessage(message) {
   // Convert markdown bold text to HTML
-  return message.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br/>");
+  let formatted = message.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Convert line breaks
+  formatted = formatted.replace(/\n/g, "<br/>");
+
+  // Add special formatting for turn headers
+  if (formatted.includes("===") && formatted.includes("TURN")) {
+    formatted = formatted.replace(/(TURN \d+)/g, '<span class="turn-number">$1</span>');
+  }
+
+  // Add highlighting for damage numbers and percentages
+  formatted = formatted.replace(/(\d+%)/g, '<span class="percentage">$1</span>');
+  formatted = formatted.replace(/HP: (\d+\/\d+)/g, 'HP: <span class="hp-fraction">$1</span>');
+
+  return formatted;
 }

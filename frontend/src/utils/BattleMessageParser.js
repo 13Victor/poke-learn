@@ -5,7 +5,12 @@ export class BattleMessageParser {
     this.p1Name = "Player";
     this.p2Name = "CPU";
     this.turn = 0;
-    this.pendingEffectivenessMessages = []; // Store effectiveness messages to show after damage
+    this.pendingEffectivenessMessages = [];
+    this.battleStarted = false;
+    this.teamPreviewActive = false;
+    this.activeWeather = null;
+    this.fieldConditions = [];
+    this.sideConditions = { p1: [], p2: [] };
   }
 
   // Main function to parse multiple logs
@@ -20,24 +25,44 @@ export class BattleMessageParser {
         if (!line.trim()) continue;
 
         const parsed = this.parseLine(line);
-        if (parsed && parsed.trim() !== "") {
-          parsedMessages.push(parsed);
+        if (parsed) {
+          // Si es un array de mensajes (para efectividad combinada), agregar todos
+          if (Array.isArray(parsed)) {
+            for (const message of parsed) {
+              if (message && typeof message === "string" && message.trim() !== "") {
+                parsedMessages.push(message.trim());
+              }
+            }
+          } else if (typeof parsed === "string" && parsed.trim() !== "") {
+            parsedMessages.push(parsed.trim());
+          }
         }
       }
     }
 
-    // Filter consecutive duplicate messages
+    // Filter consecutive duplicate messages but keep important ones
     const filteredMessages = [];
     for (let i = 0; i < parsedMessages.length; i++) {
-      if (i === 0 || parsedMessages[i] !== parsedMessages[i - 1]) {
-        filteredMessages.push(parsedMessages[i]);
+      const current = parsedMessages[i];
+      const previous = parsedMessages[i - 1];
+
+      // Always keep turn starts, battle state changes, and different messages
+      if (
+        i === 0 ||
+        current !== previous ||
+        current.includes("TURN") ||
+        current.includes("🏆") ||
+        current.includes("🤝") ||
+        current.includes("🚀")
+      ) {
+        filteredMessages.push(current);
       }
     }
 
-    return filteredMessages.filter((msg) => msg.trim() !== "");
+    return filteredMessages;
   }
 
-  // Parse an individual line
+  // Parse an individual line with enhanced functionality
   parseLine(line) {
     if (!line.startsWith("|")) {
       return null;
@@ -46,330 +71,707 @@ export class BattleMessageParser {
     const parts = line.split("|");
     const command = parts[1];
 
+    // Handle special parsing for commands with brackets
+    const { args, kwArgs } = this.parseBattleLine(line);
+
     switch (command) {
       case "player":
-        return this.parsePlayer(parts);
-      case "turn":
-        return this.parseTurn(parts);
+        return this.parsePlayer(args);
+      case "teamsize":
+        return this.parseTeamSize(args);
+      case "gen":
+        return this.parseGen(args);
+      case "tier":
+        return this.parseTier(args);
+      case "rule":
+        return this.parseRule(args);
+      case "clearpoke":
+        return this.parseClearPoke();
+      case "poke":
+        return this.parsePoke(args);
+      case "teampreview":
+        return this.parseTeamPreview(args);
       case "start":
-        return this.parseStart(parts);
+        return this.parseStart(args);
+      case "turn":
+        return this.parseTurn(args);
       case "win":
-        return this.parseWin(parts);
+        return this.parseWin(args);
       case "tie":
-        return this.parseTie(parts);
+        return this.parseTie(args);
       case "switch":
-        return this.parseSwitch(parts);
+        return this.parseSwitch(args);
       case "drag":
-        return this.parseDrag(parts);
+        return this.parseDrag(args);
+      case "replace":
+        return this.parseReplace(args);
       case "move":
-        return this.parseMove(parts);
+        return this.parseMove(args, kwArgs);
       case "faint":
-        return this.parseFaint(parts);
+        return this.parseFaint(args);
+      case "cant":
+        return this.parseCant(args, kwArgs);
       case "-damage":
-        return this.parseDamage(parts);
+        return this.parseDamage(args, kwArgs);
       case "-heal":
-        return this.parseHeal(parts);
+        return this.parseHeal(args, kwArgs);
       case "-status":
-        return this.parseStatus(parts);
+        return this.parseStatus(args, kwArgs);
       case "-curestatus":
-        return this.parseCureStatus(parts);
+        return this.parseCureStatus(args, kwArgs);
       case "-boost":
-        return this.parseBoost(parts);
+        return this.parseBoost(args, kwArgs);
       case "-unboost":
-        return this.parseUnboost(parts);
+        return this.parseUnboost(args, kwArgs);
       case "-weather":
-        return this.parseWeather(parts);
+        return this.parseWeather(args, kwArgs);
       case "-fieldstart":
-        return this.parseFieldStart(parts);
+        return this.parseFieldStart(args, kwArgs);
       case "-fieldend":
-        return this.parseFieldEnd(parts);
+        return this.parseFieldEnd(args);
       case "-sidestart":
-        return this.parseSideStart(parts);
+        return this.parseSideStart(args);
       case "-sideend":
-        return this.parseSideEnd(parts);
+        return this.parseSideEnd(args);
       case "-crit":
-        // Store critical hit message instead of returning immediately
-        this.pendingEffectivenessMessages.push(this.parseCrit(parts));
+        this.pendingEffectivenessMessages.push(this.parseCrit(args));
         return null;
       case "-supereffective":
-        // Store super effective message instead of returning immediately
-        this.pendingEffectivenessMessages.push(this.parseSuperEffective(parts));
+        this.pendingEffectivenessMessages.push(this.parseSuperEffective(args));
         return null;
       case "-resisted":
-        // Store resisted message instead of returning immediately
-        this.pendingEffectivenessMessages.push(this.parseResisted(parts));
+        this.pendingEffectivenessMessages.push(this.parseResisted(args));
         return null;
       case "-immune":
-        // Store immune message instead of returning immediately
-        this.pendingEffectivenessMessages.push(this.parseImmune(parts));
-        return null;
+        return this.parseImmune(args, kwArgs);
       case "-miss":
-        return this.parseMiss(parts);
+        return this.parseMiss(args);
       case "-fail":
-        return this.parseFail(parts);
-      case "cant":
-        return this.parseCant(parts);
-      case "teampreview":
-        return "🔍 **Team Preview phase started**";
+        return this.parseFail(args, kwArgs);
+      case "-block":
+        return this.parseBlock(args, kwArgs);
+      case "-activate":
+        return this.parseActivate(args, kwArgs);
+      case "-start":
+        return this.parseStartEffect(args, kwArgs);
+      case "-end":
+        return this.parseEndEffect(args, kwArgs);
+      case "-ability":
+        return this.parseAbility(args, kwArgs);
+      case "-item":
+        return this.parseItem(args, kwArgs);
+      case "-enditem":
+        return this.parseEndItem(args, kwArgs);
+      case "-transform":
+        return this.parseTransform(args, kwArgs);
+      case "-mega":
+        return this.parseMega(args);
+      case "-primal":
+        return this.parsePrimal(args);
+      case "-burst":
+        return this.parseBurst(args);
+      case "-terastallize":
+        return this.parseTerastallize(args);
       case "upkeep":
-        return null; // Remove turn maintenance phase message
+        return null; // Remove upkeep messages
+      case "request":
+        return null; // Handled separately
       default:
         return null;
     }
   }
 
-  // Methods to parse specific commands
-  parsePlayer(parts) {
-    const [, , side, name] = parts;
+  // Enhanced line parsing to handle brackets like Showdown
+  parseBattleLine(line) {
+    if (!line.startsWith("|")) {
+      return { args: ["", line], kwArgs: {} };
+    }
+
+    let args = line.slice(1).split("|");
+    const kwArgs = {};
+
+    // Process bracketed arguments like [from] ability:Flash Fire
+    while (args.length > 1) {
+      const lastArg = args[args.length - 1];
+      if (!lastArg.startsWith("[")) break;
+
+      const bracketPos = lastArg.indexOf("]");
+      if (bracketPos <= 0) break;
+
+      const key = lastArg.slice(1, bracketPos);
+      const value = lastArg.slice(bracketPos + 1).trim() || ".";
+      kwArgs[key] = value;
+      args.pop();
+    }
+
+    return { args, kwArgs };
+  }
+
+  // Parsing methods
+  parsePlayer(args) {
+    const [, side, name] = args;
     if (side === "p1") {
       this.p1Name = name || "Player";
     } else if (side === "p2") {
       this.p2Name = name || "CPU";
     }
-    return null; // Don't show message for player setup
+    return `👤 **${name}** joined as ${side === "p1" ? "Player" : "CPU"}`;
   }
 
-  parseTurn(parts) {
-    const [, , turnNum] = parts;
-    this.turn = parseInt(turnNum, 10);
-    return `\n🎯 **=== TURN ${turnNum} ===**\n`;
+  parseTeamSize(args) {
+    const [, side, size] = args;
+    const player = side === "p1" ? this.p1Name : this.p2Name;
+    return `📊 **${player}** brought ${size} Pokémon`;
+  }
+
+  parseGen(args) {
+    const [, gen] = args;
+    return `🎮 **Generation ${gen}** battle`;
+  }
+
+  parseTier(args) {
+    const [, tier] = args;
+    return `🏆 **Format: ${tier}**`;
+  }
+
+  parseRule(args) {
+    const [, rule] = args;
+    return `📋 **Rule:** ${rule}`;
+  }
+
+  parseClearPoke() {
+    this.teamPreviewActive = true;
+    return null;
+  }
+
+  parsePoke(args) {
+    if (!this.teamPreviewActive) return null;
+    const [, side, details] = args;
+    const player = side === "p1" ? this.p1Name : this.p2Name;
+    const species = details.split(",")[0];
+    return `🔍 **${player}** revealed **${species}**`;
+  }
+
+  parseTeamPreview(args) {
+    const [, count] = args;
+    return `🔍 **Team Preview** - Choose ${count || 6} Pokémon to bring`;
   }
 
   parseStart() {
-    return `🚀 **The battle between ${this.p1Name} and ${this.p2Name} has begun!**`;
+    this.battleStarted = true;
+    this.teamPreviewActive = false;
+    return `🚀 **The battle between ${this.p1Name} and ${this.p2Name} begins!**`;
   }
 
-  parseWin(parts) {
-    const [, , winner] = parts;
-    return `🏆 **${winner} has won the battle!**`;
+  parseTurn(args) {
+    const [, turnNum] = args;
+    this.turn = parseInt(turnNum, 10);
+
+    // Add weather/field condition reminders every few turns
+    let conditions = [];
+    if (this.activeWeather) {
+      conditions.push(`☁️ ${this.activeWeather}`);
+    }
+    if (this.fieldConditions.length > 0) {
+      conditions.push(`🌍 ${this.fieldConditions.join(", ")}`);
+    }
+
+    const conditionText = conditions.length > 0 ? `\n${conditions.join(" | ")}` : "";
+    return `\n🎯 **=== TURN ${turnNum} ===${conditionText}**\n`;
+  }
+
+  parseMove(args, kwArgs) {
+    const [, pokemon, moveName, target] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+
+    let moveText = `⚔️ **${pokemonName}** uses **${moveName}**`;
+
+    // Add target information
+    if (target && target !== pokemon) {
+      const targetName = this.getPokemonName(target);
+      moveText += ` on **${targetName}**`;
+    }
+
+    // Add special move context
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      moveText += ` (via ${effect})`;
+    }
+
+    if (kwArgs.miss) {
+      moveText += " - **MISSED!**";
+    }
+
+    return moveText;
+  }
+
+  parseDamage(args, kwArgs) {
+    const [, pokemon, hpStatus] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+
+    if (hpStatus === "0 fnt") {
+      return null; // Faint message will handle this
+    }
+
+    // Enhanced damage context
+    let damageText = `💥 **${pokemonName}** takes damage`;
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      const source = kwArgs.of ? this.getPokemonName(kwArgs.of) : null;
+
+      if (source && source !== pokemonName) {
+        damageText = `💥 **${pokemonName}** takes damage from **${source}**'s **${effect}**`;
+      } else {
+        damageText = `💥 **${pokemonName}** takes damage from **${effect}**`;
+      }
+    }
+
+    // Add effectiveness messages if any are pending
+    if (this.pendingEffectivenessMessages.length > 0) {
+      const effectivenessMessages = [...this.pendingEffectivenessMessages];
+      this.pendingEffectivenessMessages = [];
+      return [damageText, ...effectivenessMessages];
+    }
+
+    return damageText;
+  }
+
+  parseWeather(args, kwArgs) {
+    const [, weather] = args;
+
+    if (!weather || weather === "none") {
+      this.activeWeather = null;
+      return `🌤️ **The weather cleared up**`;
+    }
+
+    const weatherName = this.getWeatherName(weather);
+    this.activeWeather = weatherName;
+
+    if (kwArgs.upkeep) {
+      return `🌦️ **${weatherName}** continues`;
+    }
+
+    if (kwArgs.of) {
+      const source = this.getPokemonName(kwArgs.of);
+      return `🌦️ **${source}** summoned **${weatherName}**`;
+    }
+
+    return `🌦️ **${weatherName}** began`;
+  }
+
+  parseFieldStart(args, kwArgs) {
+    const [, effect] = args;
+    const effectName = this.getEffectName(effect);
+
+    if (!this.fieldConditions.includes(effectName)) {
+      this.fieldConditions.push(effectName);
+    }
+
+    if (kwArgs.of) {
+      const source = this.getPokemonName(kwArgs.of);
+      return `🌍 **${source}** created **${effectName}**`;
+    }
+
+    return `🌍 **${effectName}** is now active`;
+  }
+
+  parseFieldEnd(args) {
+    const [, effect] = args;
+    const effectName = this.getEffectName(effect);
+
+    this.fieldConditions = this.fieldConditions.filter((c) => c !== effectName);
+
+    return `🌍 **${effectName}** faded`;
+  }
+
+  parseSideStart(args) {
+    const [, side, effect] = args;
+    const teamName = this.getTeamName(side);
+    const effectName = this.getEffectName(effect);
+
+    if (!this.sideConditions[side].includes(effectName)) {
+      this.sideConditions[side].push(effectName);
+    }
+
+    return `🛡️ **${effectName}** is now protecting **${teamName}**'s side`;
+  }
+
+  parseSideEnd(args) {
+    const [, side, effect] = args;
+    const teamName = this.getTeamName(side);
+    const effectName = this.getEffectName(effect);
+
+    this.sideConditions[side] = this.sideConditions[side].filter((c) => c !== effectName);
+
+    return `🛡️ **${effectName}** faded from **${teamName}**'s side`;
+  }
+
+  // Helper methods with all the basic parsing functions
+  parseSwitch(args) {
+    const [, pokemon, details] = args;
+    const trainerName = this.getTrainerName(pokemon);
+    const pokemonName = this.getPokemonName(pokemon);
+    const species = details.split(",")[0];
+    return `🔄 **${trainerName}** sends out **${species}**${pokemonName !== species ? ` (${pokemonName})` : ""}`;
+  }
+
+  parseFaint(args) {
+    const [, pokemon] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    return `💀 **${pokemonName}** fainted`;
+  }
+
+  parseWin(args) {
+    const [, winner] = args;
+    return `🏆 **${winner} won the battle!**`;
   }
 
   parseTie() {
     return `🤝 **The battle ended in a tie!**`;
   }
 
-  parseSwitch(parts) {
-    const [, , pokemon, details] = parts;
-    const trainerName = this.getTrainerName(pokemon);
+  parseCrit(args) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const species = details.split(",")[0];
-
-    return `🔄 ${trainerName} sends out **${species}**${pokemonName !== species ? ` (${pokemonName})` : ""}`;
+    return `💫 **Critical hit on ${pokemonName}!**`;
   }
 
-  parseDrag(parts) {
-    const [, , pokemon, details] = parts;
-    const trainerName = this.getTrainerName(pokemon);
+  parseSuperEffective(args) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const species = details.split(",")[0];
-
-    return `💨 **${species}** from ${trainerName} was forced into battle`;
+    return `⚡ **It's super effective against ${pokemonName}!**`;
   }
 
-  parseMove(parts) {
-    const [, , pokemon, moveName, target] = parts;
-    const trainerName = this.getTrainerName(pokemon);
+  parseResisted(args) {
+    const [, pokemon] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    return `🛡️ **It's not very effective against ${pokemonName}...**`;
+  }
+
+  parseImmune(args, kwArgs) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
 
-    if (target && target !== pokemon) {
-      const targetName = this.getPokemonName(target);
-      return `⚔️ **${pokemonName}** uses **${moveName}** on **${targetName}**`;
+    if (kwArgs.from) {
+      const ability = this.getEffectName(kwArgs.from);
+      return `🚫 **${pokemonName}** is immune due to **${ability}**`;
     }
-    return `⚔️ **${pokemonName}** uses **${moveName}**`;
+
+    return `🚫 **${pokemonName}** is immune to the attack`;
   }
 
-  parseActivate(parts) {
-    const [, , pokemon, effect, target] = parts;
+  parseHeal(args, kwArgs) {
+    const [, pokemon] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `💚 **${pokemonName}** recovered HP from **${effect}**`;
+    }
+
+    return `💚 **${pokemonName}** recovered HP`;
+  }
+
+  parseStatus(args, kwArgs) {
+    const [, pokemon, status] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const statusName = this.getStatusName(status);
+
+    if (kwArgs.from) {
+      const source = kwArgs.of ? this.getPokemonName(kwArgs.of) : null;
+      const effect = this.getEffectName(kwArgs.from);
+
+      if (source) {
+        return `🔥 **${pokemonName}** was inflicted with **${statusName}** by **${source}**'s **${effect}**`;
+      } else {
+        return `🔥 **${pokemonName}** was inflicted with **${statusName}** by **${effect}**`;
+      }
+    }
+
+    return `🔥 **${pokemonName}** was inflicted with **${statusName}**`;
+  }
+
+  parseCureStatus(args, kwArgs) {
+    const [, pokemon, status] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const statusName = this.getStatusName(status);
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `✨ **${pokemonName}** was cured of **${statusName}** by **${effect}**`;
+    }
+
+    return `✨ **${pokemonName}** was cured of **${statusName}**`;
+  }
+
+  parseBoost(args, kwArgs) {
+    const [, pokemon, stat, amount] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const statName = this.getStatName(stat);
+    const level = this.getBoostLevel(parseInt(amount, 10));
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `📈 **${pokemonName}**'s **${statName}** ${level} due to **${effect}**`;
+    }
+
+    return `📈 **${pokemonName}**'s **${statName}** ${level}`;
+  }
+
+  parseUnboost(args, kwArgs) {
+    const [, pokemon, stat, amount] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const statName = this.getStatName(stat);
+    const level = this.getBoostLevel(parseInt(amount, 10));
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `📉 **${pokemonName}**'s **${statName}** ${level
+        .replace("rose", "fell")
+        .replace("increased", "decreased")} due to **${effect}**`;
+    }
+
+    return `📉 **${pokemonName}**'s **${statName}** ${level.replace("rose", "fell").replace("increased", "decreased")}`;
+  }
+
+  // Add remaining parse methods...
+  parseCant(args, kwArgs) {
+    const [, pokemon, reason, move] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const reasonName = this.getEffectName(reason);
+
+    if (move) {
+      return `🚫 **${pokemonName}** can't use **${move}** due to **${reasonName}**`;
+    }
+    return `🚫 **${pokemonName}** can't move due to **${reasonName}**`;
+  }
+
+  parseMiss(args) {
+    const [, source, target] = args;
+    const targetName = target ? this.getPokemonName(target) : "the target";
+    return `❌ **The attack missed ${targetName}!**`;
+  }
+
+  parseFail(args, kwArgs) {
+    const [, pokemon] = args;
+
+    if (pokemon) {
+      const pokemonName = this.getPokemonName(pokemon);
+      return `❌ **The move failed against ${pokemonName}**`;
+    }
+
+    return `❌ **The move failed**`;
+  }
+
+  parseBlock(args, kwArgs) {
+    const [, pokemon, effect] = args;
     const pokemonName = this.getPokemonName(pokemon);
     const effectName = this.getEffectName(effect);
 
-    // Special cases for common effects
-    if (effect && effect.includes("substitute")) {
-      return `🛡️ **${pokemonName}** is protected by **Substitute**`;
+    return `🛡️ **${pokemonName}** blocked the attack with **${effectName}**`;
+  }
+
+  parseActivate(args, kwArgs) {
+    const [, pokemon, effect, target] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const effectName = this.getEffectName(effect);
+
+    if (effect.includes("substitute")) {
+      return `🛡️ **${pokemonName}**'s **Substitute** took the hit`;
     }
 
-    if (effect && effect.includes("confusion")) {
-      return `😵 **${pokemonName}** is confused and hurts itself`;
+    if (effect.includes("confusion")) {
+      return `😵 **${pokemonName}** hurt itself in confusion`;
+    }
+
+    if (kwArgs.ability) {
+      return `⭐ **${pokemonName}**'s **${effectName}** activated`;
     }
 
     return `✨ **${effectName}** activated on **${pokemonName}**`;
   }
 
-  parseItem(parts) {
-    const [, , pokemon, item] = parts;
+  parseStartEffect(args, kwArgs) {
+    const [, pokemon, effect] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const itemName = this.getEffectName(item);
-    return `🎒 **${pokemonName}** has **${itemName}**`;
+    const effectName = this.getEffectName(effect);
+
+    if (kwArgs.from) {
+      const source = this.getEffectName(kwArgs.from);
+      return `✨ **${pokemonName}** is affected by **${effectName}** due to **${source}**`;
+    }
+
+    return `✨ **${pokemonName}** is affected by **${effectName}**`;
   }
 
-  parseEndItem(parts) {
-    const [, , pokemon, item] = parts;
+  parseEndEffect(args, kwArgs) {
+    const [, pokemon, effect] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const effectName = this.getEffectName(effect);
+
+    return `✨ **${effectName}** wore off from **${pokemonName}**`;
+  }
+
+  parseAbility(args, kwArgs) {
+    const [, pokemon, ability] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const abilityName = this.getEffectName(ability);
+
+    if (kwArgs.from) {
+      const source = this.getEffectName(kwArgs.from);
+      return `⭐ **${pokemonName}** gained **${abilityName}** via **${source}**`;
+    }
+
+    return `⭐ **${pokemonName}**'s **${abilityName}** activated`;
+  }
+
+  parseItem(args, kwArgs) {
+    const [, pokemon, item] = args;
     const pokemonName = this.getPokemonName(pokemon);
     const itemName = this.getEffectName(item);
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `🎒 **${pokemonName}** obtained **${itemName}** via **${effect}**`;
+    }
+
+    return `🎒 **${pokemonName}** revealed **${itemName}**`;
+  }
+
+  parseEndItem(args, kwArgs) {
+    const [, pokemon, item] = args;
+    const pokemonName = this.getPokemonName(pokemon);
+    const itemName = this.getEffectName(item);
+
+    if (kwArgs.eat) {
+      return `🍎 **${pokemonName}** ate its **${itemName}**`;
+    }
+
+    if (kwArgs.from) {
+      const effect = this.getEffectName(kwArgs.from);
+      return `💔 **${pokemonName}** lost its **${itemName}** due to **${effect}**`;
+    }
+
     return `💔 **${pokemonName}** lost its **${itemName}**`;
   }
 
-  parseAbility(parts) {
-    const [, , pokemon, ability] = parts;
+  parseTransform(args, kwArgs) {
+    const [, pokemon, target] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const abilityName = this.getEffectName(ability);
-    return `⭐ **${abilityName}** of **${pokemonName}** activated`;
+    const targetName = this.getPokemonName(target);
+
+    return `🔄 **${pokemonName}** transformed into **${targetName}**`;
   }
 
-  parseFaint(parts) {
-    const [, , pokemon] = parts;
+  parseTerastallize(args) {
+    const [, pokemon, type] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    return `💀 **${pokemonName}** fainted`;
+    return `✨ **${pokemonName}** terastallized into **${type}** type`;
   }
 
-  parseDamage(parts) {
-    const [, , pokemon, hpStatus] = parts;
+  parseMega(args) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
-
-    if (hpStatus === "0 fnt") {
-      return null; // The faint message already handles this
-    }
-
-    // Skip percentage damage messages (they contain "/100" at the end)
-    if (hpStatus && hpStatus.includes("/100")) {
-      return null;
-    }
-
-    // Create damage message
-    const damageMessage = `💥 **${pokemonName}** takes damage`;
-
-    // Check if we have pending effectiveness messages to show after damage
-    if (this.pendingEffectivenessMessages.length > 0) {
-      const effectivenessMessages = [...this.pendingEffectivenessMessages];
-      this.pendingEffectivenessMessages = []; // Clear pending messages
-
-      // Return damage message followed by effectiveness messages
-      return [damageMessage, ...effectivenessMessages].join("\n");
-    }
-
-    return damageMessage;
+    return `🌟 **${pokemonName}** Mega Evolved`;
   }
 
-  parseHeal(parts) {
-    const [, , pokemon] = parts;
+  parsePrimal(args) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    return `💚 **${pokemonName}** recovers HP`;
+    return `🌟 **${pokemonName}** underwent Primal Reversion`;
   }
 
-  parseStatus(parts) {
-    const [, , pokemon, status] = parts;
+  parseBurst(args) {
+    const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const statusName = this.getStatusName(status);
-    return `🔥 **${pokemonName}** was affected by **${statusName}**`;
+    return `🌟 **${pokemonName}** used Ultra Burst`;
   }
 
-  parseCureStatus(parts) {
-    const [, , pokemon, status] = parts;
+  parseDrag(args) {
+    const [, pokemon, details] = args;
+    const trainerName = this.getTrainerName(pokemon);
+    const species = details.split(",")[0];
+    return `💨 **${species}** was dragged out to battle for **${trainerName}**`;
+  }
+
+  parseReplace(args) {
+    const [, pokemon, details] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const statusName = this.getStatusName(status);
-    return `✨ **${pokemonName}** was cured of **${statusName}**`;
-  }
-
-  parseBoost(parts) {
-    const [, , pokemon, stat, amount] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    const statName = this.getStatName(stat);
-    const level = this.getBoostLevel(parseInt(amount, 10));
-    return `📈 **${pokemonName}**'s **${statName}** ${level}`;
-  }
-
-  parseUnboost(parts) {
-    const [, , pokemon, stat, amount] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    const statName = this.getStatName(stat);
-    const level = this.getBoostLevel(parseInt(amount, 10));
-    return `📉 **${pokemonName}**'s **${statName}** ${level.replace("rose", "fell").replace("increased", "decreased")}`;
-  }
-
-  parseWeather(parts) {
-    const [, , weather] = parts;
-    if (!weather || weather === "none") {
-      return `🌤️ The weather returned to normal`;
-    }
-    const weatherName = this.getWeatherName(weather);
-    return `🌦️ **${weatherName}** is active`;
-  }
-
-  parseFieldStart(parts) {
-    const [, , effect] = parts;
-    const effectName = this.getEffectName(effect);
-    return `🌍 **${effectName}** is active on the field`;
-  }
-
-  parseFieldEnd(parts) {
-    const [, , effect] = parts;
-    const effectName = this.getEffectName(effect);
-    return `🌍 **${effectName}** is no longer active`;
-  }
-
-  parseSideStart(parts) {
-    const [, , side, effect] = parts;
-    const teamName = this.getTeamName(side);
-    const effectName = this.getEffectName(effect);
-    return `🛡️ **${effectName}** is active on ${teamName}'s side`;
-  }
-
-  parseSideEnd(parts) {
-    const [, , side, effect] = parts;
-    const teamName = this.getTeamName(side);
-    const effectName = this.getEffectName(effect);
-    return `🛡️ **${effectName}** is no longer active on ${teamName}'s side`;
-  }
-
-  parseCrit(parts) {
-    const [, , pokemon] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    return `💫 **Critical hit on ${pokemonName}!**`;
-  }
-
-  parseSuperEffective(parts) {
-    const [, , pokemon] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    return `⚡ **It's super effective against ${pokemonName}!**`;
-  }
-
-  parseResisted(parts) {
-    const [, , pokemon] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    return `🛡️ **It's not very effective against ${pokemonName}...**`;
-  }
-
-  parseImmune(parts) {
-    const [, , pokemon] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    return `🚫 **${pokemonName} is immune to the attack**`;
-  }
-
-  parseMiss(parts) {
-    const [, , source, target] = parts;
-    const targetName = target ? this.getPokemonName(target) : "the target";
-    return `❌ **The attack missed ${targetName}!**`;
-  }
-
-  parseFail(parts) {
-    const [, , pokemon] = parts;
-    if (pokemon) {
-      const pokemonName = this.getPokemonName(pokemon);
-      return `❌ **The move failed against ${pokemonName}**`;
-    }
-    return `❌ **The move failed**`;
-  }
-
-  parseCant(parts) {
-    const [, , pokemon, reason, move] = parts;
-    const pokemonName = this.getPokemonName(pokemon);
-    if (move) {
-      return `🚫 **${pokemonName}** can't use **${move}** due to **${reason}**`;
-    }
-    return `🚫 **${pokemonName}** can't move due to **${reason}**`;
+    const species = details.split(",")[0];
+    return `🎭 **${pokemonName}** revealed its true form as **${species}**`;
   }
 
   // Helper methods
+  getEffectName(effect) {
+    if (!effect) return "Unknown";
+
+    if (effect.includes(":")) {
+      effect = effect.split(":")[1];
+    }
+
+    const effectMap = {
+      tackle: "Tackle",
+      thunderbolt: "Thunderbolt",
+      flamethrower: "Flamethrower",
+      surf: "Surf",
+      earthquake: "Earthquake",
+      psychic: "Psychic",
+      icebeam: "Ice Beam",
+      shadowball: "Shadow Ball",
+      energyball: "Energy Ball",
+      airslash: "Air Slash",
+      toxic: "Toxic",
+      thunderwave: "Thunder Wave",
+      willowisp: "Will-O-Wisp",
+      spore: "Spore",
+      sleeppowder: "Sleep Powder",
+      substitute: "Substitute",
+      protect: "Protect",
+      recover: "Recover",
+      roost: "Roost",
+      electricterrain: "Electric Terrain",
+      grassyterrain: "Grassy Terrain",
+      mistyterrain: "Misty Terrain",
+      psychicterrain: "Psychic Terrain",
+      sunnyday: "Sunny Day",
+      raindance: "Rain Dance",
+      sandstorm: "Sandstorm",
+      hail: "Hail",
+      snowscape: "Snowscape",
+      pressure: "Pressure",
+      intimidate: "Intimidate",
+      levitate: "Levitate",
+      flashfire: "Flash Fire",
+      waterabsorb: "Water Absorb",
+      voltabsorb: "Volt Absorb",
+      leftovers: "Leftovers",
+      lifeorb: "Life Orb",
+      choiceband: "Choice Band",
+      choicescarf: "Choice Scarf",
+      choicespecs: "Choice Specs",
+      focussash: "Focus Sash",
+    };
+
+    const lowercaseEffect = effect?.toLowerCase();
+    return effectMap[lowercaseEffect] || effect || "Unknown Effect";
+  }
+
+  getWeatherName(weather) {
+    const weatherMap = {
+      sunnyday: "Harsh Sunlight",
+      raindance: "Rain",
+      sandstorm: "Sandstorm",
+      hail: "Hail",
+      snow: "Snow",
+      snowscape: "Snowscape",
+      primordialsea: "Primordial Sea",
+      desolateland: "Desolate Land",
+      deltastream: "Delta Stream",
+    };
+    return weatherMap[weather?.toLowerCase()] || weather;
+  }
+
   getTrainerName(pokemon) {
     if (pokemon.startsWith("p1")) return this.p1Name;
     if (pokemon.startsWith("p2")) return this.p2Name;
@@ -421,104 +823,5 @@ export class BattleMessageParser {
     if (amount === 2) return "rose sharply";
     if (amount === 1) return "rose";
     return "changed";
-  }
-
-  getWeatherName(weather) {
-    const weatherMap = {
-      sunnyday: "Harsh Sunlight",
-      raindance: "Rain",
-      sandstorm: "Sandstorm",
-      hail: "Hail",
-      snow: "Snow",
-      snowscape: "Snowscape",
-      primordialsea: "Primordial Sea",
-      desolateland: "Desolate Land",
-      deltastream: "Delta Stream",
-    };
-    return weatherMap[weather] || weather;
-  }
-
-  getEffectName(effect) {
-    // Remove prefixes like "move:" or "ability:"
-    if (effect && effect.includes(":")) {
-      effect = effect.split(":")[1];
-    }
-
-    const effectMap = {
-      // Common moves
-      tackle: "Tackle",
-      thunderbolt: "Thunderbolt",
-      flamethrower: "Flamethrower",
-      surf: "Surf",
-      earthquake: "Earthquake",
-      psychic: "Psychic",
-      icebeam: "Ice Beam",
-      shadowball: "Shadow Ball",
-      energyball: "Energy Ball",
-      airslash: "Air Slash",
-
-      // Status moves
-      toxic: "Toxic",
-      thunderwave: "Thunder Wave",
-      willowisp: "Will-O-Wisp",
-      spore: "Spore",
-      sleeppowder: "Sleep Powder",
-      substitute: "Substitute",
-      protect: "Protect",
-      recover: "Recover",
-      roost: "Roost",
-
-      // Field effects
-      reflect: "Reflect",
-      lightscreen: "Light Screen",
-      stealthrock: "Stealth Rock",
-      spikes: "Spikes",
-      toxicspikes: "Toxic Spikes",
-      tailwind: "Tailwind",
-      trickroom: "Trick Room",
-      wonderroom: "Wonder Room",
-      magicroom: "Magic Room",
-      electricterrain: "Electric Terrain",
-      grassyterrain: "Grassy Terrain",
-      mistyterrain: "Misty Terrain",
-      psychicterrain: "Psychic Terrain",
-
-      // Common abilities
-      pressure: "Pressure",
-      intimidate: "Intimidate",
-      levitate: "Levitate",
-      flashfire: "Flash Fire",
-      waterabsorb: "Water Absorb",
-      voltabsorb: "Volt Absorb",
-      immunity: "Immunity",
-      naturalcure: "Natural Cure",
-      serenegrace: "Serene Grace",
-      compoundeyes: "Compound Eyes",
-      speedboost: "Speed Boost",
-      adaptability: "Adaptability",
-      technician: "Technician",
-      skilllink: "Skill Link",
-      rockhead: "Rock Head",
-      reckless: "Reckless",
-      sheerforce: "Sheer Force",
-
-      // Common items
-      leftovers: "Leftovers",
-      lifeorb: "Life Orb",
-      choiceband: "Choice Band",
-      choicescarf: "Choice Scarf",
-      choicespecs: "Choice Specs",
-      focussash: "Focus Sash",
-      sitrusberry: "Sitrus Berry",
-      lumberry: "Lum Berry",
-      flameorb: "Flame Orb",
-      toxicorb: "Toxic Orb",
-      blacksludge: "Black Sludge",
-      rockyhelmet: "Rocky Helmet",
-      airballoon: "Air Balloon",
-      eviolite: "Eviolite",
-    };
-
-    return effectMap[effect?.toLowerCase()] || effect || "Unknown Effect";
   }
 }
