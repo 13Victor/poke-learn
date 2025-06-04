@@ -18,7 +18,13 @@ const activeBattles = new Map();
  */
 router.post("/start", verifyToken, async (req, res) => {
   try {
-    const { format = "gen9ou", playerTeam = null, rivalTeamExport = null, useCustomTeams = false } = req.body;
+    const {
+      format = "gen9ou",
+      playerTeam = null,
+      rivalTeamExport = null,
+      useCustomTeams = false,
+      difficulty = "easy",
+    } = req.body;
 
     const battleId = Date.now().toString();
 
@@ -58,6 +64,7 @@ router.post("/start", verifyToken, async (req, res) => {
       state: "setup",
       lastInputTurn: 0,
       useCustomTeams,
+      difficulty, // Store difficulty level
     };
 
     activeBattles.set(battleId, battleSetup);
@@ -67,6 +74,7 @@ router.post("/start", verifyToken, async (req, res) => {
         battleId,
         format,
         useCustomTeams,
+        difficulty,
       })
     );
   } catch (error) {
@@ -165,6 +173,66 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
 });
 
 /**
+ * Helper function to get a random AI move based on difficulty
+ */
+function getAIMove(battle, availableMoves = []) {
+  const difficulty = battle.difficulty || "easy";
+
+  console.log(`🤖 IA seleccionando movimiento para dificultad: ${difficulty}`);
+
+  switch (difficulty) {
+    case "easy":
+      // For easy mode, select a random move from available moves
+      if (availableMoves.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableMoves.length);
+        const selectedMove = randomIndex + 1; // Convert to 1-based index
+        console.log(
+          `🎲 Modo fácil: seleccionando movimiento aleatorio ${selectedMove} de ${availableMoves.length} disponibles`
+        );
+        return selectedMove;
+      }
+      // Fallback to random move 1-4 if no available moves info
+      const randomMove = Math.floor(Math.random() * 4) + 1;
+      console.log(`🎲 Modo fácil: seleccionando movimiento aleatorio ${randomMove} (fallback)`);
+      return randomMove;
+
+    case "medium":
+    case "hard":
+    default:
+      // For medium and hard, use first move (existing behavior)
+      console.log(`⚡ Modo ${difficulty}: seleccionando primer movimiento`);
+      return 1;
+  }
+}
+
+/**
+ * Helper function to parse request data from battle logs to understand available moves
+ */
+function parseAvailableMovesFromLogs(logs) {
+  // Look for request messages in the logs to understand CPU's available moves
+  for (let i = logs.length - 1; i >= 0; i--) {
+    const log = logs[i];
+    if (typeof log === "string" && log.includes("|request|")) {
+      try {
+        const requestMatch = log.match(/\|request\|(.+)/);
+        if (requestMatch) {
+          const requestData = JSON.parse(requestMatch[1]);
+          if (requestData.active && requestData.active[0] && requestData.active[0].moves) {
+            const moves = requestData.active[0].moves;
+            const availableMoves = moves.filter((move) => !move.disabled);
+            console.log(`🔍 Encontrados ${availableMoves.length} movimientos disponibles para la IA`);
+            return availableMoves;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing request data:", error);
+      }
+    }
+  }
+  return [];
+}
+
+/**
  * @route POST /battle/command/:battleId
  * @desc Enviar un comando a la batalla
  */
@@ -258,8 +326,29 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
         const isP1Command = command.includes("p1");
 
         if (isP1Command) {
-          // Crear un comando automático para la CPU
-          const cpuCommand = ">p2 move 1";
+          // Parse available moves for AI decision making
+          const availableMoves = parseAvailableMovesFromLogs(battle.logs);
+
+          // Create an AI command based on difficulty and available moves
+          let cpuCommand;
+          if (command.includes("move")) {
+            // If player used a move, AI should also use a move
+            const aiMoveNumber = getAIMove(battle, availableMoves);
+            cpuCommand = `>p2 move ${aiMoveNumber}`;
+          } else if (command.includes("switch")) {
+            // If player switched, AI can switch too (random switch for easy mode)
+            if (battle.difficulty === "easy") {
+              const randomSwitch = Math.floor(Math.random() * 5) + 2; // Switch to slot 2-6
+              cpuCommand = `>p2 switch ${randomSwitch}`;
+            } else {
+              cpuCommand = ">p2 move 1"; // Medium/Hard stick to moves mostly
+            }
+          } else {
+            // Default fallback
+            const aiMoveNumber = getAIMove(battle, availableMoves);
+            cpuCommand = `>p2 move ${aiMoveNumber}`;
+          }
+
           console.log("Enviando comando de CPU:", cpuCommand);
 
           // Almacenar este comando también
@@ -292,6 +381,11 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
                 commandsExecuted: battle.pendingCommands,
                 initialLogCount: preCommandLogLength,
                 newLogCount: allNewLogs.length,
+                aiDecision: {
+                  difficulty: battle.difficulty,
+                  commandUsed: cpuCommand,
+                  availableMovesCount: availableMoves.length,
+                },
               },
             })
           );
@@ -354,6 +448,7 @@ router.get("/status/:battleId", verifyToken, async (req, res) => {
         turnCount: battle.turnCount,
         teamPreviewPhase: battle.teamPreviewPhase,
         pendingCommands: battle.pendingCommands || [],
+        difficulty: battle.difficulty,
       })
     );
   } catch (error) {

@@ -274,11 +274,19 @@ class ApiService {
     });
   }
 
+  // MÉTODOS DE BATALLA - ACTUALIZADOS PARA INCLUIR DIFICULTAD
+
   async startBattle(battleData) {
     return this.fetchData("/battle/start", {
       method: "POST",
       headers: this.getHeaders(),
-      body: JSON.stringify(battleData),
+      body: JSON.stringify({
+        format: battleData.format || "gen9ou",
+        playerTeam: battleData.playerTeamShowdown || null,
+        rivalTeamExport: battleData.rivalTeamExport || null,
+        useCustomTeams: battleData.playerTeamShowdown && battleData.rivalTeamExport,
+        difficulty: battleData.difficulty || "easy", // Include difficulty
+      }),
       requiresAuth: true,
     });
   }
