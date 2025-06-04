@@ -11,6 +11,8 @@ export class BattleMessageParser {
     this.activeWeather = null;
     this.fieldConditions = [];
     this.sideConditions = { p1: [], p2: [] };
+    this.currentMove = null; // Track current move for effectiveness messages
+    this.ignoreSplitDamage = false; // Flag to ignore split damage messages
   }
 
   // Main function to parse multiple logs
@@ -106,12 +108,21 @@ export class BattleMessageParser {
       case "replace":
         return this.parseReplace(args);
       case "move":
+        this.currentMove = { pokemon: args[1], target: args[3] }; // Track current move
         return this.parseMove(args, kwArgs);
       case "faint":
         return this.parseFaint(args);
       case "cant":
         return this.parseCant(args, kwArgs);
+      case "split":
+        // Ignore split messages to prevent duplicate damage
+        this.ignoreSplitDamage = true;
+        return null;
       case "-damage":
+        if (this.ignoreSplitDamage) {
+          this.ignoreSplitDamage = false;
+          return null; // Skip this damage message as it's a duplicate from split
+        }
         return this.parseDamage(args, kwArgs);
       case "-heal":
         return this.parseHeal(args, kwArgs);
@@ -134,13 +145,22 @@ export class BattleMessageParser {
       case "-sideend":
         return this.parseSideEnd(args);
       case "-crit":
-        this.pendingEffectivenessMessages.push(this.parseCrit(args));
+        // Only add crit message if it's for the current move's target
+        if (this.currentMove && args[1] === this.currentMove.target) {
+          this.pendingEffectivenessMessages.push(this.parseCrit(args));
+        }
         return null;
       case "-supereffective":
-        this.pendingEffectivenessMessages.push(this.parseSuperEffective(args));
+        // Only add effectiveness message if it's for the current move's target
+        if (this.currentMove && args[1] === this.currentMove.target) {
+          this.pendingEffectivenessMessages.push(this.parseSuperEffective(args));
+        }
         return null;
       case "-resisted":
-        this.pendingEffectivenessMessages.push(this.parseResisted(args));
+        // Only add effectiveness message if it's for the current move's target
+        if (this.currentMove && args[1] === this.currentMove.target) {
+          this.pendingEffectivenessMessages.push(this.parseResisted(args));
+        }
         return null;
       case "-immune":
         return this.parseImmune(args, kwArgs);
@@ -173,7 +193,10 @@ export class BattleMessageParser {
       case "-terastallize":
         return this.parseTerastallize(args);
       case "upkeep":
-        return null; // Remove upkeep messages
+        // Clear current move context at upkeep
+        this.currentMove = null;
+        this.pendingEffectivenessMessages = [];
+        return null;
       case "request":
         return null; // Handled separately
       default:
@@ -267,6 +290,11 @@ export class BattleMessageParser {
     const [, turnNum] = args;
     this.turn = parseInt(turnNum, 10);
 
+    // Clear any pending messages at turn start
+    this.currentMove = null;
+    this.pendingEffectivenessMessages = [];
+    this.ignoreSplitDamage = false;
+
     // Add weather/field condition reminders every few turns
     let conditions = [];
     if (this.activeWeather) {
@@ -327,8 +355,8 @@ export class BattleMessageParser {
       }
     }
 
-    // Add effectiveness messages if any are pending
-    if (this.pendingEffectivenessMessages.length > 0) {
+    // Add effectiveness messages if any are pending and this damage is for the current move's target
+    if (this.pendingEffectivenessMessages.length > 0 && this.currentMove && pokemon === this.currentMove.target) {
       const effectivenessMessages = [...this.pendingEffectivenessMessages];
       this.pendingEffectivenessMessages = [];
       return [damageText, ...effectivenessMessages];
@@ -413,12 +441,22 @@ export class BattleMessageParser {
     const trainerName = this.getTrainerName(pokemon);
     const pokemonName = this.getPokemonName(pokemon);
     const species = details.split(",")[0];
+
+    // Clear any pending messages when switching
+    this.currentMove = null;
+    this.pendingEffectivenessMessages = [];
+
     return `🔄 **${trainerName}** sends out **${species}**${pokemonName !== species ? ` (${pokemonName})` : ""}`;
   }
 
   parseFaint(args) {
     const [, pokemon] = args;
     const pokemonName = this.getPokemonName(pokemon);
+
+    // Clear any pending messages when fainting
+    this.currentMove = null;
+    this.pendingEffectivenessMessages = [];
+
     return `💀 **${pokemonName}** fainted`;
   }
 
@@ -751,6 +789,12 @@ export class BattleMessageParser {
       choicescarf: "Choice Scarf",
       choicespecs: "Choice Specs",
       focussash: "Focus Sash",
+      moxie: "Moxie",
+      protosynthesis: "Protosynthesis",
+      supremeoverlord: "Supreme Overlord",
+      goodasgold: "Good as Gold",
+      clearbody: "Clear Body",
+      regenerator: "Regenerator",
     };
 
     const lowercaseEffect = effect?.toLowerCase();
