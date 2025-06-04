@@ -26,8 +26,11 @@
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-md);
   overflow: auto;
-  padding-block: var(--spacing-sm);
-  padding-right: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
+.section-title {
+  padding: var(--spacing-sm) var(--spacing-sm) 0 var(--spacing-sm);
 }
 
 .team-card {
@@ -480,6 +483,7 @@
   border-radius: var(--radius-sm);
 }
 
-.teams-section:first-child {
+.teams-section.favorites {
   background-color:rgba(255, 208, 0, .33) ;
+  border-radius: var(--radius-md);
 }

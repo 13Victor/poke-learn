@@ -28,8 +28,8 @@ const TeamsGrid = ({
     <div className="teams-grid-container">
       {/* Sección de Favoritos */}
       {favoriteTeams.length > 0 && (
-        <div className="teams-section">
-          <h3 className="section-title">⭐ Favorites ({favoriteTeams.length})</h3>
+        <div className="teams-section favorites">
+          <h3 className="section-title">Favorites ({favoriteTeams.length})</h3>
           <div className="teams-grid">
             {favoriteTeams.map((team) => (
               <TeamCard
@@ -49,7 +49,7 @@ const TeamsGrid = ({
 
       {regularTeams.length > 0 && (
         <div className="teams-section">
-          <h3 className="section-title">📂 All Teams ({regularTeams.length})</h3>
+          <h3 className="section-title">All Teams ({regularTeams.length})</h3>
           <div className="teams-grid">
             {regularTeams.map((team) => (
               <TeamCard
