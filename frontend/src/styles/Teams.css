@@ -259,6 +259,18 @@
 .teams-additional-info .moveInputsContainer {
   grid-template-columns: repeat(1, 1fr);
   grid-template-rows: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.moveInputsContainer div {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  justify-content: center;
+}
+
+.moveInputsContainer div .moveInput {
+  height: 100%;
 }
 
 .container-top {

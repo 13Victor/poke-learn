@@ -859,7 +859,7 @@ main {
   transform: scale(0.8) translateY(20px);
 }
 
-.pokemon:active {
+.pokedex-container .pokemon:active {
   transform: translateY(-2px) scale(0.98);
   transition: all 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

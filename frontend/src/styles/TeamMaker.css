@@ -231,7 +231,6 @@ button {
   box-sizing: border-box;
   border-radius: var(--radius-sm);
   transition: none;
-  min-height: 26px;
 }
 
 .moveInput[style*="--type-normal"]:hover {
