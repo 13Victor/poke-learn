@@ -1,9 +1,8 @@
 // src/firebase.config.js
-
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// Configuración de Firebase
+// Configuración de Firebase (la que ya tienes)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -18,4 +17,17 @@ const app = initializeApp(firebaseConfig);
 
 // Exportar la instancia de autenticación
 export const auth = getAuth(app);
+
+// Configuraciones para el restablecimiento de contraseña
+export const passwordResetSettings = {
+  url: `${window.location.origin}/auth/reset-success`,
+  handleCodeInApp: false,
+};
+
+// Configuraciones para verificación de email
+export const emailVerificationSettings = {
+  url: `${window.location.origin}/auth/login`,
+  handleCodeInApp: false,
+};
+
 export default app;

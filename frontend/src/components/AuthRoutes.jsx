@@ -3,6 +3,8 @@ import { ProtectedRoute, AuthRoute } from "./common/ProtectedRoute";
 import LoadingScreen from "./common/LoadingScreen";
 import Login from "./Login";
 import Register from "./Register";
+import ForgotPassword from "./ForgotPassword"; // Nueva importación
+import PasswordResetSuccess from "./PasswordResetSuccess"; // Nueva importación
 import User from "./User";
 import TeamMaker from "./TeamMaker/TeamMaker";
 import Teams from "./Teams/Teams";
@@ -43,6 +45,8 @@ function AuthRoutes() {
         <Route path="/auth" element={<Navigate to="/auth/login" />} />
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
+        <Route path="/auth/forgot-password" element={<ForgotPassword />} /> {/* Nueva ruta */}
+        <Route path="/auth/reset-success" element={<PasswordResetSuccess />} /> {/* Nueva ruta */}
       </Route>
 
       {/* Rutas protegidas - solo accesibles si está autenticado */}

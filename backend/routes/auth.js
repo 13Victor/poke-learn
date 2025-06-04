@@ -19,6 +19,7 @@ const {
   getUserByEmail,
   updateFirebaseUid,
   getUserById,
+  updateUserPassword, // Nueva función para actualizar contraseña
 } = require("../database/userQueries");
 
 const router = express.Router();
@@ -101,6 +102,70 @@ router.post("/register", async (req, res) => {
     res.json(formatResponse(true, successMessages.REGISTRATION_SUCCESS));
   } catch (error) {
     console.error("Error en registro:", error);
+    res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
+  }
+});
+
+/**
+ * @route POST /auth/reset-password
+ * @desc Verificar que el usuario existe antes de enviar email de reset
+ */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json(formatResponse(false, "Email es requerido"));
+    }
+
+    // Verificar si el usuario existe en nuestra base de datos
+    const user = await getUserByEmail(email);
+
+    if (!user) {
+      // Por seguridad, no revelar si el usuario existe o no
+      return res.json(formatResponse(true, "Si el correo está registrado, recibirás un enlace de restablecimiento"));
+    }
+
+    // Si el usuario existe, podemos proceder
+    // El email real se enviará desde el frontend usando Firebase
+    res.json(formatResponse(true, "Si el correo está registrado, recibirás un enlace de restablecimiento"));
+  } catch (error) {
+    console.error("Error en reset-password:", error);
+    res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
+  }
+});
+
+/**
+ * @route POST /auth/confirm-password-reset
+ * @desc Confirmar el restablecimiento de contraseña (opcional, para logs o estadísticas)
+ */
+router.post("/confirm-password-reset", async (req, res) => {
+  try {
+    const { email, firebase_uid } = req.body;
+
+    if (!email && !firebase_uid) {
+      return res.status(400).json(formatResponse(false, "Email o Firebase UID es requerido"));
+    }
+
+    // Buscar usuario por email o Firebase UID
+    let user;
+    if (firebase_uid) {
+      // Buscar por Firebase UID (más seguro)
+      user = await getUserById(firebase_uid); // Necesitarás implementar esta función si no existe
+    } else {
+      user = await getUserByEmail(email);
+    }
+
+    if (!user) {
+      return res.status(404).json(formatResponse(false, "Usuario no encontrado"));
+    }
+
+    // Aquí podrías actualizar algún campo como "last_password_reset" si lo tienes
+    // o simplemente registrar el evento para logs/estadísticas
+
+    res.json(formatResponse(true, "Restablecimiento de contraseña confirmado"));
+  } catch (error) {
+    console.error("Error en confirm-password-reset:", error);
     res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
   }
 });

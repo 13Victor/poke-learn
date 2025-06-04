@@ -121,6 +121,26 @@ class ApiService {
     });
   }
 
+  // NUEVO: Verificar que el usuario existe antes de enviar reset
+  async requestPasswordReset(email) {
+    return this.fetchData("/auth/reset-password", {
+      method: "POST",
+      headers: this.getHeaders(false),
+      body: JSON.stringify({ email }),
+      requiresAuth: false,
+    });
+  }
+
+  // NUEVO: Confirmar restablecimiento de contraseña (opcional)
+  async confirmPasswordReset(email, firebaseUid = null) {
+    return this.fetchData("/auth/confirm-password-reset", {
+      method: "POST",
+      headers: this.getHeaders(false),
+      body: JSON.stringify({ email, firebase_uid: firebaseUid }),
+      requiresAuth: false,
+    });
+  }
+
   // Verificar estado de autenticación
   async checkAuth() {
     return this.fetchData("/auth/check", {
