@@ -5,14 +5,14 @@ import { useBattle } from "../../hooks/useBattle";
 import { BattleField } from "./BattleField";
 import { StatusMessages } from "../Battle/StatusMessages";
 import { BattleControls } from "../Battle/BattleControls";
-import { BattleMessages } from "../Battle/BattleMessages"; // Componente mejorado
+import { BattleMessages } from "../Battle/BattleMessages";
 import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
 import "../../styles/Battle/Combat.css";
 import "../../styles/Battle/BattleField.css";
-import "../../styles/Battle/BattleMessages.css"; // Nuevos estilos
+import "../../styles/Battle/BattleMessages.css";
 
 const Combat = () => {
   const navigate = useNavigate();
@@ -34,10 +34,8 @@ const Combat = () => {
     teamPreviewPokemon,
   } = useBattle();
 
-  // Estado para alternar entre la vista de campo de batalla y logs (para debugging)
-  const [showLogs, setShowLogs] = useState(false);
-  // Nuevo estado para alternar entre vista de campo y mensajes parseados
-  const [viewMode, setViewMode] = useState("field"); // "field", "messages", "logs"
+  // Estado para alternar entre vista normal y debug
+  const [showDebugMode, setShowDebugMode] = useState(false);
 
   // Estado para manejar la configuración de batalla seleccionada
   const [battleConfig, setBattleConfig] = useState(null);
@@ -95,11 +93,6 @@ const Combat = () => {
     navigate("/battle");
   };
 
-  // Función para cambiar el modo de vista
-  const handleViewModeChange = (mode) => {
-    setViewMode(mode);
-  };
-
   // Si estamos cargando, mostrar estado de carga
   if (battleState === "loading") {
     return (
@@ -134,27 +127,6 @@ const Combat = () => {
       </div>
     );
   }
-
-  // Función para renderizar el contenido principal según el modo de vista
-  const renderMainContent = () => {
-    if (isTeamPreview) {
-      return (
-        <div className="team-preview-area">
-          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
-        </div>
-      );
-    }
-
-    switch (viewMode) {
-      case "messages":
-        return <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />;
-      case "logs":
-        return <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />;
-      case "field":
-      default:
-        return <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />;
-    }
-  };
 
   // Resto del componente para cuando la batalla está activa o completada
   return (
@@ -204,26 +176,14 @@ const Combat = () => {
             : "Finalizada"}
         </span>
 
-        {/* Botones mejorados para alternar entre vistas */}
+        {/* Botón para alternar modo debug */}
         {battleState === "active" && !isTeamPreview && (
           <div className="view-mode-selector">
-            <button
-              className={`view-button ${viewMode === "field" ? "active" : ""}`}
-              onClick={() => handleViewModeChange("field")}
-            >
-              🏟️ Campo
+            <button className={`view-button ${!showDebugMode ? "active" : ""}`} onClick={() => setShowDebugMode(false)}>
+              🏟️ Vista Normal
             </button>
-            <button
-              className={`view-button ${viewMode === "messages" ? "active" : ""}`}
-              onClick={() => handleViewModeChange("messages")}
-            >
-              📜 Mensajes
-            </button>
-            <button
-              className={`view-button ${viewMode === "logs" ? "active" : ""}`}
-              onClick={() => handleViewModeChange("logs")}
-            >
-              🔧 Debug
+            <button className={`view-button ${showDebugMode ? "active" : ""}`} onClick={() => setShowDebugMode(true)}>
+              🔧 Vista Debug
             </button>
           </div>
         )}
@@ -236,8 +196,34 @@ const Combat = () => {
         isProcessingCommand={isProcessingCommand}
       />
 
-      {/* Renderizar el contenido principal según el modo seleccionado */}
-      {renderMainContent()}
+      {/* Contenido principal: Campo de batalla y mensajes lado a lado */}
+      {battleState === "active" && !isTeamPreview && (
+        <div className="battle-main-content">
+          {showDebugMode ? (
+            // Vista Debug: Solo logs
+            <div className="debug-view">
+              <BattleLogViewer logs={battleLogs} isLoading={battleState === "loading"} />
+            </div>
+          ) : (
+            // Vista Normal: Campo de batalla y mensajes lado a lado
+            <div className="battle-split-view">
+              <div className="battle-field-container">
+                <BattleField logs={battleLogs} requestData={requestData} isLoading={battleState === "loading"} />
+              </div>
+              <div className="battle-messages-container">
+                <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Vista previa de equipos */}
+      {isTeamPreview && (
+        <div className="team-preview-area">
+          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
+        </div>
+      )}
 
       {battleState === "active" && (
         <div className="battle-controls">
@@ -258,7 +244,7 @@ const Combat = () => {
           {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />}
 
           {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
-          {!isTeamPreview && viewMode === "logs" && (
+          {!isTeamPreview && showDebugMode && (
             <DebugPanel
               requestData={requestData}
               battleLogs={battleLogs}
@@ -275,7 +261,14 @@ const Combat = () => {
           <h2>¡La batalla ha finalizado!</h2>
 
           {/* Mostrar mensajes finales incluso cuando la batalla haya terminado */}
-          <BattleMessages logs={battleLogs} isTeamPreview={false} />
+          <div className="battle-split-view">
+            <div className="battle-field-container">
+              <BattleField logs={battleLogs} requestData={requestData} isLoading={false} />
+            </div>
+            <div className="battle-messages-container">
+              <BattleMessages logs={battleLogs} isTeamPreview={false} />
+            </div>
+          </div>
 
           <div className="battle-complete-actions">
             <button onClick={goBackToSetup}>Configurar Nueva Batalla</button>
