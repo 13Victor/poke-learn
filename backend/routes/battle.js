@@ -65,6 +65,11 @@ router.post("/start", verifyToken, async (req, res) => {
       lastInputTurn: 0,
       useCustomTeams,
       difficulty, // Store difficulty level
+      aiState: {
+        pendingAction: null,
+        availablePokemon: [], // Keep track of CPU's available pokemon
+        needsToSwitch: false,
+      },
     };
 
     activeBattles.set(battleId, battleSetup);
@@ -179,49 +184,107 @@ function getAIMove(battle, availableMoves = []) {
   const difficulty = battle.difficulty || "easy";
 
   console.log(`🤖 IA seleccionando movimiento para dificultad: ${difficulty}`);
+  console.log(`🎯 Movimientos disponibles:`, availableMoves);
+
+  // Filter only enabled moves
+  const enabledMoves = availableMoves.filter((move) => !move.disabled);
+  console.log(`✅ Movimientos habilitados: ${enabledMoves.length}`, enabledMoves);
+
+  if (enabledMoves.length === 0) {
+    console.log("❌ No hay movimientos habilitados, usando struggle");
+    return 1; // Fallback to first move slot (will likely be Struggle)
+  }
+
+  // Get the actual slot numbers of enabled moves
+  const enabledSlots = [];
+  availableMoves.forEach((move, index) => {
+    if (!move.disabled) {
+      enabledSlots.push(index + 1); // Convert to 1-based index
+    }
+  });
+
+  console.log(`🎰 Slots de movimientos habilitados: [${enabledSlots.join(", ")}]`);
 
   switch (difficulty) {
     case "easy":
-      // For easy mode, select a random move from available moves
-      if (availableMoves.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availableMoves.length);
-        const selectedMove = randomIndex + 1; // Convert to 1-based index
-        console.log(
-          `🎲 Modo fácil: seleccionando movimiento aleatorio ${selectedMove} de ${availableMoves.length} disponibles`
-        );
-        return selectedMove;
-      }
-      // Fallback to random move 1-4 if no available moves info
-      const randomMove = Math.floor(Math.random() * 4) + 1;
-      console.log(`🎲 Modo fácil: seleccionando movimiento aleatorio ${randomMove} (fallback)`);
-      return randomMove;
+      // For easy mode, select a random move from enabled moves
+      const randomIndex = Math.floor(Math.random() * enabledSlots.length);
+      const selectedMove = enabledSlots[randomIndex];
+      console.log(
+        `🎲 Modo fácil: seleccionando movimiento habilitado slot ${selectedMove} (${
+          enabledMoves[randomIndex]?.move || "Unknown"
+        })`
+      );
+      return selectedMove;
 
     case "medium":
+      // For medium mode, prefer earlier moves but still random among enabled
+      const mediumSlots = enabledSlots.slice(0, Math.min(enabledSlots.length, 3)); // Prefer first 3 enabled moves
+      const mediumIndex = Math.floor(Math.random() * mediumSlots.length);
+      const mediumMove = mediumSlots[mediumIndex];
+      console.log(`⚡ Modo medio: seleccionando movimiento habilitado slot ${mediumMove} de los primeros disponibles`);
+      return mediumMove;
+
     case "hard":
     default:
-      // For medium and hard, use first move (existing behavior)
-      console.log(`⚡ Modo ${difficulty}: seleccionando primer movimiento`);
-      return 1;
+      // For hard mode, prefer the first enabled move (usually strongest available)
+      const hardMove = enabledSlots[0];
+      console.log(
+        `🔥 Modo difícil: seleccionando primer movimiento habilitado slot ${hardMove} (${
+          enabledMoves[0]?.move || "Unknown"
+        })`
+      );
+      return hardMove;
   }
+}
+
+/**
+ * Helper function to get a random AI switch when forced
+ */
+function getAISwitch(battle, availablePokemon = []) {
+  const difficulty = battle.difficulty || "easy";
+
+  console.log(`🔄 IA seleccionando cambio de Pokémon para dificultad: ${difficulty}`);
+
+  // Filter out fainted pokemon and the current active one
+  const viablePokemon = availablePokemon.filter(
+    (pokemon, index) => !pokemon.condition.includes("fnt") && !pokemon.active
+  );
+
+  if (viablePokemon.length === 0) {
+    console.log("❌ No hay Pokémon viables para cambiar");
+    return 2; // Fallback to slot 2
+  }
+
+  // Get a random viable pokemon
+  const randomIndex = Math.floor(Math.random() * viablePokemon.length);
+  const selectedPokemon = viablePokemon[randomIndex];
+
+  // Find the original index of this pokemon (1-based)
+  const originalIndex = availablePokemon.findIndex((pokemon) => pokemon.details === selectedPokemon.details) + 1;
+
+  console.log(`🎲 IA seleccionando cambio a slot ${originalIndex}: ${selectedPokemon.details.split(",")[0]}`);
+  return originalIndex;
 }
 
 /**
  * Helper function to parse request data from battle logs to understand available moves
  */
-function parseAvailableMovesFromLogs(logs) {
-  // Look for request messages in the logs to understand CPU's available moves
+function parseLatestRequestData(logs, player = "p2") {
+  // Look for the most recent request messages for the specified player
   for (let i = logs.length - 1; i >= 0; i--) {
     const log = logs[i];
-    if (typeof log === "string" && log.includes("|request|")) {
+    if (typeof log === "string" && log.includes(`sideupdate\n${player}`) && log.includes("|request|")) {
       try {
-        const requestMatch = log.match(/\|request\|(.+)/);
-        if (requestMatch) {
-          const requestData = JSON.parse(requestMatch[1]);
-          if (requestData.active && requestData.active[0] && requestData.active[0].moves) {
-            const moves = requestData.active[0].moves;
-            const availableMoves = moves.filter((move) => !move.disabled);
-            console.log(`🔍 Encontrados ${availableMoves.length} movimientos disponibles para la IA`);
-            return availableMoves;
+        const lines = log.split("\n");
+        for (const line of lines) {
+          if (line.includes("|request|")) {
+            const requestMatch = line.match(/\|request\|(.+)/);
+            if (requestMatch) {
+              const requestData = JSON.parse(requestMatch[1]);
+              console.log(`🔍 Request data encontrada para ${player}:`, requestData);
+              return requestData;
+            }
           }
         }
       } catch (error) {
@@ -229,7 +292,64 @@ function parseAvailableMovesFromLogs(logs) {
       }
     }
   }
-  return [];
+  return null;
+}
+
+/**
+ * Helper function to determine what AI should do based on the game state
+ */
+function getAIAction(battle) {
+  const cpuRequestData = parseLatestRequestData(battle.logs, "p2");
+
+  if (!cpuRequestData) {
+    console.log("🤖 No hay datos de request para la CPU, usando movimiento por defecto");
+    return { type: "move", value: 1 }; // Fallback move
+  }
+
+  // Check if CPU is forced to switch (pokemon fainted)
+  if (cpuRequestData.forceSwitch && cpuRequestData.forceSwitch[0]) {
+    console.log("🔄 CPU forzada a cambiar de Pokémon");
+    const availablePokemon = cpuRequestData.side?.pokemon || [];
+    const switchSlot = getAISwitch(battle, availablePokemon);
+    return { type: "switch", value: switchSlot };
+  }
+
+  // Check if CPU has active pokemon and can make moves
+  if (cpuRequestData.active && cpuRequestData.active[0] && cpuRequestData.active[0].moves) {
+    const allMoves = cpuRequestData.active[0].moves;
+    console.log("🎯 Todos los movimientos de la CPU:", allMoves);
+
+    // Filter only enabled moves
+    const enabledMoves = allMoves.filter((move) => !move.disabled);
+    console.log("✅ Movimientos habilitados para la CPU:", enabledMoves);
+
+    if (enabledMoves.length > 0) {
+      console.log("⚔️ CPU puede atacar con movimientos habilitados");
+      const moveSlot = getAIMove(battle, allMoves); // Pass all moves, function will filter enabled ones
+      return { type: "move", value: moveSlot };
+    } else {
+      console.log("⚠️ No hay movimientos habilitados, la CPU usará Struggle");
+      return { type: "move", value: 1 }; // Will likely result in Struggle
+    }
+  }
+
+  // Check if CPU can only switch (no moves available but has pokemon)
+  if (cpuRequestData.side?.pokemon) {
+    const availablePokemon = cpuRequestData.side.pokemon;
+    const viablePokemon = availablePokemon.filter(
+      (pokemon, index) => !pokemon.condition.includes("fnt") && !pokemon.active
+    );
+
+    if (viablePokemon.length > 0) {
+      console.log("🔄 CPU no puede atacar, cambiando de Pokémon");
+      const switchSlot = getAISwitch(battle, availablePokemon);
+      return { type: "switch", value: switchSlot };
+    }
+  }
+
+  // Default fallback - try to make a move
+  console.log("🤖 CPU usando acción por defecto (primer movimiento)");
+  return { type: "move", value: 1 };
 }
 
 /**
@@ -314,88 +434,73 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
         );
       }
 
-      // Si no hay nuevos logs pero el comando debería generar acción, intentamos con comando de CPU también
-      if (
-        newLogs.length === 0 &&
-        (command.includes("move") || command.includes("switch")) &&
-        !battle.teamPreviewPhase
-      ) {
-        console.log("No se detectaron logs, probando con comando de CPU adicional...");
+      // NUEVO SISTEMA DE IA: Solo ejecutar IA después de comandos del jugador
+      if (command.includes("p1") && !battle.teamPreviewPhase) {
+        console.log("🤖 Comando del jugador detectado, preparando respuesta de la IA");
 
-        // Determinar si es comando del jugador
-        const isP1Command = command.includes("p1");
+        // Esperar un poco más para asegurar que todos los logs se procesen
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        if (isP1Command) {
-          // Parse available moves for AI decision making
-          const availableMoves = parseAvailableMovesFromLogs(battle.logs);
+        // Determinar la acción de la IA basada en el estado actual
+        const aiAction = getAIAction(battle);
 
-          // Create an AI command based on difficulty and available moves
-          let cpuCommand;
-          if (command.includes("move")) {
-            // If player used a move, AI should also use a move
-            const aiMoveNumber = getAIMove(battle, availableMoves);
-            cpuCommand = `>p2 move ${aiMoveNumber}`;
-          } else if (command.includes("switch")) {
-            // If player switched, AI can switch too (random switch for easy mode)
-            if (battle.difficulty === "easy") {
-              const randomSwitch = Math.floor(Math.random() * 5) + 2; // Switch to slot 2-6
-              cpuCommand = `>p2 switch ${randomSwitch}`;
-            } else {
-              cpuCommand = ">p2 move 1"; // Medium/Hard stick to moves mostly
-            }
-          } else {
-            // Default fallback
-            const aiMoveNumber = getAIMove(battle, availableMoves);
-            cpuCommand = `>p2 move ${aiMoveNumber}`;
-          }
-
-          console.log("Enviando comando de CPU:", cpuCommand);
-
-          // Almacenar este comando también
-          battle.pendingCommands.push(cpuCommand);
-
-          // Ejecutar comando de la CPU
-          await battle.stream.write(cpuCommand);
-
-          // Esperar que se procese
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-
-          // Obtener todos los logs nuevos después de ambos comandos
-          const allNewLogs = battle.logs.slice(preCommandLogLength);
-          console.log(`Logs después de comandos del jugador y CPU: ${allNewLogs.length}`, allNewLogs);
-
-          // Si aún no hay logs, agregamos un mensaje informativo
-          if (allNewLogs.length === 0) {
-            battle.logs.push("Comando ejecutado, pero no generó respuesta del simulador.");
-            allNewLogs.push("Comando ejecutado, pero no generó respuesta del simulador.");
-          }
-
-          return res.json(
-            formatResponse(true, "Comando ejecutado", {
-              battleId,
-              logs: allNewLogs,
-              state: battle.state,
-              turnCount: battle.turnCount,
-              teamPreviewPhase: battle.teamPreviewPhase,
-              debug: {
-                commandsExecuted: battle.pendingCommands,
-                initialLogCount: preCommandLogLength,
-                newLogCount: allNewLogs.length,
-                aiDecision: {
-                  difficulty: battle.difficulty,
-                  commandUsed: cpuCommand,
-                  availableMovesCount: availableMoves.length,
-                },
-              },
-            })
-          );
+        let cpuCommand;
+        if (aiAction.type === "move") {
+          cpuCommand = `>p2 move ${aiAction.value}`;
+        } else if (aiAction.type === "switch") {
+          cpuCommand = `>p2 switch ${aiAction.value}`;
+        } else {
+          // Fallback
+          cpuCommand = ">p2 move 1";
         }
+
+        console.log(`🎯 IA decidió: ${cpuCommand}`);
+
+        // Almacenar este comando también
+        battle.pendingCommands.push(cpuCommand);
+
+        // Ejecutar comando de la IA
+        await battle.stream.write(cpuCommand);
+
+        // Esperar que se procese
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Obtener todos los logs nuevos después de ambos comandos
+        const allNewLogs = battle.logs.slice(preCommandLogLength);
+        console.log(`Logs después de comandos del jugador y CPU: ${allNewLogs.length}`, allNewLogs);
+
+        // Si aún no hay logs, agregamos un mensaje informativo
+        if (allNewLogs.length === 0) {
+          battle.logs.push("Comandos ejecutados, esperando respuesta del simulador.");
+          allNewLogs.push("Comandos ejecutados, esperando respuesta del simulador.");
+        }
+
+        return res.json(
+          formatResponse(true, "Comando ejecutado con respuesta de IA", {
+            battleId,
+            logs: allNewLogs,
+            state: battle.state,
+            turnCount: battle.turnCount,
+            teamPreviewPhase: battle.teamPreviewPhase,
+            debug: {
+              commandsExecuted: [command, cpuCommand],
+              initialLogCount: preCommandLogLength,
+              newLogCount: allNewLogs.length,
+              aiDecision: {
+                type: aiAction.type,
+                value: aiAction.value,
+                difficulty: battle.difficulty,
+                commandUsed: cpuCommand,
+              },
+            },
+          })
+        );
       }
 
-      // Si aún no tenemos logs, agregamos un mensaje informativo
+      // Si es comando de CPU o no necesita respuesta de IA, responder normalmente
       if (newLogs.length === 0) {
-        battle.logs.push("Comando ejecutado, pero no generó respuesta del simulador.");
-        newLogs.push("Comando ejecutado, pero no generó respuesta del simulador.");
+        battle.logs.push("Comando ejecutado, esperando más acciones.");
+        newLogs.push("Comando ejecutado, esperando más acciones.");
       }
 
       // Respuesta normal
