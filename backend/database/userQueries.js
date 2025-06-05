@@ -51,6 +51,31 @@ async function isUserRegistered(email, user_name) {
   }
 }
 
+async function updateUserName(userId, newUserName) {
+  try {
+    // Verificar si el nombre de usuario ya existe (excluyendo al usuario actual)
+    const checkQuery = `SELECT id FROM user WHERE user_name = ? AND id != ?`;
+    const existingUser = await db.query(checkQuery, [newUserName, userId]);
+
+    if (existingUser.length > 0) {
+      return { error: errorMessages.USERNAME_IN_USE };
+    }
+
+    // Actualizar el nombre de usuario
+    const updateQuery = `UPDATE user SET user_name = ? WHERE id = ?`;
+    const result = await db.update(updateQuery, [newUserName, userId]);
+
+    if (result > 0) {
+      return { success: true };
+    } else {
+      return { error: errorMessages.USER_NOT_FOUND };
+    }
+  } catch (error) {
+    console.error("Error al actualizar nombre de usuario:", error);
+    return { error: errorMessages.DATABASE_ERROR };
+  }
+}
+
 /**
  * Autentica un usuario por email/username y contraseña
  * @param {string} emailOrUserName - Email o nombre de usuario
@@ -164,4 +189,5 @@ module.exports = {
   updateFirebaseUid,
   getUserByEmail,
   getUserById,
+  updateUserName,
 };

@@ -283,3 +283,79 @@
     padding: 15px;
   }
 }
+
+.username-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.username-display,
+.username-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.username-edit {
+  gap: var(--spacing-xs);
+}
+
+.username-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.username-display .edit-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  visibility: hidden;
+  position: absolute;
+  right: calc(var(--spacing-xl) * -1);
+}
+
+.modal-content svg {
+  font-size: 24px;
+}
+
+.username-actions svg {
+  font-size: 20px;
+}
+
+.username-display:hover .edit-button {
+  visibility: visible;
+}
+
+.save-button,
+.cancel-button {
+  background: rgb(73, 163, 73);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  background: rgb(231, 76, 60);
+}
+
+.cancel-button:hover {
+  background: rgb(192, 57, 43);
+}
+
+.save-button:hover {
+  background: hsl(120, 40%, 39%);
+}
+
+.username-input {
+  width: 100%;
+  padding: var(--spacing-xs);
+  border: 1px solid #ccc;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+}

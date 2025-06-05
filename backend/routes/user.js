@@ -58,10 +58,38 @@ router.get("/teams", verifyToken, async (req, res) => {
  */
 router.put("/profile", verifyToken, async (req, res) => {
   const userId = req.user.id;
-  // Implementar actualización de perfil
-  // ...
+  const { user_name } = req.body;
 
-  res.json(formatResponse(true, successMessages.USER_UPDATED));
+  // Validar que se proporcione el nombre de usuario
+  if (!user_name || !user_name.trim()) {
+    return res.status(400).json(formatResponse(false, "Username is required"));
+  }
+
+  // Validar longitud del nombre de usuario
+  if (user_name.trim().length < 3 || user_name.trim().length > 20) {
+    return res.status(400).json(formatResponse(false, "Username must be between 3 and 20 characters"));
+  }
+
+  // Validar caracteres permitidos (letras, números, guiones bajos)
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+  if (!usernameRegex.test(user_name.trim())) {
+    return res.status(400).json(formatResponse(false, "Username can only contain letters, numbers, and underscores"));
+  }
+
+  const { updateUserName } = require("../database/userQueries");
+
+  try {
+    const result = await updateUserName(userId, user_name.trim());
+
+    if (result.error) {
+      return res.status(400).json(formatResponse(false, result.error));
+    }
+
+    res.json(formatResponse(true, successMessages.USER_UPDATED));
+  } catch (error) {
+    console.error("Error al actualizar perfil de usuario:", error);
+    res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
+  }
 });
 
 /**

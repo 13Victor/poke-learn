@@ -356,6 +356,15 @@ class ApiService {
       requiresAuth: true,
     });
   }
+
+  async updateUserProfile(userData) {
+    return this.fetchData("/user/profile", {
+      method: "PUT",
+      headers: this.getHeaders(),
+      body: JSON.stringify(userData),
+      requiresAuth: true,
+    });
+  }
 }
 
 // Exportar una única instancia para usar en toda la aplicación
