@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -10,6 +10,7 @@ import { auth } from "../firebase.config";
 import { useAuth } from "../contexts/AuthContext";
 import apiService from "../services/apiService";
 import GoogleButton from "react-google-button";
+import "../styles/Register.css";
 
 function Register() {
   const [userName, setUserName] = useState("");
@@ -28,12 +29,44 @@ function Register() {
     symbol: false,
   });
 
+  // Estados para la animación de imágenes
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const animationInterval = useRef(null);
+
+  // Generar array de rutas de las imágenes de la animación (000 a 155)
+  const animationFrames = Array.from({ length: 156 }, (_, i) => {
+    const frameNumber = i.toString().padStart(3, "0");
+    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
+  });
+
   const { setError, clearError, isAuthenticated, setManualLoginInProgress } = useAuth();
   const navigate = useNavigate();
+
+  // Efecto para la animación de imágenes
+  useEffect(() => {
+    if (animationFrames.length > 1) {
+      animationInterval.current = setInterval(() => {
+        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
+      }, 60); // 60ms entre frames = ~16.6 FPS
+
+      return () => {
+        if (animationInterval.current) {
+          clearInterval(animationInterval.current);
+        }
+      };
+    }
+  }, [animationFrames.length]);
 
   // Limpiar errores al montar el componente
   useEffect(() => {
     clearError();
+
+    // Limpieza al desmontar
+    return () => {
+      if (animationInterval.current) {
+        clearInterval(animationInterval.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -271,104 +304,136 @@ function Register() {
   return (
     <div className="register-page">
       <div className="register-container">
-        <h3>Regístrate</h3>
-        {!verificationSent ? (
-          <>
-            <form onSubmit={handleSubmit} className="register-form">
-              <div className="form-group">
-                <label htmlFor="username">Nombre de usuario</label>
-                <input
-                  id="username"
-                  type="text"
-                  placeholder="Nombre de usuario"
-                  value={userName}
-                  onChange={(event) => setUserName(event.target.value)}
-                  disabled={isLoading || googleLoading}
-                />
-                <small>Mínimo 3 caracteres, solo letras, números y guiones bajos</small>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  disabled={isLoading || googleLoading}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="password">Contraseña</label>
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="Contraseña"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  disabled={isLoading || googleLoading}
-                />
-
-                <div className="password-requirements">
-                  <p>La contraseña debe tener:</p>
-                  <ul>
-                    <li className={passwordErrors.length ? "valid" : "invalid"}>Al menos 8 caracteres</li>
-                    <li className={passwordErrors.uppercase ? "valid" : "invalid"}>Al menos una letra mayúscula</li>
-                    <li className={passwordErrors.lowercase ? "valid" : "invalid"}>Al menos una letra minúscula</li>
-                    <li className={passwordErrors.number ? "valid" : "invalid"}>Al menos un número</li>
-                    <li className={passwordErrors.symbol ? "valid" : "invalid"}>
-                      Al menos un símbolo especial (!@#$%^&*...)
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="register-button"
-                disabled={isLoading || googleLoading || !Object.values(passwordErrors).every((v) => v)}
-              >
-                {isLoading ? "Registrando..." : "Registrarse"}
-              </button>
-            </form>
-
-            {/* Separador entre métodos de registro */}
-            <div className="register-separator">
-              <span>O</span>
-            </div>
-
-            {/* Botón de registro con Google */}
-            <div className="google-register-container">
-              <GoogleButton
-                onClick={handleGoogleRegister}
-                disabled={isLoading || googleLoading}
-                label={googleLoading ? "Procesando..." : "Registrarse con Google"}
-                type="light"
-              />
-            </div>
-          </>
-        ) : (
-          <div className="verification-message">
-            <h4>¡Gracias por registrarte!</h4>
-            <p>
-              Te hemos enviado un correo de verificación a <strong>{email}</strong>
-            </p>
-            <p>Por favor, verifica tu correo antes de iniciar sesión.</p>
-            <p className="verification-note">
-              Si no encuentras el correo, revisa tu carpeta de spam. El correo puede tardar unos minutos en llegar.
-            </p>
-            <button onClick={() => navigate("/auth/login")} className="goto-login-button">
-              Ir a Login
-            </button>
+        <div className="form-container">
+          <div className="logo-container">
+            <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+            <h2>Únete a la aventura</h2>
+            <p className="subtitle">¡Crea tu cuenta de entrenador!</p>
           </div>
-        )}
-        {error && <p className="error-message">{error}</p>}
-        {success && !verificationSent && <p className="success-message">{success}</p>}
+
+          {!verificationSent ? (
+            <>
+              <form onSubmit={handleSubmit} className="register-form">
+                <div className="form-group">
+                  <label htmlFor="username">Nombre de usuario</label>
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="Tu nombre de entrenador"
+                    value={userName}
+                    onChange={(event) => setUserName(event.target.value)}
+                    disabled={isLoading || googleLoading}
+                  />
+                  <small className="input-help">Mínimo 3 caracteres, solo letras, números y guiones bajos</small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="trainer@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={isLoading || googleLoading}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="password">Contraseña</label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    disabled={isLoading || googleLoading}
+                  />
+
+                  <div className="password-requirements">
+                    <p>La contraseña debe tener:</p>
+                    <ul>
+                      <li className={passwordErrors.length ? "valid" : "invalid"}>Al menos 8 caracteres</li>
+                      <li className={passwordErrors.uppercase ? "valid" : "invalid"}>Al menos una letra mayúscula</li>
+                      <li className={passwordErrors.lowercase ? "valid" : "invalid"}>Al menos una letra minúscula</li>
+                      <li className={passwordErrors.number ? "valid" : "invalid"}>Al menos un número</li>
+                      <li className={passwordErrors.symbol ? "valid" : "invalid"}>
+                        Al menos un símbolo especial (!@#$%^&*...)
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="register-button"
+                  disabled={isLoading || googleLoading || !Object.values(passwordErrors).every((v) => v)}
+                >
+                  {isLoading ? "Registrando..." : "Crear cuenta"}
+                </button>
+              </form>
+
+              {/* Separador entre métodos de registro */}
+              <div className="register-separator">
+                <span>O</span>
+              </div>
+
+              {/* Botón de registro con Google */}
+              <div className="google-register-container">
+                <GoogleButton
+                  onClick={handleGoogleRegister}
+                  disabled={isLoading || googleLoading}
+                  label={googleLoading ? "Procesando..." : "Registrarse con Google"}
+                  type="light"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="verification-message">
+              <div className="verification-icon">✉️</div>
+              <h4>¡Gracias por registrarte!</h4>
+              <p>
+                Te hemos enviado un correo de verificación a <strong>{email}</strong>
+              </p>
+              <p>Por favor, verifica tu correo antes de iniciar sesión.</p>
+              <p className="verification-note">
+                Si no encuentras el correo, revisa tu carpeta de spam. El correo puede tardar unos minutos en llegar.
+              </p>
+              <button onClick={() => navigate("/auth/login")} className="goto-login-button">
+                Ir a Login
+              </button>
+            </div>
+          )}
+
+          {error && <p className="error-message">{error}</p>}
+          {success && !verificationSent && <p className="success-message">{success}</p>}
+
+          <div className="login-link">
+            ¿Ya tienes una cuenta? <Link to="/auth/login">Inicia sesión</Link>
+          </div>
+        </div>
       </div>
-      <div className="login-link">
-        ¿Ya tienes una cuenta? <Link to="/auth/login">Inicia sesión</Link>
+
+      <div className="background-container">
+        {/* Overlay con animación de imágenes */}
+        <div className="overlay">
+          <div className="animated-overlay">
+            <img
+              src={animationFrames[currentFrame]}
+              alt="Pokémon Animation"
+              className="animation-frame"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </div>
+        </div>
+        <div className="background-text">
+          <h3>¡Conviértete en un maestro!</h3>
+          <p>Únete a miles de entrenadores y demuestra que tienes lo necesario para ser el mejor de todos.</p>
+        </div>
       </div>
     </div>
   );

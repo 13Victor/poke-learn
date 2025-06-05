@@ -30,7 +30,7 @@ const LoadingScreen = ({ children, timeout = 800 }) => {
   return (
     <div className="loading-screen">
       <div className="loading-container">
-        <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="loading-logo" />
+        <img src="/assets/logo.png" alt="Pokémon Battle App" className="loading-logo" />
         <div className="loading-spinner"></div>
         <p>Cargando...</p>
       </div>

@@ -22,6 +22,16 @@ function Login() {
   const [loginState, setLoginState] = useState("idle");
   const redirectTimer = useRef(null);
 
+  // Estados para la animación de imágenes
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const animationInterval = useRef(null);
+
+  // Generar array de rutas de las imágenes de la animación (000 a 155)
+  const animationFrames = Array.from({ length: 156 }, (_, i) => {
+    const frameNumber = i.toString().padStart(3, "0"); // Convierte 0 -> "000", 1 -> "001", etc.
+    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
+  });
+
   const { setError, error, clearError, isAuthenticated, setManualLoginInProgress, forceAuthCheck, debugState } =
     useAuth();
   const navigate = useNavigate();
@@ -29,6 +39,21 @@ function Login() {
 
   // Obtener la ubicación anterior si existe
   const from = location.state?.from?.pathname || "/user";
+
+  // Efecto para la animación de imágenes
+  useEffect(() => {
+    if (animationFrames.length > 1) {
+      animationInterval.current = setInterval(() => {
+        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
+      }, 60); // 60ms entre frames = ~16.6 FPS, ajusta según prefieras
+
+      return () => {
+        if (animationInterval.current) {
+          clearInterval(animationInterval.current);
+        }
+      };
+    }
+  }, [animationFrames.length]);
 
   // Efecto para mostrar el estado de depuración
   useEffect(() => {
@@ -118,12 +143,16 @@ function Login() {
       if (redirectTimer.current) {
         clearTimeout(redirectTimer.current);
       }
+      if (animationInterval.current) {
+        clearInterval(animationInterval.current);
+      }
       // Asegurarse de que el login manual se marca como finalizado si se desmonta el componente
       setManualLoginInProgress(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // [Resto de las funciones permanecen igual...]
   // Función para reenviar el correo de verificación
   const handleResendVerification = async () => {
     if (!unverifiedUser) return;
@@ -329,7 +358,7 @@ function Login() {
       <div className="login-container">
         <div className="form-container">
           <div className="logo-container">
-            <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+            <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
             <h2>Inicia sesión en tu cuenta</h2>
             <p className="subtitle">¡Prepárate para la batalla!</p>
           </div>
@@ -359,7 +388,7 @@ function Login() {
             <>
               <form onSubmit={handleSubmit} className="login-form">
                 <div className="form-group">
-                  <label htmlFor="email">Email o nombre de usuario</label>
+                  <label htmlFor="email">Email</label>
                   <input
                     id="email"
                     type="text"
@@ -462,8 +491,21 @@ function Login() {
       </div>
 
       <div className="background-container">
-        <div className="overlay"></div>
-        <img src="/pokemon-battle-background.png" alt="Pokémon Battle" className="background-image" />
+        {/* Overlay con animación de imágenes */}
+        <div className="overlay">
+          <div className="animated-overlay">
+            <img
+              src={animationFrames[currentFrame]}
+              alt="Pokémon Animation"
+              className="animation-frame"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </div>
+        </div>
         <div className="background-text">
           <h3>¡Crea equipos y combate!</h3>
           <p>Forma tu equipo perfecto, desarrolla estrategias y demuestra que eres el mejor entrenador Pokémon.</p>

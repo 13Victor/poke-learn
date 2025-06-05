@@ -123,7 +123,7 @@ function ForgotPassword() {
       <div className="login-container">
         <div className="form-container">
           <div className="logo-container">
-            <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+            <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
             <h2>Restablecer Contraseña</h2>
             <p className="subtitle">
               {emailSent ? "Revisa tu correo electrónico" : "Ingresa tu correo para restablecer tu contraseña"}

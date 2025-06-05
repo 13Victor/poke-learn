@@ -45,7 +45,7 @@ function PasswordResetSuccess() {
         <div className="login-container">
           <div className="form-container">
             <div className="logo-container">
-              <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+              <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
               <h2>Enlace inválido</h2>
               <p className="subtitle">Este enlace no es válido o ha expirado</p>
             </div>
@@ -75,7 +75,7 @@ function PasswordResetSuccess() {
       <div className="login-container">
         <div className="form-container">
           <div className="logo-container">
-            <img src="/pokemon-logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+            <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
             <h2>¡Contraseña actualizada!</h2>
             <p className="subtitle">Tu contraseña ha sido restablecida exitosamente</p>
           </div>

@@ -30,7 +30,7 @@
 }
 
 .pokemon-logo {
-  height: auto;
+  height: 100px;
 }
 
 .logo-container h2 {
@@ -173,7 +173,6 @@
 .register-link {
   text-align: center;
   margin-top: 1.5rem;
-  font-size: 0.875rem;
   color: #333;
 }
 
@@ -191,7 +190,6 @@
 .background-container {
   width: 50%;
   position: relative;
-  background-color: var(--lapis-lazuli);
   display: none;
 }
 
@@ -212,6 +210,11 @@
   height: 100%;
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 1;
+}
+
+.animated-overlay {
+  height: 100%;
+  overflow: hidden;
 }
 
 .background-text {
