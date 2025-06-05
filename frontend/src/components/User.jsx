@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import apiService from "../services/apiService";
+import "../styles/User.css";
 
 function User() {
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const { currentUser, isAuthenticated, logout, error: authError, setError, clearError } = useAuth();
   const [error, setLocalError] = useState("");
   const navigate = useNavigate();
@@ -83,50 +85,89 @@ function User() {
     await logout();
   };
 
+  const openModal = () => {
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  // Close modal when clicking outside
+  const handleModalClick = (e) => {
+    if (e.target.classList.contains("modal-overlay")) {
+      closeModal();
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading user information...</div>;
   }
 
   return (
-    <div>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {authError && <p style={{ color: "red" }}>{authError}</p>}
+    <div className="user-container">
+      {error && <p className="error-message">{error}</p>}
+      {authError && <p className="error-message">{authError}</p>}
+
       {currentUser ? (
         <div className="user-profile">
-          <h2>Welcome, {currentUser.user_name}!</h2>
-          <div className="user-details">
-            <p>
-              <strong>ID:</strong> {currentUser.id}
-            </p>
-            <p>
-              <strong>Email:</strong> {currentUser.email}
-            </p>
-            <p>
-              <strong>Username:</strong> {currentUser.user_name}
-            </p>
-            <div className="profile-image">
-              {currentUser.profile_picture ? (
-                <img
-                  src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
-                  width={100}
-                  alt="Profile picture"
-                />
-              ) : (
-                <div className="no-image">No profile picture</div>
-              )}
+          <div className="profile-preview" onClick={openModal}>
+            {currentUser.profile_picture ? (
+              <img
+                src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
+                alt="Profile picture"
+                className="profile-image-small"
+              />
+            ) : (
+              <div className="no-image-small">
+                <span className="user-initial">{currentUser.user_name.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+            <span className="profile-name">{currentUser.user_name}</span>
+          </div>
+
+          {/* Modal */}
+          {showModal && (
+            <div className="modal-overlay" onClick={handleModalClick}>
+              <div className="modal-content">
+                <button className="modal-close" onClick={closeModal}>
+                  ×
+                </button>
+
+                <div className="modal-profile">
+                  <div className="profile-image-large">
+                    {currentUser.profile_picture ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${
+                          currentUser.profile_picture
+                        }`}
+                        alt="Profile picture"
+                      />
+                    ) : (
+                      <div className="no-image-large">
+                        <span className="user-initial-large">{currentUser.user_name.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="profile-info">
+                    <h3>{currentUser.user_name}</h3>
+                    <p className="email">{currentUser.email}</p>
+                    <button className="logout-button" onClick={handleLogout}>
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="actions">
-            <button className="logout-button" onClick={handleLogout}>
-              Sign Out
-            </button>
-            <button onClick={() => navigate("/teammaker")}>Go to Team Builder</button>
-          </div>
+          )}
         </div>
       ) : (
         <div className="not-authenticated">
           <p>You haven't signed in or your session has expired.</p>
-          <button onClick={() => navigate("/auth/login")}>Go to Login</button>
+          <button className="login-button" onClick={() => navigate("/auth/login")}>
+            Go to Login
+          </button>
         </div>
       )}
     </div>
