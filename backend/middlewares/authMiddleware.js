@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const { formatResponse } = require("../utils/helpers");
 const { errorMessages } = require("../utils/messages");
+const { getUserById } = require("../database/userQueries");
 
 dotenv.config();
 
@@ -17,8 +18,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "secreto_super_seguro";
  * @param {Object} res - Objeto de respuesta
  * @param {Function} next - Siguiente middleware
  */
-const verifyToken = (req, res, next) => {
-  // Obtener token del header Authorization
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(" ")[1]; // Formato: Bearer TOKEN
 
@@ -30,10 +30,20 @@ const verifyToken = (req, res, next) => {
     // Verificar y decodificar el token
     const decoded = jwt.verify(token, SECRET_KEY);
 
-    // Guardar los datos del usuario en req.user
-    req.user = decoded;
+    // Obtener el usuario desde la base de datos para incluir el user_name y profile_picture
+    const user = await getUserById(decoded.id);
+    if (!user) {
+      return res.status(404).json(formatResponse(false, errorMessages.USER_NOT_FOUND));
+    }
 
-    // Continuar con la siguiente función
+    // Guardar los datos del usuario en req.user
+    req.user = {
+      id: decoded.id,
+      user_name: user.user_name, // Nombre de usuario
+      email: user.email,
+      profile_picture: user.profile_picture, // Imagen de perfil
+    };
+
     next();
   } catch (error) {
     console.error("Error al verificar token:", error.message);

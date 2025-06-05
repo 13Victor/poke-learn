@@ -96,7 +96,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
   try {
     const { battleId } = req.params;
     const battle = activeBattles.get(battleId);
-
+    console.log("Dificultad enviada al frontend:", battle.difficulty);
     if (!battle) {
       return res.status(404).json(formatResponse(false, "Batalla no encontrada"));
     }
@@ -110,7 +110,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     battle.logs = [];
     battle.turnCount = 0;
     battle.pendingCommands = [];
-    battle.teamPreviewPhase = true; // Add team preview phase flag
+    battle.teamPreviewPhase = true; // Add team preview phase fla
 
     // Manejar la salida del stream
     const streamHandler = async () => {
@@ -153,13 +153,17 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     console.log("Configurando jugador 1...");
-    await battleStream.write(`>player p1 {"name":"Jugador","team":${JSON.stringify(battle.playerTeam)}}`);
+    await battleStream.write(
+      `>player p1 {"name":"${req.user.user_name}","avatar":"${req.user.profile_picture}","team":${JSON.stringify(
+        battle.playerTeam
+      )}}`
+    );
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     console.log("Configurando jugador 2...");
-    await battleStream.write(`>player p2 {"name":"CPU","team":${JSON.stringify(battle.aiTeam)}}`);
+    const cpuName = `${battle.difficulty.charAt(0).toUpperCase() + battle.difficulty.slice(1)} CPU`; // Formatear dificultad
+    await battleStream.write(`>player p2 {"name":"${cpuName}","team":${JSON.stringify(battle.aiTeam)}}`);
 
-    // Esperamos más tiempo para que se procesen los mensajes iniciales
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     res.json(
@@ -169,6 +173,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
         state: battle.state,
         turnCount: battle.turnCount,
         teamPreviewPhase: battle.teamPreviewPhase,
+        difficulty: battle.difficulty, // Asegúrate de incluir la dificultad aquí
       })
     );
   } catch (error) {

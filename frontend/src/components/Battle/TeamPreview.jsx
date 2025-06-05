@@ -1,5 +1,6 @@
 // src/components/Battle/TeamPreview.jsx
 import React, { useState } from "react";
+import "../../styles/Battle/TeamPreview.css"; // Importa tu archivo CSS para estilos
 
 export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, isProcessingCommand }) {
   const [selectedLeader, setSelectedLeader] = useState(1); // Default to first Pokémon
@@ -7,6 +8,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
   // Get player's team from request data or team preview data
   const playerTeam = requestData?.side?.pokemon || [];
   const opponentPreview = teamPreviewPokemon?.p2 || [];
+  const teamName = requestData?.side?.name || "Unnamed Team";
 
   // Function to get Pokémon sprite URL using the new format
   const getPokemonSprite = (pokemonName) => {
@@ -51,8 +53,8 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
 
       <div className="teams-preview-grid">
         {/* Player's Team */}
-        <div className="team-preview-section player-section">
-          <h3>🎮 Tu Equipo</h3>
+        <div className="team-preview-section player-section team-card">
+          <h3>{teamName}</h3>
           <div className="pokemon-grid">
             {playerTeam.map((pokemon, index) => {
               if (!pokemon) return null;
@@ -76,19 +78,14 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
                         e.target.src = "https://via.placeholder.com/96x96?text=?";
                       }}
                     />
+                    {pokemon.item && (
+                      <img className="item-indicator" src={`/assets/items/${pokemon.item}.webp`} alt="" srcset="" />
+                    )}
                   </div>
                   <div className="pokemon-info">
-                    <div className="pokemon-name">{pokemonName}</div>
-                    <div className="pokemon-position">
-                      {isSelected && <span className="leader-badge">👑 Líder Seleccionado</span>}
-                      <span className="position-number">#{index + 1}</span>
-                    </div>
+                    <h4>{pokemonName}</h4>
                   </div>
-                  {pokemon.item && (
-                    <div className="item-indicator" title="Tiene objeto">
-                      <img src={`/assets/items/${pokemon.item}.webp`} alt="" srcset="" />
-                    </div>
-                  )}
+
                   {isSelected && <div className="selection-glow"></div>}
                 </div>
               );
@@ -98,7 +95,12 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
 
         {/* Opponent's Team */}
         <div className="team-preview-section opponent-section">
-          <h3>🤖 Equipo Rival</h3>
+          <h3>
+            {teamPreviewPokemon?.difficulty
+              ? `${teamPreviewPokemon.difficulty.charAt(0).toUpperCase() + teamPreviewPokemon.difficulty.slice(1)} CPU`
+              : "Equipo Rival"}
+          </h3>
+
           <div className="pokemon-grid">
             {opponentPreview.map((pokemon, index) => {
               const pokemonName = pokemon.species || pokemon.details?.split(",")[0] || "Unknown";
@@ -116,10 +118,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
                     />
                   </div>
                   <div className="pokemon-info">
-                    <div className="pokemon-name">{pokemonName}</div>
-                    <div className="pokemon-position">
-                      <span className="position-number">#{index + 1}</span>
-                    </div>
+                    <h4>{pokemonName}</h4>
                   </div>
                   {pokemon.hasItem && (
                     <div className="item-indicator" title="Tiene objeto">
