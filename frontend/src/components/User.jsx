@@ -184,10 +184,6 @@ function User() {
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading user information...</div>;
-  }
-
   return (
     <div className="user-container">
       {error && <p className="error-message">{error}</p>}

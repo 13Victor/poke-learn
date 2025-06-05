@@ -214,22 +214,16 @@ function Login() {
     setResendSuccess(false);
     setLoginState("processing");
 
-    // Indicar que se está realizando un login manual
     setManualLoginInProgress(true);
     console.log("[Login] Iniciando proceso de login con email/password");
 
     try {
-      // 1. Autenticar con Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       console.log("[Login] Login exitoso en Firebase:", user.email);
-      console.log("[Login] Email verificado:", user.emailVerified);
 
-      // 2. Verificar si el email está verificado
       if (!user.emailVerified) {
-        console.log("[Login] Email no verificado, mostrando mensaje");
-        // Almacenar el usuario para permitir reenviar la verificación
         setUnverifiedUser(user);
         setError("Please verify your email before signing in");
         setIsLoading(false);
@@ -238,11 +232,7 @@ function Login() {
         return;
       }
 
-      // Obtener token de Firebase
-      console.log("[Login] Obteniendo token de Firebase");
       const idToken = await user.getIdToken();
-
-      // 3. Preparar información de usuario para enviar al backend
       const userInfo = {
         uid: user.uid,
         email: user.email,
@@ -251,13 +241,10 @@ function Login() {
         photoURL: user.photoURL,
       };
 
-      console.log("[Login] Enviando información de usuario al backend...");
-
-      // 4. Autenticar en backend con información y token
       const response = await apiService.loginWithFirebase(userInfo, idToken);
 
       if (!response.success) {
-        throw new Error(response.message || "Error del servidor");
+        throw new Error(response.message || "Server error");
       }
 
       await completeLoginProcess(response, user.email);
@@ -266,15 +253,26 @@ function Login() {
       setLoginState("idle");
       setManualLoginInProgress(false);
 
-      // Handle specific Firebase errors
-      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-        setError("Invalid credentials");
-      } else if (error.code === "auth/too-many-requests") {
-        setError("Too many failed attempts. Try again later or reset your password.");
-      } else if (error.code === "auth/network-request-failed") {
-        setError("Network error. Check your internet connection");
-      } else {
-        setError(`${error.message || "Unknown error"}`);
+      // Mapear errores de Firebase a mensajes más humanos
+      switch (error.code) {
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+          setError("Email or password incorrect.");
+          break;
+        case "auth/missing-password":
+          setError("Missing password.");
+          break;
+        case "auth/invalid-email":
+          setError("Invalid email.");
+          break;
+        case "auth/too-many-requests":
+          setError("Too many failed attempts. Try again later or reset your password.");
+          break;
+        case "auth/network-request-failed":
+          setError("Network error. Check your internet connection.");
+          break;
+        default:
+          setError(`${error.message || "Unknown error"}`);
       }
 
       setDebugInfo(`Error code: ${error.code || "N/A"}`);
@@ -470,7 +468,6 @@ function Login() {
 
           {error && !unverifiedUser && <p className="error-message">{error}</p>}
           {success && <p className="success-message">{success}</p>}
-          {debugInfo && <p className="debug-info">{debugInfo}</p>}
 
           {/* Información de depuración */}
           <div
