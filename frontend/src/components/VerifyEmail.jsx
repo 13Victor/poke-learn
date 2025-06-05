@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { auth } from "../firebase.config";
 import { sendEmailVerification } from "firebase/auth";
+import "../styles/Login.css";
 
 function VerifyEmail() {
   const [email, setEmail] = useState("");
@@ -11,34 +12,65 @@ function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  // Animation states
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const animationInterval = useRef(null);
+
+  // Generate animation frames array (000 to 155)
+  const animationFrames = Array.from({ length: 156 }, (_, i) => {
+    const frameNumber = i.toString().padStart(3, "0");
+    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
+  });
+
   const { clearError } = useAuth();
   const navigate = useNavigate();
 
-  // Limpiar errores al montar componente
+  // Animation effect
+  useEffect(() => {
+    if (animationFrames.length > 1) {
+      animationInterval.current = setInterval(() => {
+        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
+      }, 60);
+
+      return () => {
+        if (animationInterval.current) {
+          clearInterval(animationInterval.current);
+        }
+      };
+    }
+  }, [animationFrames.length]);
+
+  // Clear errors on mount
   useEffect(() => {
     clearError();
+
+    return () => {
+      if (animationInterval.current) {
+        clearInterval(animationInterval.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Obtener email del usuario actual
+  // Get current user's email
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
       setEmail(currentUser.email);
-      console.log("Usuario en VerifyEmail:", currentUser.email);
-      console.log("Email verificado:", currentUser.emailVerified);
+      console.log("User in VerifyEmail:", currentUser.email);
+      console.log("Email verified:", currentUser.emailVerified);
 
-      // Si el email ya está verificado, redirigir a /user
+      // If email is already verified, redirect to /user
       if (currentUser.emailVerified) {
         navigate("/user", { replace: true });
       }
     } else {
-      console.log("No hay usuario autenticado en VerifyEmail");
-      setError("No hay una sesión activa. Por favor, inicia sesión nuevamente.");
+      console.log("No authenticated user in VerifyEmail");
+      setError("No active session. Please sign in again.");
     }
   }, [navigate]);
 
-  // Contador para el botón de reenvío
+  // Countdown timer for resend button
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -48,7 +80,7 @@ function VerifyEmail() {
 
   const handleResendVerification = async () => {
     if (!auth.currentUser) {
-      setError("No hay una sesión activa. Por favor, inicia sesión nuevamente.");
+      setError("No active session. Please sign in again.");
       setTimeout(() => navigate("/auth/login"), 3000);
       return;
     }
@@ -58,15 +90,15 @@ function VerifyEmail() {
       await sendEmailVerification(auth.currentUser);
       setSentAgain(true);
       setError("");
-      // Iniciar contador de espera para reenvío (60 segundos)
+      // Start wait timer for resend (60 seconds)
       setCountdown(60);
     } catch (error) {
-      console.error("Error al reenviar verificación:", error);
+      console.error("Error resending verification:", error);
 
       if (error.code === "auth/too-many-requests") {
-        setError("Has enviado demasiadas solicitudes. Por favor, espera unos minutos antes de intentarlo de nuevo.");
+        setError("You've sent too many requests. Please wait a few minutes before trying again.");
       } else {
-        setError(`Error al enviar correo de verificación: ${error.message}`);
+        setError(`Error sending verification email: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -77,77 +109,149 @@ function VerifyEmail() {
     try {
       setLoading(true);
 
-      // Forzar recarga del usuario actual
+      // Force reload current user
       await auth.currentUser.reload();
 
       if (auth.currentUser.emailVerified) {
-        console.log("¡Email verificado correctamente!");
+        console.log("Email verified successfully!");
         navigate("/user", { replace: true });
       } else {
-        setError("Tu email aún no ha sido verificado. Por favor, revisa tu bandeja de entrada.");
+        setError("Your email has not been verified yet. Please check your inbox.");
       }
     } catch (error) {
-      console.error("Error al verificar estado:", error);
-      setError(`Error al verificar estado: ${error.message}`);
+      console.error("Error checking status:", error);
+      setError(`Error checking status: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="verify-email-container">
-      <div className="verify-email-card">
-        <h2>Verificación de correo electrónico</h2>
-
-        <div className="verify-email-content">
-          <p>
-            Se ha enviado un correo de verificación a: <strong>{email || "tu correo electrónico"}</strong>
-          </p>
-
-          <p>
-            Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para completar tu registro.
-          </p>
-
-          <div className="tip-box">
-            <p>
-              <strong>Consejo:</strong> Si no encuentras el correo en tu bandeja de entrada, revisa la carpeta de spam o
-              correo no deseado.
-            </p>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="form-container">
+          <div className="logo-container">
+            <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+            <h2>Email Verification</h2>
+            <p className="subtitle">Check your inbox to continue</p>
           </div>
 
-          <div className="action-buttons">
-            {countdown === 0 ? (
+          <div className="verify-email-content">
+            <p>
+              A verification email has been sent to: <strong>{email || "your email address"}</strong>
+            </p>
+
+            <p>Please check your inbox and click the verification link to complete your registration.</p>
+
+            <div
+              className="tip-box"
+              style={{
+                marginTop: "15px",
+                padding: "15px",
+                backgroundColor: "#f0f8ff",
+                border: "1px solid #add8e6",
+                borderRadius: "8px",
+              }}
+            >
+              <p>
+                <strong>💡 Tip:</strong> If you can't find the email in your inbox, check your spam or junk mail folder.
+              </p>
+            </div>
+
+            <div className="action-buttons" style={{ marginTop: "20px" }}>
+              {countdown === 0 ? (
+                <button
+                  onClick={handleResendVerification}
+                  disabled={loading || !auth.currentUser}
+                  className="resend-button"
+                  style={{
+                    backgroundColor: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    marginRight: "10px",
+                  }}
+                >
+                  {loading ? "Sending..." : "Resend verification email"}
+                </button>
+              ) : (
+                <button
+                  disabled={true}
+                  className="resend-button disabled"
+                  style={{
+                    backgroundColor: "#e9ecef",
+                    color: "#6c757d",
+                    width: "100%",
+                    border: "1px solid #dee2e6",
+                    padding: "10px 20px",
+                    borderRadius: "5px",
+                    cursor: "not-allowed",
+                    marginRight: "10px",
+                  }}
+                >
+                  Resend in {countdown} seconds
+                </button>
+              )}
+
               <button
-                onClick={handleResendVerification}
-                disabled={loading || !auth.currentUser}
-                className="resend-button"
+                onClick={handleRefreshStatus}
+                disabled={loading}
+                className="refresh-button"
+                style={{
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
               >
-                {loading ? "Enviando..." : "Reenviar correo de verificación"}
+                {loading ? "Checking..." : "I've verified my email"}
               </button>
-            ) : (
-              <button disabled={true} className="resend-button disabled">
-                Reenviar en {countdown} segundos
-              </button>
+            </div>
+
+            {sentAgain && (
+              <div className="success-message" style={{ marginTop: "15px" }}>
+                <p>Email resent successfully! Please check your inbox.</p>
+              </div>
             )}
 
-            <button onClick={handleRefreshStatus} disabled={loading} className="refresh-button">
-              {loading ? "Verificando..." : "He verificado mi correo"}
-            </button>
-          </div>
+            {error && (
+              <p className="error-message" style={{ marginTop: "15px" }}>
+                {error}
+              </p>
+            )}
 
-          {sentAgain && (
-            <div className="success-message">
-              <p>¡Correo reenviado con éxito! Por favor, revisa tu bandeja de entrada.</p>
+            <div className="navigation-links" style={{ marginTop: "20px", textAlign: "center" }}>
+              <Link to="/auth/login" className="login-link">
+                Back to sign in
+              </Link>
             </div>
-          )}
-
-          {error && <p className="error-message">{error}</p>}
-
-          <div className="navigation-links">
-            <Link to="/auth/login" className="login-link">
-              Volver a inicio de sesión
-            </Link>
           </div>
+        </div>
+      </div>
+
+      <div className="background-container">
+        {/* Overlay with image animation */}
+        <div className="overlay">
+          <div className="animated-overlay">
+            <img
+              src={animationFrames[currentFrame]}
+              alt="Pokémon Animation"
+              className="animation-frame"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </div>
+        </div>
+        <div className="background-text">
+          <h3>Almost there!</h3>
+          <p>Just one more step to join the adventure. Verify your email and start your Pokémon journey!</p>
         </div>
       </div>
     </div>

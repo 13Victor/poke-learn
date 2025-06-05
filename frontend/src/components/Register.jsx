@@ -105,7 +105,7 @@ function Register() {
     // Validación de contraseña
     const allValid = Object.values(passwordErrors).every((valid) => valid);
     if (!allValid) {
-      setLocalError("La contraseña no cumple con todos los requisitos de seguridad");
+      setLocalError("Password does not meet all security requirements");
       setIsLoading(false);
       return;
     }
@@ -133,23 +133,23 @@ function Register() {
         throw new Error(response.message || "Error en el registro del servidor");
       }
 
-      setSuccess("Registro exitoso. Por favor verifica tu correo electrónico");
+      setSuccess("Registration successful. Please verify your email");
     } catch (error) {
       console.error("Error en registro:", error);
 
-      // Manejo de errores específicos de Firebase
+      // Handle specific Firebase errors
       if (error.code === "auth/email-already-in-use") {
-        setLocalError("Este correo ya está registrado");
+        setLocalError("This email is already registered");
       } else if (error.code === "auth/invalid-email") {
-        setLocalError("Formato de correo inválido");
+        setLocalError("Invalid email format");
       } else if (error.code === "auth/weak-password") {
-        setLocalError("La contraseña es demasiado débil");
+        setLocalError("Password is too weak");
       } else if (error.code === "auth/network-request-failed") {
-        setLocalError("Error de red. Verifica tu conexión a internet");
+        setLocalError("Network error. Check your internet connection");
       } else if (error.message && error.message.includes("fetch")) {
-        setLocalError("Error al conectar con el servidor");
+        setLocalError("Error connecting to server");
       } else {
-        setLocalError(error.message || "Error desconocido en el registro");
+        setLocalError(error.message || "Unknown registration error");
       }
     } finally {
       setIsLoading(false);
@@ -202,7 +202,7 @@ function Register() {
           // Si el inicio de sesión es exitoso, significa que el usuario ya existe
           // Guardar token y redirigir a la página principal
           localStorage.setItem("token", loginResponse.data.token);
-          setSuccess("¡Has iniciado sesión con Google! Redirigiendo...");
+          setSuccess("You've signed in with Google! Redirecting...");
 
           // Esperar para asegurar que el token se almacenó correctamente
           setTimeout(() => {
@@ -258,7 +258,7 @@ function Register() {
 
       if (loginAfterRegister.success) {
         localStorage.setItem("token", loginAfterRegister.data.token);
-        setSuccess("Registro con Google exitoso. Redirigiendo...");
+        setSuccess("Google registration successful. Redirecting...");
 
         // Esperar para asegurar que el token se almacenó correctamente
         setTimeout(() => {
@@ -288,13 +288,13 @@ function Register() {
       if (error.code === "auth/popup-closed-by-user") {
         // No hacer nada
       }
-      // Si ya existe una cuenta con el mismo email pero otro método
+      // If account already exists with same email but different method
       else if (error.code === "auth/account-exists-with-different-credential") {
-        setLocalError("Ya existe una cuenta con este email. Intenta otro método de inicio de sesión.");
+        setLocalError("An account already exists with this email. Try another sign-in method.");
       }
-      // Otros errores
+      // Other errors
       else {
-        setLocalError(`Error al registrarse con Google: ${error.message || "Error desconocido"}`);
+        setLocalError(`Error signing up with Google: ${error.message || "Unknown error"}`);
       }
     } finally {
       setGoogleLoading(false);
@@ -307,24 +307,24 @@ function Register() {
         <div className="form-container">
           <div className="logo-container">
             <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
-            <h2>Únete a la aventura</h2>
-            <p className="subtitle">¡Crea tu cuenta de entrenador!</p>
+            <h2>Join the adventure</h2>
+            <p className="subtitle">Create your trainer account!</p>
           </div>
 
           {!verificationSent ? (
             <>
               <form onSubmit={handleSubmit} className="register-form">
                 <div className="form-group">
-                  <label htmlFor="username">Nombre de usuario</label>
+                  <label htmlFor="username">Username</label>
                   <input
                     id="username"
                     type="text"
-                    placeholder="Tu nombre de entrenador"
+                    placeholder="Your trainer name"
                     value={userName}
                     onChange={(event) => setUserName(event.target.value)}
                     disabled={isLoading || googleLoading}
                   />
-                  <small className="input-help">Mínimo 3 caracteres, solo letras, números y guiones bajos</small>
+                  <small className="input-help">Minimum 3 characters, only letters, numbers and underscores</small>
                 </div>
 
                 <div className="form-group">
@@ -340,7 +340,7 @@ function Register() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="password">Contraseña</label>
+                  <label htmlFor="password">Password</label>
                   <input
                     id="password"
                     type="password"
@@ -351,14 +351,14 @@ function Register() {
                   />
 
                   <div className="password-requirements">
-                    <p>La contraseña debe tener:</p>
+                    <p>Password must have:</p>
                     <ul>
-                      <li className={passwordErrors.length ? "valid" : "invalid"}>Al menos 8 caracteres</li>
-                      <li className={passwordErrors.uppercase ? "valid" : "invalid"}>Al menos una letra mayúscula</li>
-                      <li className={passwordErrors.lowercase ? "valid" : "invalid"}>Al menos una letra minúscula</li>
-                      <li className={passwordErrors.number ? "valid" : "invalid"}>Al menos un número</li>
+                      <li className={passwordErrors.length ? "valid" : "invalid"}>At least 8 characters</li>
+                      <li className={passwordErrors.uppercase ? "valid" : "invalid"}>At least one uppercase letter</li>
+                      <li className={passwordErrors.lowercase ? "valid" : "invalid"}>At least one lowercase letter</li>
+                      <li className={passwordErrors.number ? "valid" : "invalid"}>At least one number</li>
                       <li className={passwordErrors.symbol ? "valid" : "invalid"}>
-                        Al menos un símbolo especial (!@#$%^&*...)
+                        At least one special symbol (!@#$%^&*...)
                       </li>
                     </ul>
                   </div>
@@ -369,7 +369,7 @@ function Register() {
                   className="register-button"
                   disabled={isLoading || googleLoading || !Object.values(passwordErrors).every((v) => v)}
                 >
-                  {isLoading ? "Registrando..." : "Crear cuenta"}
+                  {isLoading ? "Registering..." : "Create account"}
                 </button>
               </form>
 
@@ -383,7 +383,7 @@ function Register() {
                 <GoogleButton
                   onClick={handleGoogleRegister}
                   disabled={isLoading || googleLoading}
-                  label={googleLoading ? "Procesando..." : "Registrarse con Google"}
+                  label={googleLoading ? "Processing..." : "Sign up with Google"}
                   type="light"
                 />
               </div>
@@ -391,16 +391,16 @@ function Register() {
           ) : (
             <div className="verification-message">
               <div className="verification-icon">✉️</div>
-              <h4>¡Gracias por registrarte!</h4>
+              <h4>Thanks for signing up!</h4>
               <p>
-                Te hemos enviado un correo de verificación a <strong>{email}</strong>
+                We've sent a verification email to <strong>{email}</strong>
               </p>
-              <p>Por favor, verifica tu correo antes de iniciar sesión.</p>
+              <p>Please verify your email before signing in.</p>
               <p className="verification-note">
-                Si no encuentras el correo, revisa tu carpeta de spam. El correo puede tardar unos minutos en llegar.
+                If you can't find the email, check your spam folder. The email may take a few minutes to arrive.
               </p>
               <button onClick={() => navigate("/auth/login")} className="goto-login-button">
-                Ir a Login
+                Go to Login
               </button>
             </div>
           )}
@@ -409,7 +409,7 @@ function Register() {
           {success && !verificationSent && <p className="success-message">{success}</p>}
 
           <div className="login-link">
-            ¿Ya tienes una cuenta? <Link to="/auth/login">Inicia sesión</Link>
+            Already have an account? <Link to="/auth/login">Sign in</Link>
           </div>
         </div>
       </div>
@@ -431,8 +431,8 @@ function Register() {
           </div>
         </div>
         <div className="background-text">
-          <h3>¡Conviértete en un maestro!</h3>
-          <p>Únete a miles de entrenadores y demuestra que tienes lo necesario para ser el mejor de todos.</p>
+          <h3>Become a master!</h3>
+          <p>Join thousands of trainers and prove you have what it takes to be the very best.</p>
         </div>
       </div>
     </div>

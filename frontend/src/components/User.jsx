@@ -9,12 +9,12 @@ function User() {
   const [error, setLocalError] = useState("");
   const navigate = useNavigate();
 
-  // Referencia para controlar si el componente está montado
+  // Reference to control if component is mounted
   const isMounted = useRef(true);
 
-  // Cleanup al desmontar
+  // Cleanup on unmount
   useEffect(() => {
-    // Limpiar errores al montar el componente
+    // Clear errors on mount
     clearError();
 
     return () => {
@@ -25,17 +25,17 @@ function User() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // No realizar la llamada si no estamos autenticados o si ya tenemos el error de auth
+      // Don't make the call if not authenticated or if we already have auth error
       if (!isAuthenticated || authError) {
         setLoading(false);
         return;
       }
 
       try {
-        // Obtener datos adicionales del usuario si es necesario
+        // Get additional user data if needed
         const response = await apiService.getUserProfile();
 
-        // Verificar si el componente sigue montado antes de actualizar el estado
+        // Check if component is still mounted before updating state
         if (isMounted.current) {
           setLoading(false);
 
@@ -44,25 +44,25 @@ function User() {
           }
         }
       } catch (error) {
-        console.error("Error al obtener datos del usuario:", error);
+        console.error("Error getting user data:", error);
 
-        // Solo actualizar estados si el componente sigue montado
+        // Only update states if component is still mounted
         if (isMounted.current) {
           setLocalError(error.message);
           setLoading(false);
 
-          // Si hay un error de autorización, redirigir al login después de un tiempo
+          // If there's an authorization error, redirect to login after some time
           if (
-            error.message.includes("autorizado") ||
-            error.message.includes("sesión") ||
+            error.message.includes("authorized") ||
+            error.message.includes("session") ||
             error.message.includes("token") ||
-            error.message.includes("expirada")
+            error.message.includes("expired")
           ) {
-            // Limpiar información de autenticación
+            // Clear authentication information
             localStorage.removeItem("token");
-            setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+            setError("Your session has expired. Please sign in again.");
 
-            // Usar un setTimeout para dar tiempo a otros efectos a ejecutarse
+            // Use setTimeout to give time for other effects to execute
             setTimeout(() => {
               if (isMounted.current) {
                 navigate("/auth/login");
@@ -77,14 +77,14 @@ function User() {
   }, [isAuthenticated, navigate, setError, authError, clearError]);
 
   const handleLogout = async () => {
-    // Marcar el componente como no montado antes del logout
-    // para evitar actualizar estados después de la navegación
+    // Mark component as unmounted before logout
+    // to avoid updating states after navigation
     isMounted.current = false;
     await logout();
   };
 
   if (loading) {
-    return <div className="loading">Cargando información de usuario...</div>;
+    return <div className="loading">Loading user information...</div>;
   }
 
   return (
@@ -93,7 +93,7 @@ function User() {
       {authError && <p style={{ color: "red" }}>{authError}</p>}
       {currentUser ? (
         <div className="user-profile">
-          <h2>¡Bienvenido, {currentUser.user_name}!</h2>
+          <h2>Welcome, {currentUser.user_name}!</h2>
           <div className="user-details">
             <p>
               <strong>ID:</strong> {currentUser.id}
@@ -102,31 +102,31 @@ function User() {
               <strong>Email:</strong> {currentUser.email}
             </p>
             <p>
-              <strong>Nombre de Usuario:</strong> {currentUser.user_name}
+              <strong>Username:</strong> {currentUser.user_name}
             </p>
             <div className="profile-image">
               {currentUser.profile_picture ? (
                 <img
                   src={`${import.meta.env.VITE_API_BASE_URL}/uploads/profile_pictures/${currentUser.profile_picture}`}
                   width={100}
-                  alt="Imagen de perfil"
+                  alt="Profile picture"
                 />
               ) : (
-                <div className="no-image">Sin imagen de perfil</div>
+                <div className="no-image">No profile picture</div>
               )}
             </div>
           </div>
           <div className="actions">
             <button className="logout-button" onClick={handleLogout}>
-              Cerrar Sesión
+              Sign Out
             </button>
-            <button onClick={() => navigate("/teammaker")}>Ir al creador de equipos</button>
+            <button onClick={() => navigate("/teammaker")}>Go to Team Builder</button>
           </div>
         </div>
       ) : (
         <div className="not-authenticated">
-          <p>No has iniciado sesión o tu sesión ha expirado.</p>
-          <button onClick={() => navigate("/auth/login")}>Ir a Login</button>
+          <p>You haven't signed in or your session has expired.</p>
+          <button onClick={() => navigate("/auth/login")}>Go to Login</button>
         </div>
       )}
     </div>

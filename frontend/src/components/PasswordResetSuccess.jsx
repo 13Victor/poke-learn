@@ -1,67 +1,111 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import "../styles/Login.css";
 
 function PasswordResetSuccess() {
   const [searchParams] = useSearchParams();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(5000);
   const { isAuthenticated, clearError } = useAuth();
   const navigate = useNavigate();
 
   const mode = searchParams.get("mode");
   const oobCode = searchParams.get("oobCode");
+  const apiKey = searchParams.get("apiKey");
+  const continueUrl = searchParams.get("continueUrl");
 
-  // Limpiar errores al montar
+  // Estado interno para seguimiento del proceso de login
+  const [loginState, setLoginState] = useState("idle");
+  const redirectTimer = useRef(null);
+
+  // Estados para la animación de imágenes
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const animationInterval = useRef(null);
+
+  // Generar array de rutas de las imágenes de la animación (000 a 155)
+  const animationFrames = Array.from({ length: 156 }, (_, i) => {
+    const frameNumber = i.toString().padStart(3, "0"); // Convierte 0 -> "000", 1 -> "001", etc.
+    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
+  });
+
+  const location = useLocation();
+
+  // Obtener la ubicación anterior si existe
+  const from = location.state?.from?.pathname || "/user";
+
+  // Efecto para la animación de imágenes
+  useEffect(() => {
+    if (animationFrames.length > 1) {
+      animationInterval.current = setInterval(() => {
+        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
+      }, 60); // 60ms entre frames = ~16.6 FPS, ajusta según prefieras
+
+      return () => {
+        if (animationInterval.current) {
+          clearInterval(animationInterval.current);
+        }
+      };
+    }
+  }, [animationFrames.length]);
+
+  // Clear errors on mount
   useEffect(() => {
     clearError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Redirigir si ya está autenticado
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/user", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
-  // Contador para redirección automática
+  // Countdown for automatic redirection
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else {
-      // Redirigir automáticamente al login después del countdown
+      // Automatically redirect to login after countdown
       navigate("/auth/login", { replace: true });
     }
   }, [countdown, navigate]);
 
-  // Verificar si es una acción de reset de contraseña válida
-  const isValidPasswordReset = mode === "resetPassword" && oobCode;
+  // Verify if it's a valid redirect from Firebase
+  // Can come with mode=resetPassword or simply from continueUrl
+  const isValidPasswordReset =
+    (mode === "resetPassword" && oobCode) || // Standard flow
+    continueUrl || // Continue URL from Firebase
+    (apiKey && window.location.pathname === "/auth/reset-success"); // Direct redirect
 
-  if (!isValidPasswordReset) {
+  // If we arrive at this page directly (without parameters), assume it's valid
+  // because the user was redirected here after changing their password
+  const isDirectAccess = !mode && !oobCode && !apiKey && !continueUrl;
+
+  if (!isValidPasswordReset && !isDirectAccess) {
     return (
       <div className="login-page">
         <div className="login-container">
           <div className="form-container">
             <div className="logo-container">
               <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
-              <h2>Enlace inválido</h2>
-              <p className="subtitle">Este enlace no es válido o ha expirado</p>
+              <h2>Invalid Link</h2>
+              <p className="subtitle">This link is invalid or has expired</p>
             </div>
 
             <div className="invalid-link-message">
-              <p className="error-message">El enlace de restablecimiento de contraseña no es válido o ha expirado.</p>
-              <p>Si necesitas restablecer tu contraseña, solicita un nuevo enlace.</p>
+              <p className="error-message">The password reset link is invalid or has expired.</p>
+              <p>If you need to reset your password, please request a new link.</p>
             </div>
 
             <div className="navigation-links" style={{ marginTop: "20px", textAlign: "center" }}>
               <Link to="/auth/forgot-password" className="reset-link">
-                Solicitar nuevo enlace
+                Request new link
               </Link>
               <span style={{ margin: "0 10px", color: "#ccc" }}>|</span>
               <Link to="/auth/login" className="login-link">
-                Volver a iniciar sesión
+                Back to login
               </Link>
             </div>
           </div>
@@ -76,15 +120,15 @@ function PasswordResetSuccess() {
         <div className="form-container">
           <div className="logo-container">
             <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
-            <h2>¡Contraseña actualizada!</h2>
-            <p className="subtitle">Tu contraseña ha sido restablecida exitosamente</p>
+            <h2>Password Updated!</h2>
+            <p className="subtitle">Your password has been reset successfully</p>
           </div>
 
           <div className="success-message-container">
             <div className="success-message">
-              <h4>✅ ¡Perfecto!</h4>
-              <p>Tu contraseña ha sido actualizada correctamente.</p>
-              <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+              <h4>✅ Perfect!</h4>
+              <p>Your password has been updated correctly.</p>
+              <p>You can now log in with your new password.</p>
             </div>
 
             <div
@@ -99,7 +143,7 @@ function PasswordResetSuccess() {
               }}
             >
               <p>
-                Serás redirigido automáticamente al login en <strong>{countdown}</strong> segundo
+                You will be automatically redirected to login in <strong>{countdown}</strong> second
                 {countdown !== 1 ? "s" : ""}...
               </p>
             </div>
@@ -119,7 +163,7 @@ function PasswordResetSuccess() {
                   transition: "background-color 0.3s",
                 }}
               >
-                Ir a iniciar sesión ahora
+                Go to login now
               </Link>
             </div>
 
@@ -133,12 +177,12 @@ function PasswordResetSuccess() {
                 borderRadius: "8px",
               }}
             >
-              <h5 style={{ margin: "0 0 10px 0", color: "#856404" }}>💡 Consejos de seguridad:</h5>
+              <h5 style={{ margin: "0 0 10px 0", color: "#856404" }}>💡 Security tips:</h5>
               <ul style={{ margin: 0, paddingLeft: "20px", color: "#856404" }}>
-                <li>Usa una contraseña única que no uses en otros sitios</li>
-                <li>Considera usar un gestor de contraseñas</li>
-                <li>No compartas tu contraseña con nadie</li>
-                <li>Si sospechas que tu cuenta está comprometida, cambia tu contraseña inmediatamente</li>
+                <li>Use a unique password that you don't use on other sites</li>
+                <li>Consider using a password manager</li>
+                <li>Never share your password with anyone</li>
+                <li>If you suspect your account is compromised, change your password immediately</li>
               </ul>
             </div>
           </div>
@@ -146,11 +190,24 @@ function PasswordResetSuccess() {
       </div>
 
       <div className="background-container">
-        <div className="overlay"></div>
-        <img src="/pokemon-battle-background.png" alt="Pokémon Battle" className="background-image" />
+        <div className="overlay">
+          <div className="animated-overlay">
+            <img
+              src={animationFrames[currentFrame]}
+              alt="Pokémon Animation"
+              className="animation-frame"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                opacity: 1, // Ajusta la opacidad según necesites
+              }}
+            />
+          </div>
+        </div>
         <div className="background-text">
-          <h3>¡Bienvenido de vuelta!</h3>
-          <p>Tu cuenta está segura. Continúa tu aventura Pokémon con total tranquilidad.</p>
+          <h3>Welcome back!</h3>
+          <p>Your account is secure. Continue your Pokémon adventure with complete peace of mind.</p>
         </div>
       </div>
     </div>

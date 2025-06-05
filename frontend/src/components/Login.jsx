@@ -161,13 +161,13 @@ function Login() {
     try {
       await sendEmailVerification(unverifiedUser);
       setResendSuccess(true);
-      setSuccess("Se ha enviado un nuevo correo de verificación a " + unverifiedUser.email);
+      setSuccess("A new verification email has been sent to " + unverifiedUser.email);
     } catch (error) {
       console.error("[Login] Error al reenviar verificación:", error);
       if (error.code === "auth/too-many-requests") {
-        setError("Demasiadas solicitudes. Espera unos minutos antes de intentarlo de nuevo.");
+        setError("Too many requests. Wait a few minutes before trying again.");
       } else {
-        setError("Error al reenviar verificación: " + error.message);
+        setError("Error resending verification: " + error.message);
       }
     } finally {
       setResendLoading(false);
@@ -188,7 +188,7 @@ function Login() {
           : "No se guardó correctamente"
       );
 
-      setSuccess("Login exitoso. Redirigiendo...");
+      setSuccess("Login successful. Redirecting...");
       console.log("[Login] Login exitoso para:", userEmail);
 
       // Cambiar estado a 'esperando redirección'
@@ -231,7 +231,7 @@ function Login() {
         console.log("[Login] Email no verificado, mostrando mensaje");
         // Almacenar el usuario para permitir reenviar la verificación
         setUnverifiedUser(user);
-        setError("Por favor verifica tu correo electrónico antes de iniciar sesión");
+        setError("Please verify your email before signing in");
         setIsLoading(false);
         setManualLoginInProgress(false);
         setLoginState("idle");
@@ -266,18 +266,18 @@ function Login() {
       setLoginState("idle");
       setManualLoginInProgress(false);
 
-      // Manejar errores específicos de Firebase
+      // Handle specific Firebase errors
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-        setError("Credenciales incorrectas");
+        setError("Invalid credentials");
       } else if (error.code === "auth/too-many-requests") {
-        setError("Demasiados intentos fallidos. Intenta más tarde o restablece tu contraseña.");
+        setError("Too many failed attempts. Try again later or reset your password.");
       } else if (error.code === "auth/network-request-failed") {
-        setError("Error de red. Verifica tu conexión a internet");
+        setError("Network error. Check your internet connection");
       } else {
-        setError(`${error.message || "Error desconocido"}`);
+        setError(`${error.message || "Unknown error"}`);
       }
 
-      setDebugInfo(`Código de error: ${error.code || "N/A"}`);
+      setDebugInfo(`Error code: ${error.code || "N/A"}`);
     } finally {
       setIsLoading(false);
     }
@@ -335,18 +335,18 @@ function Login() {
       setLoginState("idle");
       setManualLoginInProgress(false);
 
-      // Si el usuario canceló el popup, no mostrar error
+      // If user cancelled popup, don't show error
       if (error.code === "auth/popup-closed-by-user") {
-        setDebugInfo("Ventana de autenticación cerrada por el usuario");
+        setDebugInfo("Authentication window closed by user");
       }
-      // Si ya existe una cuenta con el mismo email pero otro método
+      // If account already exists with same email but different method
       else if (error.code === "auth/account-exists-with-different-credential") {
-        setError("Ya existe una cuenta con este email. Intenta otro método de inicio de sesión.");
+        setError("An account already exists with this email. Try another sign-in method.");
       }
-      // Otros errores
+      // Other errors
       else {
-        setError(`Error al iniciar sesión con Google: ${error.message || "Error desconocido"}`);
-        setDebugInfo(`Código de error: ${error.code || "N/A"}`);
+        setError(`Error signing in with Google: ${error.message || "Unknown error"}`);
+        setDebugInfo(`Error code: ${error.code || "N/A"}`);
       }
     } finally {
       setGoogleLoading(false);
@@ -359,28 +359,28 @@ function Login() {
         <div className="form-container">
           <div className="logo-container">
             <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
-            <h2>Inicia sesión en tu cuenta</h2>
-            <p className="subtitle">¡Prepárate para la batalla!</p>
+            <h2>Sign in to your account</h2>
+            <p className="subtitle">Get ready for battle!</p>
           </div>
 
           {/* Sección de usuario no verificado */}
           {unverifiedUser ? (
             <div className="unverified-user-section">
-              <p className="error-message">Por favor verifica tu correo electrónico antes de iniciar sesión.</p>
+              <p className="error-message">Please verify your email before signing in.</p>
               <p>
-                Se ha enviado un correo de verificación a <strong>{unverifiedUser.email}</strong>
+                A verification email has been sent to <strong>{unverifiedUser.email}</strong>
               </p>
 
               {!resendSuccess ? (
                 <button onClick={handleResendVerification} disabled={resendLoading} className="resend-button">
-                  {resendLoading ? "Enviando..." : "Reenviar correo de verificación"}
+                  {resendLoading ? "Sending..." : "Resend verification email"}
                 </button>
               ) : (
-                <p className="success-message">¡Correo de verificación reenviado con éxito!</p>
+                <p className="success-message">Verification email resent successfully!</p>
               )}
 
               <button onClick={() => setUnverifiedUser(null)} className="back-button">
-                Volver al login
+                Back to login
               </button>
             </div>
           ) : (
@@ -402,7 +402,7 @@ function Login() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="password">Contraseña</label>
+                  <label htmlFor="password">Password</label>
                   <input
                     id="password"
                     type="password"
@@ -418,10 +418,10 @@ function Login() {
                 <div className="form-options">
                   <div className="remember-me">
                     <input type="checkbox" id="remember" />
-                    <label htmlFor="remember">Recordarme</label>
+                    <label htmlFor="remember">Remember me</label>
                   </div>
                   <Link to="/auth/forgot-password" className="forgot-password">
-                    ¿Olvidaste tu contraseña?
+                    Forgot your password?
                   </Link>
                 </div>
 
@@ -433,12 +433,12 @@ function Login() {
                   className="login-button"
                 >
                   {isLoading
-                    ? "Procesando..."
+                    ? "Processing..."
                     : loginState === "success_waiting"
-                    ? "Verificando..."
+                    ? "Verifying..."
                     : loginState === "redirecting"
-                    ? "Redirigiendo..."
-                    : "Iniciar sesión"}
+                    ? "Redirecting..."
+                    : "Sign in"}
                 </button>
               </form>
 
@@ -455,12 +455,12 @@ function Login() {
                   }
                   label={
                     googleLoading
-                      ? "Procesando..."
+                      ? "Processing..."
                       : loginState === "success_waiting"
-                      ? "Verificando..."
+                      ? "Verifying..."
                       : loginState === "redirecting"
-                      ? "Redirigiendo..."
-                      : "Iniciar sesión con Google"
+                      ? "Redirecting..."
+                      : "Sign in with Google"
                   }
                   type="light"
                 />
@@ -485,7 +485,7 @@ function Login() {
           </div>
 
           <div className="register-link">
-            ¿No tienes una cuenta? <Link to="/auth/register">Regístrate</Link>
+            Don't have an account? <Link to="/auth/register">Sign up</Link>
           </div>
         </div>
       </div>
@@ -502,13 +502,14 @@ function Login() {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+                opacity: 1, // Ajusta la opacidad según necesites
               }}
             />
           </div>
         </div>
         <div className="background-text">
-          <h3>¡Crea equipos y combate!</h3>
-          <p>Forma tu equipo perfecto, desarrolla estrategias y demuestra que eres el mejor entrenador Pokémon.</p>
+          <h3>Create teams and battle!</h3>
+          <p>Build your perfect team, develop strategies and prove you're the best Pokémon trainer.</p>
         </div>
       </div>
     </div>

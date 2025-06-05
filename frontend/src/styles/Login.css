@@ -232,6 +232,12 @@
   margin-bottom: 0.5rem;
 }
 
+.loading-logo {
+  height: 100px;
+  align-self: center;
+  justify-self: center;
+}
+
 .background-text p {
   font-size: 1rem;
 }
