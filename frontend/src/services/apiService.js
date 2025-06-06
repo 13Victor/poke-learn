@@ -365,6 +365,14 @@ class ApiService {
       requiresAuth: true,
     });
   }
+
+  async getMoveByName(moveName) {
+    return this.fetchData(`/data/move/${encodeURIComponent(moveName)}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
 }
 
 // Exportar una única instancia para usar en toda la aplicación

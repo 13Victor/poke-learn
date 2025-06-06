@@ -440,4 +440,52 @@ router.get("/types", async (req, res) => {
   }
 });
 
+/**
+ * @route GET /data/move/:moveName
+ * @desc Obtener datos de un movimiento específico por nombre
+ */
+router.get("/move/:moveName", async (req, res) => {
+  try {
+    const { moveName } = req.params;
+    const moves = data.moves.Moves;
+
+    // Normalize the move name for searching
+    const normalizedSearchName = moveName.toLowerCase().replace(/[\s'-]/g, "");
+
+    // Find the move by name (case insensitive and handle special characters)
+    let foundMoveId = null;
+    let foundMoveData = null;
+
+    for (const moveId in moves) {
+      const move = moves[moveId];
+      const normalizedMoveName = move.name.toLowerCase().replace(/[\s'-]/g, "");
+
+      if (normalizedMoveName === normalizedSearchName || moveId === normalizedSearchName) {
+        foundMoveId = moveId;
+        foundMoveData = move;
+        break;
+      }
+    }
+
+    if (!foundMoveData) {
+      return res.status(404).json(formatResponse(false, "Movimiento no encontrado"));
+    }
+
+    // Add move descriptions if available
+    const moveDescData = data.movesDesc?.MovesText?.[foundMoveId] || {};
+
+    const moveWithDesc = {
+      ...foundMoveData,
+      id: foundMoveId,
+      shortDesc: moveDescData.shortDesc || foundMoveData.shortDesc || "",
+      desc: moveDescData.desc || foundMoveData.desc || "",
+    };
+
+    res.json(formatResponse(true, "Datos del movimiento", moveWithDesc));
+  } catch (error) {
+    console.error("Error al obtener datos del movimiento:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos del movimiento"));
+  }
+});
+
 module.exports = router;
