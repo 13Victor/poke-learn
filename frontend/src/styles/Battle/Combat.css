@@ -1,14 +1,18 @@
 .combat-container {
-  margin: 0 auto;
   padding: var(--spacing-xl);
-  font-family: Arial, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
-
 .battle-status {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+}
+
+.battle-split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
 .format-selector {
@@ -157,13 +161,6 @@
 .cpu-controls {
   background-color: #f3e5f5;
   border-color: #ce93d8;
-}
-
-.player-section h3,
-.cpu-controls h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #333;
 }
 
 .action-required {

@@ -1,3 +1,9 @@
+.player-section,
+.opponent-section {
+  padding: 0;
+  padding-top: var(--spacing-md);
+}
+
 .team-preview-section {
   display: flex;
   flex-direction: column;
@@ -5,14 +11,36 @@
   width: fit-content;
 }
 
+.teams-preview-grid {
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+  gap: var(--spacing-md);
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
 .team-preview-section .pokemon-sprite img:not(.item-indicator) {
   height: 200px;
+}
+
+.team-preview-section .pokemon-grid {
+  padding: var(--spacing-md);
+}
+
+.battle-controls {
+  height: 100%;
 }
 
 .team-preview-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+
+  gap: var(--spacing-xl);
+  height: 100%;
+  width: 100%;
 }
 .pokemon-sprite {
   position: relative;
@@ -22,5 +50,91 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  height: 30px;
+  height: 40px;
+}
+
+.selected-leader {
+  background-color: rgba(255, 217, 46, 0.596);
+  outline: 2px solid rgb(253, 186, 61);
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+.selected-leader::after {
+  content: "Team Leader";
+  position: absolute;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  top: -12px;
+  left: 50%;
+  background-color: rgb(253, 186, 61);
+  padding: 0 var(--spacing-xs);
+  transform: translateX(-50%);
+  border-radius: var(--radius-sm);
+}
+
+.opponent-section {
+  outline: 2px dashed var(--silver);
+  outline-offset: -2px;
+  border-radius: var(--radius-md);
+}
+
+.team-preview-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.team-preview-header h5 {
+  font-weight: 400;
+}
+
+.battle-info {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--spacing-xs);
+}
+
+.battle-format {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-full);
+  margin: var(--spacing-xl);
+}
+
+.difficulty-easy {
+  background-color: #fffbe3;
+  border: 2px solid #afa54c;
+  font-weight: 500;
+  color: #5e5822;
+}
+.difficulty-medium {
+  background-color: #fff3e3;
+  border: 2px solid #af814c;
+  font-weight: 500;
+  color: #5e3f22;
+}
+.difficulty-hard {
+  background-color: #ffe3e3;
+  border: 2px solid #af4c4c;
+  font-weight: 500;
+  color: #5e2222;
+}
+
+.confirm-button {
+  background-color: rgb(75, 200, 70);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.confirm-button:hover {
+  background-color: rgb(65, 180, 60);
 }

@@ -131,50 +131,21 @@ const Combat = () => {
   // Resto del componente para cuando la batalla está activa o completada
   return (
     <div className="combat-container">
-      <h1>Simulador de Batalla Pokémon</h1>
+      <h1>Battle Simulator</h1>
 
       <div className="battle-status">
         <div className="battle-info">
-          <span>Formato: {format}</span>
           {battleConfig && (
             <>
-              <span>Equipo: {battleConfig.team?.name || "Personalizado"}</span>
-              <span>
-                Dificultad:{" "}
-                {battleConfig.difficulty === "easy"
-                  ? "Fácil"
-                  : battleConfig.difficulty === "medium"
-                  ? "Media"
-                  : "Difícil"}
+              <span className={`battle-format difficulty-${battleConfig.difficulty?.toLowerCase() || "unknown"}`}>
+                {battleConfig.difficulty
+                  ? battleConfig.difficulty.charAt(0).toUpperCase() + battleConfig.difficulty.slice(1)
+                  : "Desconocida"}{" "}
+                mode
               </span>
             </>
           )}
-          {isTeamPreview && <span className="team-preview-indicator">🔍 Vista Previa de Equipos</span>}
         </div>
-
-        <div className="battle-actions">
-          <button className="back-button" onClick={goBackToSetup}>
-            Volver a Configuración
-          </button>
-
-          <button
-            className="start-button"
-            onClick={() => handleStartBattle(battleConfig)}
-            disabled={battleState === "loading"}
-          >
-            {battleState === "loading" ? "Iniciando..." : "Nueva Batalla"}
-          </button>
-        </div>
-
-        <span className={`status-indicator ${battleState}`}>
-          {battleState === "idle"
-            ? "Sin batalla"
-            : battleState === "loading"
-            ? "Cargando..."
-            : battleState === "active"
-            ? "En curso"
-            : "Finalizada"}
-        </span>
 
         {/* Botón para alternar modo debug */}
         {battleState === "active" && !isTeamPreview && (
@@ -215,13 +186,6 @@ const Combat = () => {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Vista previa de equipos */}
-      {isTeamPreview && (
-        <div className="team-preview-area">
-          <p>Selecciona el orden de tu equipo para comenzar la batalla.</p>
         </div>
       )}
 

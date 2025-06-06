@@ -47,8 +47,8 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
   return (
     <div className="team-preview-container">
       <div className="team-preview-header">
-        <h2>🔍 Vista Previa de Equipos</h2>
-        <p>Selecciona qué Pokémon quieres que salga primero al campo de batalla.</p>
+        <h2>Team Preview</h2>
+        <h5>Select which Pokémon you want to go out onto the battlefield first</h5>
       </div>
 
       <div className="teams-preview-grid">
@@ -75,7 +75,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
                       alt={pokemonName}
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = "https://via.placeholder.com/96x96?text=?";
+                        e.target.src = "";
                       }}
                     />
                     {pokemon.item && (
@@ -133,30 +133,14 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
       </div>
 
       <div className="team-preview-controls">
-        <div className="leader-display">
-          <h4>Pokémon Líder Seleccionado:</h4>
-          {playerTeam[selectedLeader - 1] && (
-            <div className="selected-leader-info">
-              <span className="leader-name">{playerTeam[selectedLeader - 1].details?.split(",")[0] || "Pokémon"}</span>
-              <span className="leader-position">#{selectedLeader}</span>
-            </div>
-          )}
-        </div>
+        <div className="leader-display"></div>
 
         <div className="control-buttons">
           <button onClick={handleConfirmTeam} disabled={isProcessingCommand} className="confirm-button">
             {isProcessingCommand
               ? "Confirmando..."
-              : `✅ Confirmar - ${playerTeam[selectedLeader - 1]?.details?.split(",")[0] || "Pokémon"} como Líder`}
+              : `Go ${playerTeam[selectedLeader - 1]?.details?.split(",")[0] || "Pokémon"}!`}
           </button>
-        </div>
-
-        <div className="team-preview-tips">
-          <p>
-            💡 <strong>Consejo:</strong> Haz clic en el Pokémon que quieras que salga primero.
-          </p>
-          <p>🎯 El resto de tu equipo mantendrá su orden original.</p>
-          <p>⚡ Elige estratégicamente según el equipo rival que puedes ver.</p>
         </div>
       </div>
     </div>
