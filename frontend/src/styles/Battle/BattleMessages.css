@@ -3,13 +3,9 @@
 .battle-messages {
   display: flex;
   flex-direction: column;
-  height: 400px;
-  border: 2px solid #ddd;
-  border-radius: 12px;
-  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  height: 500px;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 
 .messages-header {

@@ -10,6 +10,7 @@ import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
+import { TeamPreview } from "../Battle/TeamPreview";
 import "../../styles/Battle/Combat.css";
 import "../../styles/Battle/BattleField.css";
 import "../../styles/Battle/BattleMessages.css";
@@ -128,6 +129,47 @@ const Combat = () => {
     );
   }
 
+  // Render Team Preview as a separate full-screen component
+  if (battleState === "active" && isTeamPreview) {
+    return (
+      <div className="combat-container">
+        <h1>Battle Simulator</h1>
+
+        <div className="battle-status">
+          <div className="battle-info">
+            {battleConfig && (
+              <>
+                <span className={`battle-format difficulty-${battleConfig.difficulty?.toLowerCase() || "unknown"}`}>
+                  {battleConfig.difficulty
+                    ? battleConfig.difficulty.charAt(0).toUpperCase() + battleConfig.difficulty.slice(1)
+                    : "Desconocida"}{" "}
+                  mode
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <StatusMessages
+          error={error}
+          playerForceSwitch={playerForceSwitch}
+          cpuForceSwitch={cpuForceSwitch}
+          isProcessingCommand={isProcessingCommand}
+        />
+
+        {/* Team Preview as independent component */}
+        <div className="team-preview-wrapper">
+          <TeamPreview
+            requestData={requestData}
+            teamPreviewPokemon={teamPreviewPokemon}
+            onSendCommand={sendCommand}
+            isProcessingCommand={isProcessingCommand}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Resto del componente para cuando la batalla está activa o completada
   return (
     <div className="combat-container">
@@ -148,7 +190,7 @@ const Combat = () => {
         </div>
 
         {/* Botón para alternar modo debug */}
-        {battleState === "active" && !isTeamPreview && (
+        {/* {battleState === "active" && !isTeamPreview && (
           <div className="view-mode-selector">
             <button className={`view-button ${!showDebugMode ? "active" : ""}`} onClick={() => setShowDebugMode(false)}>
               🏟️ Vista Normal
@@ -157,7 +199,7 @@ const Combat = () => {
               🔧 Vista Debug
             </button>
           </div>
-        )}
+        )} */}
       </div>
 
       <StatusMessages
@@ -168,7 +210,7 @@ const Combat = () => {
       />
 
       {/* Contenido principal: Campo de batalla y mensajes lado a lado */}
-      {battleState === "active" && !isTeamPreview && (
+      {battleState === "active" && (
         <div className="battle-main-content">
           {showDebugMode ? (
             // Vista Debug: Solo logs
@@ -184,38 +226,36 @@ const Combat = () => {
               <div className="battle-messages-container">
                 <BattleMessages logs={battleLogs} isTeamPreview={isTeamPreview} />
               </div>
+              {battleState === "active" && (
+                <div className="battle-controls">
+                  <BattleControls
+                    requestData={requestData}
+                    playerForceSwitch={playerForceSwitch}
+                    cpuForceSwitch={cpuForceSwitch}
+                    isProcessingCommand={isProcessingCommand}
+                    onSendCommand={sendCommand}
+                    isTeamPreview={isTeamPreview}
+                  />
+
+                  {/* Controles de la CPU para testing - solo si no estamos en team preview */}
+                  {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
+
+                  {/* Input de comando personalizado - solo si no estamos en team preview */}
+                  {/* {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />} */}
+
+                  {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
+                  {!isTeamPreview && showDebugMode && (
+                    <DebugPanel
+                      requestData={requestData}
+                      battleLogs={battleLogs}
+                      playerForceSwitch={playerForceSwitch}
+                      cpuForceSwitch={cpuForceSwitch}
+                      isProcessingCommand={isProcessingCommand}
+                    />
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-      {battleState === "active" && (
-        <div className="battle-controls">
-          <BattleControls
-            requestData={requestData}
-            playerForceSwitch={playerForceSwitch}
-            cpuForceSwitch={cpuForceSwitch}
-            isProcessingCommand={isProcessingCommand}
-            onSendCommand={sendCommand}
-            isTeamPreview={isTeamPreview}
-            teamPreviewPokemon={teamPreviewPokemon}
-          />
-
-          {/* Controles de la CPU para testing - solo si no estamos en team preview */}
-          {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
-
-          {/* Input de comando personalizado - solo si no estamos en team preview */}
-          {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />}
-
-          {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
-          {!isTeamPreview && showDebugMode && (
-            <DebugPanel
-              requestData={requestData}
-              battleLogs={battleLogs}
-              playerForceSwitch={playerForceSwitch}
-              cpuForceSwitch={cpuForceSwitch}
-              isProcessingCommand={isProcessingCommand}
-            />
           )}
         </div>
       )}

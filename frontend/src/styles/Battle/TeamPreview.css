@@ -1,7 +1,6 @@
 .player-section,
 .opponent-section {
   padding: 0;
-  padding-top: var(--spacing-md);
 }
 
 .team-preview-section {
@@ -26,10 +25,6 @@
 
 .team-preview-section .pokemon-grid {
   padding: var(--spacing-md);
-}
-
-.battle-controls {
-  height: 100%;
 }
 
 .team-preview-container {

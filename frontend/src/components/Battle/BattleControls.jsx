@@ -2,7 +2,6 @@
 import React from "react";
 import { MoveButton } from "./MoveButton";
 import { SwitchButton } from "./SwitchButton";
-import { TeamPreview } from "./TeamPreview";
 
 export function BattleControls({
   requestData,
@@ -11,18 +10,10 @@ export function BattleControls({
   isProcessingCommand,
   onSendCommand,
   isTeamPreview,
-  teamPreviewPokemon,
 }) {
-  // Si estamos en team preview, mostrar el componente de team preview
+  // Si estamos en team preview, no mostrar controles normales
   if (isTeamPreview || requestData?.teamPreview) {
-    return (
-      <TeamPreview
-        requestData={requestData}
-        teamPreviewPokemon={teamPreviewPokemon}
-        onSendCommand={onSendCommand}
-        isProcessingCommand={isProcessingCommand}
-      />
-    );
+    return null;
   }
 
   // Verificar si los controles deben estar deshabilitados
@@ -30,22 +21,11 @@ export function BattleControls({
 
   return (
     <div className="player-section">
-      <h3>Controles del Jugador</h3>
-
-      {/* Mostrar mensaje sobre qué acción se requiere */}
-      <div className="action-required">
-        {playerForceSwitch
-          ? "Debes elegir un nuevo Pokémon"
-          : cpuForceSwitch
-          ? "Debes realizar la acción para la CPU"
-          : "Elige tu próxima acción"}
-      </div>
-
       {/* Botones de movimientos solo si no estamos forzados a cambiar */}
       {!playerForceSwitch && requestData?.active?.[0]?.moves && (
         <>
-          <h4>Movimientos</h4>
-          <div className="control-row">
+          <h4>Moves</h4>
+          <div className="control-row moves-setup-row">
             {requestData.active[0].moves.map((move, index) => (
               <MoveButton
                 key={index}
@@ -62,7 +42,7 @@ export function BattleControls({
 
       {/* Botones de cambio siempre visibles, pero inhabilitados según el estado */}
       <h4>Cambiar Pokémon</h4>
-      <div className="control-row">
+      <div className="control-row switch-setup-row">
         {requestData?.side?.pokemon?.map((pokemon, index) => (
           <SwitchButton
             key={index}
