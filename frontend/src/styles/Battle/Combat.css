@@ -191,10 +191,21 @@
 }
 
 .control-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-block: var(--spacing-xs) var(--spacing-md);
+}
+
+.moves-setup-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: var(--spacing-md);
+}
+
+.switch-setup-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+
+  gap: var(--spacing-sm);
 }
 
 .control-row button {
