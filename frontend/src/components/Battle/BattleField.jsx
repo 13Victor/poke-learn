@@ -57,20 +57,28 @@ export function BattleField({ logs, requestData, isLoading }) {
             break;
           }
 
+          // Buscar línea de heal para CPU
+          const healMatch = log.match(/\|-heal\|p2a: ([^|]+)\|([^|]+)/);
+          if (healMatch) {
+            if (!cpuName) cpuName = healMatch[1];
+            cpuCondition = healMatch[2];
+            // Continue searching for the name if we don't have it yet
+            if (cpuName && cpuCondition) break;
+          }
+
           // Buscar línea de daño para CPU
-          const damageMatch = log.match(/\|damage\|p2a: ([^|]+)\|([^|]+)/);
+          const damageMatch = log.match(/\|-damage\|p2a: ([^|]+)\|([^|]+)/);
           if (damageMatch) {
             if (!cpuName) cpuName = damageMatch[1];
             cpuCondition = damageMatch[2];
-            if (cpuName) break; // Si ya tenemos el nombre, podemos salir
+            // Continue searching for the name if we don't have it yet
+            if (cpuName && cpuCondition) break;
           }
 
-          // Buscar línea de hp para CPU
-          const hpMatch = log.match(/\|-damage\|p2a: ([^|]+)\|([^|]+)/);
-          if (hpMatch) {
-            if (!cpuName) cpuName = hpMatch[1];
-            cpuCondition = hpMatch[2];
-            if (cpuName) break; // Si ya tenemos el nombre, podemos salir
+          // Buscar cualquier línea que mencione p2a para obtener el nombre del Pokémon
+          const p2aMatch = log.match(/p2a: ([^|,\s]+)/);
+          if (p2aMatch && !cpuName) {
+            cpuName = p2aMatch[1];
           }
         }
       }
@@ -92,7 +100,7 @@ export function BattleField({ logs, requestData, isLoading }) {
           name: cpuName,
           currentHP,
           maxHP,
-          hpPercentage: (currentHP / maxHP) * 100,
+          hpPercentage: maxHP > 0 ? (currentHP / maxHP) * 100 : 0,
           status: cpuCondition && cpuCondition.includes("fnt") ? "fnt" : null,
         });
       }

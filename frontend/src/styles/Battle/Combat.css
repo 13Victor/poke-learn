@@ -209,15 +209,13 @@
 }
 
 .control-row button {
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   background-color: #4caf50;
   color: white;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
   flex-grow: 1;
-  min-width: 100px;
-  transition: all 0.3s ease;
+  transition: var(--transition-fast);
 }
 
 .cpu-controls .control-row button {
@@ -230,13 +228,11 @@
 
 .control-row button:hover:not(.disabled) {
   background-color: #45a049;
-  transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .control-row button.disabled {
-  background-color: #e0e0e0;
-  color: #9e9e9e;
+  opacity: 0.7 !important;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;

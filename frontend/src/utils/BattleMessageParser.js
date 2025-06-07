@@ -418,8 +418,15 @@ export class BattleMessageParser {
     const teamName = this.getTeamName(side);
     const effectName = this.getEffectName(effect);
 
-    if (!this.sideConditions[side].includes(effectName)) {
-      this.sideConditions[side].push(effectName);
+    // Extract the actual side (p1 or p2) from the full side identifier
+    const actualSide = side.startsWith("p1") ? "p1" : "p2";
+
+    if (!this.sideConditions[actualSide]) {
+      this.sideConditions[actualSide] = [];
+    }
+
+    if (!this.sideConditions[actualSide].includes(effectName)) {
+      this.sideConditions[actualSide].push(effectName);
     }
 
     return `🛡️ **${effectName}** is now protecting **${teamName}**'s side`;

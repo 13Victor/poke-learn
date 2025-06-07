@@ -60,8 +60,6 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
         backgroundColor: moveType ? `var(--type-${moveTypeLower})` : `var(--white-smoke)`,
         textTransform: moveType ? "uppercase" : "none",
         fontWeight: moveType ? "600" : "400",
-        color: isDisabled ? "var(--danger)" : moveType ? "var(--white)" : "var(--black)",
-        opacity: loading ? 0.7 : 1,
       }}
       title={
         isProcessing
