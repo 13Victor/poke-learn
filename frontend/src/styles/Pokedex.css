@@ -228,7 +228,6 @@ main {
 
 .pokemon-info {
   display: flex;
-  margin-top: var(--spacing-xs);
   flex-direction: column;
   gap: var(--spacing-xs);
   align-items: center;

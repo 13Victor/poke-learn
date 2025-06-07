@@ -13,14 +13,18 @@
 .battle-split-view {
   display: grid;
   grid-template-columns: 750px 500px;
-  grid-template-rows: 400px auto;
+  grid-template-rows: 400px 220px;
   grid-column-gap: var(--spacing-xl);
   grid-row-gap: var(--spacing-md);
   height: 100%;
 }
-.battle-main-content {
+
+.hp-info {
   display: flex;
-  height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  width: 100%;
 }
 
 .battle-messages-container {
@@ -28,6 +32,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 100%;
   justify-content: start;
 }
 
@@ -173,6 +178,7 @@
   flex-direction: column;
   grid-area: 2 / 1 / 3 / 2;
   height: 100%;
+  justify-content: end;
 }
 
 .cpu-controls {
@@ -190,7 +196,7 @@
 }
 
 .control-row {
-  margin-block: var(--spacing-xs) var(--spacing-md);
+  margin-block: var(--spacing-xs) 0;
 }
 
 .moves-setup-row {
@@ -208,7 +214,7 @@
   display: grid;
   color: var(--text) !important;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: var(--spacing-sm);
 }
 
@@ -365,6 +371,11 @@
 
 .switch-button {
   border-radius: var(--radius-md);
+}
+
+.switch-button.disabled {
+  filter: grayscale(100%);
+  opacity: 0.75;
 }
 
 .hp-bar-container {

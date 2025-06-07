@@ -110,7 +110,8 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     battle.logs = [];
     battle.turnCount = 0;
     battle.pendingCommands = [];
-    battle.teamPreviewPhase = true; // Add team preview phase fla
+    battle.teamPreviewPhase = true; // Add team preview phase flag
+    battle.waitingForCPUAction = false; // Flag to track if we're waiting for CPU action
 
     // Manejar la salida del stream
     const streamHandler = async () => {
@@ -131,6 +132,20 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
             battle.turnCount = parseInt(turnMatch[1], 10);
             console.log(`Turno ${battle.turnCount} detectado`);
           }
+        }
+
+        // NUEVO: Detectar automáticamente cuando la CPU necesita hacer algo
+        if (chunk.includes("sideupdate") && chunk.includes("p2") && chunk.includes("|request|")) {
+          console.log("🤖 Detectado request para la CPU, procesando automáticamente...");
+
+          // Procesar automáticamente la acción de la CPU después de un breve delay
+          setTimeout(async () => {
+            try {
+              await handleAutomaticCPUAction(battle);
+            } catch (error) {
+              console.error("Error en acción automática de CPU:", error);
+            }
+          }, 1500); // Delay para asegurar que el log se procese completamente
         }
 
         // Si la batalla ha terminado, actualizamos el estado
@@ -181,6 +196,107 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
     res.status(500).json(formatResponse(false, "Error al inicializar batalla: " + error.message));
   }
 });
+
+/**
+ * NUEVA FUNCIÓN: Manejar automáticamente las acciones de la CPU
+ */
+async function handleAutomaticCPUAction(battle) {
+  if (!battle.stream || battle.state !== "active" || battle.waitingForCPUAction) {
+    return; // Evitar múltiples ejecuciones simultáneas
+  }
+
+  battle.waitingForCPUAction = true;
+
+  try {
+    console.log("🤖 Procesando acción automática de la CPU...");
+
+    // Obtener los datos de request más recientes para la CPU
+    const cpuRequestData = parseLatestRequestData(battle.logs, "p2");
+
+    if (!cpuRequestData) {
+      console.log("⚠️ No se encontraron datos de request para la CPU");
+      battle.waitingForCPUAction = false;
+      return;
+    }
+
+    console.log("📋 Datos de request de CPU:", JSON.stringify(cpuRequestData, null, 2));
+
+    let cpuCommand = null;
+
+    // Verificar si la CPU necesita cambiar de Pokémon (forzado)
+    if (cpuRequestData.forceSwitch && cpuRequestData.forceSwitch[0]) {
+      console.log("🔄 CPU forzada a cambiar de Pokémon");
+
+      const availablePokemon = cpuRequestData.side?.pokemon || [];
+      console.log(
+        "🎯 Pokémon disponibles para CPU:",
+        availablePokemon.map((p) => `${p.details} (${p.condition})`)
+      );
+
+      // Encontrar un Pokémon viable para cambiar
+      const viablePokemon = availablePokemon.filter(
+        (pokemon, index) => !pokemon.condition.includes("fnt") && !pokemon.active
+      );
+
+      console.log(
+        "✅ Pokémon viables para cambio:",
+        viablePokemon.map((p) => p.details)
+      );
+
+      if (viablePokemon.length > 0) {
+        // Seleccionar aleatoriamente uno de los Pokémon viables
+        const randomIndex = Math.floor(Math.random() * viablePokemon.length);
+        const selectedPokemon = viablePokemon[randomIndex];
+
+        // Encontrar el índice original del Pokémon seleccionado (1-based)
+        const originalIndex = availablePokemon.findIndex((pokemon) => pokemon.details === selectedPokemon.details) + 1;
+
+        cpuCommand = `>p2 switch ${originalIndex}`;
+        console.log(`🎲 CPU cambiando a slot ${originalIndex}: ${selectedPokemon.details.split(",")[0]}`);
+      } else {
+        console.log("❌ No hay Pokémon viables para cambiar, usando slot 2 por defecto");
+        cpuCommand = ">p2 switch 2";
+      }
+    }
+    // Verificar si la CPU puede atacar
+    else if (cpuRequestData.active && cpuRequestData.active[0] && cpuRequestData.active[0].moves) {
+      console.log("⚔️ CPU puede atacar");
+
+      const allMoves = cpuRequestData.active[0].moves;
+      const enabledMoves = allMoves.filter((move) => !move.disabled);
+
+      if (enabledMoves.length > 0) {
+        const moveSlot = getAIMove(battle, allMoves);
+        cpuCommand = `>p2 move ${moveSlot}`;
+        console.log(`🎯 CPU atacando con movimiento slot ${moveSlot}`);
+      } else {
+        console.log("⚠️ No hay movimientos habilitados, CPU usará primer slot");
+        cpuCommand = ">p2 move 1";
+      }
+    }
+    // Team preview
+    else if (battle.teamPreviewPhase) {
+      console.log("🔍 CPU en team preview, enviando orden de equipo");
+      cpuCommand = ">p2 team 123456";
+    }
+
+    // Ejecutar el comando si tenemos uno
+    if (cpuCommand) {
+      console.log(`🚀 Ejecutando comando automático de CPU: ${cpuCommand}`);
+
+      battle.pendingCommands.push(cpuCommand);
+      await battle.stream.write(cpuCommand);
+
+      console.log("✅ Comando automático de CPU ejecutado exitosamente");
+    } else {
+      console.log("⚠️ No se pudo determinar qué acción debe tomar la CPU");
+    }
+  } catch (error) {
+    console.error("❌ Error en acción automática de CPU:", error);
+  } finally {
+    battle.waitingForCPUAction = false;
+  }
+}
 
 /**
  * Helper function to get a random AI move based on difficulty
@@ -410,14 +526,10 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
 
       // Handle team preview phase differently
       if (battle.teamPreviewPhase && command.includes("p1 team")) {
-        console.log("🎯 Team preview command from player, sending CPU team command");
+        console.log("🎯 Team preview command from player, CPU command will be handled automatically");
 
-        // Automatically send CPU team command
-        const cpuTeamCommand = ">p2 team 123456";
-        battle.pendingCommands.push(cpuTeamCommand);
-
-        await battle.stream.write(cpuTeamCommand);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Wait for automatic CPU response
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Get all logs after both commands
         const allNewLogs = battle.logs.slice(preCommandLogLength);
@@ -431,7 +543,7 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
             turnCount: battle.turnCount,
             teamPreviewPhase: battle.teamPreviewPhase,
             debug: {
-              commandsExecuted: [command, cpuTeamCommand],
+              commandExecuted: command,
               initialLogCount: preCommandLogLength,
               newLogCount: allNewLogs.length,
             },
@@ -439,64 +551,30 @@ router.post("/command/:battleId", verifyToken, async (req, res) => {
         );
       }
 
-      // NUEVO SISTEMA DE IA: Solo ejecutar IA después de comandos del jugador
+      // Para comandos del jugador durante la batalla, simplemente ejecutar y esperar
+      // La CPU responderá automáticamente a través del stream handler
       if (command.includes("p1") && !battle.teamPreviewPhase) {
-        console.log("🤖 Comando del jugador detectado, preparando respuesta de la IA");
+        console.log("🎯 Comando del jugador detectado, CPU responderá automáticamente");
 
-        // Esperar un poco más para asegurar que todos los logs se procesen
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Esperar tiempo adicional para que la CPU responda automáticamente
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        // Determinar la acción de la IA basada en el estado actual
-        const aiAction = getAIAction(battle);
-
-        let cpuCommand;
-        if (aiAction.type === "move") {
-          cpuCommand = `>p2 move ${aiAction.value}`;
-        } else if (aiAction.type === "switch") {
-          cpuCommand = `>p2 switch ${aiAction.value}`;
-        } else {
-          // Fallback
-          cpuCommand = ">p2 move 1";
-        }
-
-        console.log(`🎯 IA decidió: ${cpuCommand}`);
-
-        // Almacenar este comando también
-        battle.pendingCommands.push(cpuCommand);
-
-        // Ejecutar comando de la IA
-        await battle.stream.write(cpuCommand);
-
-        // Esperar que se procese
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Obtener todos los logs nuevos después de ambos comandos
+        // Obtener todos los logs después del comando del jugador
         const allNewLogs = battle.logs.slice(preCommandLogLength);
-        console.log(`Logs después de comandos del jugador y CPU: ${allNewLogs.length}`, allNewLogs);
-
-        // Si aún no hay logs, agregamos un mensaje informativo
-        if (allNewLogs.length === 0) {
-          battle.logs.push("Comandos ejecutados, esperando respuesta del simulador.");
-          allNewLogs.push("Comandos ejecutados, esperando respuesta del simulador.");
-        }
+        console.log(`Logs después del comando del jugador: ${allNewLogs.length}`, allNewLogs);
 
         return res.json(
-          formatResponse(true, "Comando ejecutado con respuesta de IA", {
+          formatResponse(true, "Comando ejecutado con respuesta automática de CPU", {
             battleId,
             logs: allNewLogs,
             state: battle.state,
             turnCount: battle.turnCount,
             teamPreviewPhase: battle.teamPreviewPhase,
             debug: {
-              commandsExecuted: [command, cpuCommand],
+              commandExecuted: command,
               initialLogCount: preCommandLogLength,
               newLogCount: allNewLogs.length,
-              aiDecision: {
-                type: aiAction.type,
-                value: aiAction.value,
-                difficulty: battle.difficulty,
-                commandUsed: cpuCommand,
-              },
+              automatic: true,
             },
           })
         );

@@ -144,18 +144,20 @@ export function BattleField({ logs, requestData, isLoading }) {
           <div className="cpu-pokemon">
             <div className="pokemon-info">
               <div className="pokemon-name">{cpuPokemon.name}</div>
-              <div className="hp-bar">
-                <div
-                  className="hp-fill"
-                  style={{
-                    width: `${cpuPokemon.hpPercentage}%`,
-                    backgroundColor: getHPColor(cpuPokemon.hpPercentage),
-                  }}
-                ></div>
-              </div>
-              <div className="hp-text">
-                HP: {cpuPokemon.currentHP}/{cpuPokemon.maxHP}
-                {cpuPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+              <div className="hp-info">
+                <div className="hp-bar">
+                  <div
+                    className="hp-fill"
+                    style={{
+                      width: `${cpuPokemon.hpPercentage}%`,
+                      backgroundColor: getHPColor(cpuPokemon.hpPercentage),
+                    }}
+                  ></div>
+                </div>
+                <div className="hp-text">
+                  {cpuPokemon.currentHP}/{cpuPokemon.maxHP}
+                  {cpuPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+                </div>
               </div>
             </div>
             <div className="pokemon-sprite">
@@ -186,18 +188,20 @@ export function BattleField({ logs, requestData, isLoading }) {
             </div>
             <div className="pokemon-info">
               <div className="pokemon-name">{playerPokemon.name}</div>
-              <div className="hp-bar">
-                <div
-                  className="hp-fill"
-                  style={{
-                    width: `${playerPokemon.hpPercentage}%`,
-                    backgroundColor: getHPColor(playerPokemon.hpPercentage),
-                  }}
-                ></div>
-              </div>
-              <div className="hp-text">
-                HP: {playerPokemon.currentHP}/{playerPokemon.maxHP}
-                {playerPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+              <div className="hp-info">
+                <div className="hp-bar">
+                  <div
+                    className="hp-fill"
+                    style={{
+                      width: `${playerPokemon.hpPercentage}%`,
+                      backgroundColor: getHPColor(playerPokemon.hpPercentage),
+                    }}
+                  ></div>
+                </div>
+                <div className="hp-text">
+                  {playerPokemon.currentHP}/{playerPokemon.maxHP}
+                  {playerPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+                </div>
               </div>
             </div>
           </div>

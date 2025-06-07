@@ -3,6 +3,10 @@
   padding: 0;
 }
 
+.player-section h4 {
+  margin-top: var(--spacing-md);
+}
+
 .team-preview-section {
   display: flex;
   flex-direction: column;

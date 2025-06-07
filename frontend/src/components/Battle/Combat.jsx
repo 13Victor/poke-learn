@@ -6,7 +6,6 @@ import { BattleField } from "./BattleField";
 import { StatusMessages } from "../Battle/StatusMessages";
 import { BattleControls } from "../Battle/BattleControls";
 import { BattleMessages } from "../Battle/BattleMessages";
-import { CPUControls } from "../Battle/CPUControls";
 import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
@@ -182,18 +181,6 @@ const Combat = () => {
             </>
           )}
         </div>
-
-        {/* Botón para alternar modo debug */}
-        {/* {battleState === "active" && !isTeamPreview && (
-          <div className="view-mode-selector">
-            <button className={`view-button ${!showDebugMode ? "active" : ""}`} onClick={() => setShowDebugMode(false)}>
-              🏟️ Vista Normal
-            </button>
-            <button className={`view-button ${showDebugMode ? "active" : ""}`} onClick={() => setShowDebugMode(true)}>
-              🔧 Vista Debug
-            </button>
-          </div>
-        )} */}
       </div>
 
       {/* Contenido principal: Campo de batalla y mensajes lado a lado */}
@@ -223,11 +210,6 @@ const Combat = () => {
                     onSendCommand={sendCommand}
                     isTeamPreview={isTeamPreview}
                   />
-
-                  {/* Controles de la CPU para testing - solo si no estamos en team preview */}
-                  {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
-
-                  {/* {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />} */}
 
                   {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
                   {!isTeamPreview && showDebugMode && (
