@@ -485,6 +485,8 @@ button {
   bottom: auto;
   left: var(--spacing-xs);
   transform: none;
+  transform: translateY(-50%);
+  top: 50%;
   transition: all var(--transition-fast) !important;
 }
 

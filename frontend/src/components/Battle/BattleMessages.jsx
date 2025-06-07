@@ -1,6 +1,9 @@
 // src/components/Battle/BattleMessages.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { BattleMessageParser } from "../../utils/BattleMessageParser";
+import { TiPinOutline } from "react-icons/ti";
+import { IoChevronDownOutline } from "react-icons/io5";
+import { TiPin } from "react-icons/ti";
 
 export function BattleMessages({ logs, isTeamPreview }) {
   const messagesEndRef = useRef(null);
@@ -93,31 +96,18 @@ export function BattleMessages({ logs, isTeamPreview }) {
     <div className="battle-messages">
       <div className="messages-header">
         <div className="messages-title">
-          <h4>📜 Battle Log</h4>
-          <div className="messages-stats">
-            Turn {currentTurn} • {filteredMessages.length} events
-          </div>
+          <h4>Battle Log</h4>
+          <div className="messages-stats">Turn {currentTurn}</div>
         </div>
 
         <div className="messages-controls">
-          <div className="filter-controls">
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
-              <option value="all">All Events</option>
-              <option value="important">Important</option>
-              <option value="moves">Moves & Damage</option>
-              <option value="switches">Switches & Faints</option>
-              <option value="status">Status Effects</option>
-              <option value="field">Field Effects</option>
-            </select>
-          </div>
-
           <div className="scroll-controls">
             <button
               onClick={() => setAutoScroll(!autoScroll)}
               className={`auto-scroll-btn ${autoScroll ? "active" : ""}`}
               title={autoScroll ? "Auto-scroll enabled" : "Auto-scroll disabled"}
             >
-              {autoScroll ? "📌" : "📍"}
+              {autoScroll ? <TiPin /> : <TiPinOutline />}
             </button>
 
             <button
@@ -130,7 +120,7 @@ export function BattleMessages({ logs, isTeamPreview }) {
               className="scroll-to-bottom-btn"
               title="Scroll to bottom"
             >
-              ⬇️
+              <IoChevronDownOutline />
             </button>
           </div>
         </div>
@@ -156,12 +146,10 @@ export function BattleMessages({ logs, isTeamPreview }) {
 
             return (
               <div key={index} className={`message ${className}`}>
-                <div className="message-icon"></div>
                 <div className="message-content">
                   <div className="message-text" dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
                   {messageType === "turn-start" && <div className="turn-separator"></div>}
                 </div>
-                <div className="message-time">{index < 10 ? `0${index}` : index}</div>
               </div>
             );
           })

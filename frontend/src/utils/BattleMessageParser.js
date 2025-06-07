@@ -305,7 +305,7 @@ export class BattleMessageParser {
     }
 
     const conditionText = conditions.length > 0 ? `\n${conditions.join(" | ")}` : "";
-    return `\n🎯 **=== TURN ${turnNum} ===${conditionText}**\n`;
+    return `\n🎯 **TURN ${turnNum}${conditionText}**\n`;
   }
 
   parseMove(args, kwArgs) {

@@ -10,9 +10,13 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
   const [loading, setLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Extract move name from the move object
+  // Extract move data from the move object (from requestData)
   const moveName = move?.move || move?.name || `Move ${index + 1}`;
   const isDisabled = move?.disabled || disabled;
+
+  // Get PP data from move object (from requestData)
+  const currentPP = move?.pp || 0;
+  const maxPP = move?.maxpp || 0;
 
   // Fetch move data when component mounts or move changes
   useEffect(() => {
@@ -83,9 +87,21 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
     );
   };
 
-  // Create tooltip content
+  // Function to get PP status color
+  const getPPStatusColor = () => {
+    if (maxPP === 0) return "#9E9E9E"; // Gray for unknown
+    const percentage = (currentPP / maxPP) * 100;
+    if (percentage > 50) return "#4CAF50"; // Green
+    if (percentage > 25) return "#FF9800"; // Orange
+    if (percentage > 0) return "#F44336"; // Red
+    return "#9E9E9E"; // Gray for 0 PP
+  };
+
+  // Create tooltip content with real PP data
   const renderTooltip = () => {
     if (!moveData || loading) return null;
+
+    const ppStatusColor = getPPStatusColor();
 
     return (
       <div className="move-tooltip">
@@ -106,12 +122,14 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
           </div>
 
           <div className="move-stat type">
-            <img className={`move-tooltip-type`} src={`/assets/type-icons/${moveType}_banner.png`} alt="" srcset="" />
+            <img className={`move-tooltip-type`} src={`/assets/type-icons/${moveType}_banner.png`} alt="" />
           </div>
 
           <div className="move-stat">
             <span className="stat-label">PP:</span>
-            <span className="stat-value">{moveData.pp || "—"}</span>
+            <span className="stat-value" style={{ color: ppStatusColor }}>
+              {currentPP}/{maxPP}
+            </span>
           </div>
 
           <div className="move-stat">
@@ -125,6 +143,10 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
     );
   };
 
+  // Determine button states based on PP
+  const isLowPP = currentPP > 0 && maxPP > 0 && currentPP <= maxPP * 0.25; // 25% or less
+  const isOutOfPP = currentPP === 0 && maxPP > 0;
+
   return (
     <div
       className="move-button-container"
@@ -133,8 +155,8 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
     >
       <button
         onClick={() => onExecute(`>p1 move ${index + 1}`)}
-        disabled={isDisabled}
-        className={`moveInput ${isDisabled ? "disabled" : ""}`}
+        disabled={isDisabled || isOutOfPP}
+        className={`moveInput ${isDisabled ? "disabled" : ""} ${isLowPP ? "low-pp" : ""} ${isOutOfPP ? "no-pp" : ""}`}
         style={{
           backgroundColor: moveType ? `var(--type-${moveTypeLower})` : `var(--white-smoke)`,
           textTransform: moveType ? "uppercase" : "none",
@@ -142,26 +164,42 @@ export function MoveButton({ move, index, disabled, isProcessing, onExecute }) {
         }}
         title={
           isProcessing
-            ? "Procesando comando anterior..."
+            ? "Waiting CPU..."
             : disabled
-            ? "Debes esperar a que la CPU cambie de Pokémon"
+            ? "Waiting CPU..."
             : isDisabled
-            ? "Movimiento deshabilitado"
-            : "" // Remove basic title since we have detailed tooltip
+            ? "Disabled move"
+            : isOutOfPP
+            ? "No PP left"
+            : "" // Custom tooltip will handle the detailed info
         }
       >
-        {moveType && !loading && (
-          <img
-            src={`/assets/type-icons/${moveType}_icon.png`}
-            alt={`${moveType} type`}
-            className="move-type-icon-small"
-            onError={(e) => {
-              // Hide image if type icon doesn't exist
-              e.target.style.display = "none";
-            }}
-          />
-        )}
-        <p>{loading ? "..." : moveName}</p>
+        <div className="move-content">
+          {moveType && !loading && (
+            <img
+              src={`/assets/type-icons/${moveType}_icon.png`}
+              alt={`${moveType} type`}
+              className="move-type-icon-small"
+              onError={(e) => {
+                // Hide image if type icon doesn't exist
+                e.target.style.display = "none";
+              }}
+            />
+          )}
+          <p>{loading ? "..." : moveName}</p>
+
+          {/* PP Indicator */}
+          {maxPP > 0 && (
+            <div className="pp-indicator">
+              <span className={`pp-text ${isLowPP ? "low" : ""} ${isOutOfPP ? "empty" : ""}`}>
+                {currentPP}/{maxPP}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* No PP Overlay */}
+        {isOutOfPP && <div className="no-pp-overlay">NO PP</div>}
       </button>
 
       {/* Tooltip */}

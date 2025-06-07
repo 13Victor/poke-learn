@@ -100,7 +100,8 @@ const Combat = () => {
       <div className="combat-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Iniciando batalla...</p>
+          <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
+          <p>Building battle...</p>
           <button onClick={goBackToSetup} className="back-button">
             Volver a Configuración
           </button>
@@ -114,11 +115,11 @@ const Combat = () => {
     return (
       <div className="combat-container">
         <div className="error-container">
-          <h2>Error al Iniciar Batalla</h2>
-          <p>No se pudo iniciar la batalla. Es posible que falte la configuración.</p>
+          <h2>Error when building the battle</h2>
+          <p>The battle could not be started. It is possible that the configuration is missing.</p>
           <div className="error-actions">
             <button onClick={goBackToSetup} className="back-button">
-              Volver a Configuración
+              Return
             </button>
             <button onClick={() => window.location.reload()} className="retry-button">
               Reintentar
@@ -149,13 +150,6 @@ const Combat = () => {
             )}
           </div>
         </div>
-
-        <StatusMessages
-          error={error}
-          playerForceSwitch={playerForceSwitch}
-          cpuForceSwitch={cpuForceSwitch}
-          isProcessingCommand={isProcessingCommand}
-        />
 
         {/* Team Preview as independent component */}
         <div className="team-preview-wrapper">
@@ -202,13 +196,6 @@ const Combat = () => {
         )} */}
       </div>
 
-      <StatusMessages
-        error={error}
-        playerForceSwitch={playerForceSwitch}
-        cpuForceSwitch={cpuForceSwitch}
-        isProcessingCommand={isProcessingCommand}
-      />
-
       {/* Contenido principal: Campo de batalla y mensajes lado a lado */}
       {battleState === "active" && (
         <div className="battle-main-content">
@@ -240,7 +227,6 @@ const Combat = () => {
                   {/* Controles de la CPU para testing - solo si no estamos en team preview */}
                   {cpuForceSwitch && !isTeamPreview && <CPUControls onSendCommand={sendCommand} />}
 
-                  {/* Input de comando personalizado - solo si no estamos en team preview */}
                   {/* {!isTeamPreview && <CustomCommandInput onSendCommand={sendCommand} disabled={isProcessingCommand} />} */}
 
                   {/* Panel de debug - solo si no estamos en team preview y estamos en modo debug */}
@@ -275,8 +261,8 @@ const Combat = () => {
           </div>
 
           <div className="battle-complete-actions">
-            <button onClick={goBackToSetup}>Configurar Nueva Batalla</button>
-            <button onClick={() => handleStartBattle(battleConfig)}>Repetir con Misma Configuración</button>
+            <button onClick={goBackToSetup}>Go Back</button>
+            <button onClick={() => handleStartBattle(battleConfig)}>Repeat the Battle</button>
           </div>
         </div>
       )}

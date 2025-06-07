@@ -6,6 +6,10 @@
   align-items: center;
   justify-content: center;
 }
+
+.combat-container h1 {
+  margin-bottom: var(--spacing-md);
+}
 .battle-split-view {
   display: grid;
   grid-template-columns: 750px 500px;
@@ -305,33 +309,24 @@
 }
 
 .battle-complete {
-  text-align: center;
-  padding: 20px;
-  background-color: #fff9c4;
-  border-radius: 5px;
-  margin-top: 20px;
+  background-color: #ffd54c79;
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-md);
 }
 
-.battle-complete p {
-  font-size: 18px;
-  margin-bottom: 15px;
+.battle-complete-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
 }
 
-.battle-complete button {
-  padding: 10px 20px;
-  background-color: #4caf50;
+.battle-complete-actions button {
+  background-color: #4578a0;
   color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-.battle-complete button:hover {
-  background-color: #45a049;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-top: var(--spacing-md);
+  border-radius: var(--radius-md);
 }
 
 /* Responsive design */
@@ -434,6 +429,7 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
+  opacity: 1 !important;
   margin-bottom: var(--spacing-md);
   z-index: 1000;
   pointer-events: none;
@@ -564,4 +560,13 @@
 .move-button-container:hover .moveInput:not(.disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pp-text {
+  font-size: 8px;
+  position: absolute;
+  top: 0;
+  font-weight: 400;
+  right: 0;
+  padding-inline: var(--spacing-xs);
 }

@@ -164,7 +164,7 @@ export function BattleField({ logs, requestData, isLoading }) {
                 alt={cpuPokemon.name}
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = "https://via.placeholder.com/120x120?text=?";
+                  e.target.src = "";
                 }}
               />
             </div>
@@ -180,7 +180,7 @@ export function BattleField({ logs, requestData, isLoading }) {
                 alt={playerPokemon.name}
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = "https://via.placeholder.com/120x120?text=?";
+                  e.target.src = "";
                 }}
               />
             </div>
