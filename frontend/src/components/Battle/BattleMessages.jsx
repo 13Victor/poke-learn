@@ -156,7 +156,7 @@ export function BattleMessages({ logs, isTeamPreview }) {
 
             return (
               <div key={index} className={`message ${className}`}>
-                <div className="message-icon">{icon}</div>
+                <div className="message-icon"></div>
                 <div className="message-content">
                   <div className="message-text" dangerouslySetInnerHTML={{ __html: formatMessage(message) }} />
                   {messageType === "turn-start" && <div className="turn-separator"></div>}

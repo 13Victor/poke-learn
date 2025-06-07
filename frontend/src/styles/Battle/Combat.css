@@ -422,3 +422,146 @@
   opacity: 0.75;
   filter: grayscale(100%);
 }
+
+/* Estilos para el contenedor y tooltip de movimientos */
+.move-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.move-tooltip-wrapper {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: var(--spacing-md);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.move-tooltip {
+  background: rgba(255, 255, 255, 1);
+  color: black;
+  padding: var(--spacing-sm);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  max-width: 280px;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Flecha del tooltip */
+.move-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: white;
+}
+
+/* Header del tooltip */
+.move-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--gray);
+}
+
+.move-tooltip-type {
+  height: 18px;
+}
+
+/* Stats del movimiento */
+.move-tooltip-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  justify-content: center;
+  grid-row-gap: var(--spacing-xs);
+  grid-column-gap: var(--spacing-xl);
+  padding-bottom: var(--spacing-xs);
+}
+
+.move-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.move-stat.type {
+  grid-area: 3 / 1 / 4 / 3;
+  justify-content: center;
+  padding-block: var(--spacing-xs);
+}
+
+.move-tooltip-description {
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid var(--gray);
+  color: var(--battleship-gray);
+  font-style: italic;
+}
+
+/* Responsive para tooltips */
+@media (max-width: 768px) {
+  .move-tooltip {
+    min-width: 200px;
+    max-width: 240px;
+    padding: 10px;
+  }
+
+  .move-tooltip-stats {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .move-tooltip-name {
+    font-size: 13px;
+  }
+
+  .move-stat {
+    font-size: 11px;
+  }
+}
+
+/* Asegurar que el tooltip se posicione correctamente */
+.moves-setup-row {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ajustar el posicionamiento cuando el tooltip se sale de la pantalla */
+.move-button-container:first-child .move-tooltip-wrapper {
+  left: 0;
+  transform: none;
+}
+
+.move-button-container:last-child .move-tooltip-wrapper {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* Estilo especial para movimientos deshabilitados */
+.move-button-container .moveInput.disabled:hover + .move-tooltip-wrapper {
+  opacity: 0.7;
+}
+
+/* Hover effect suave */
+.move-button-container:hover .moveInput:not(.disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
