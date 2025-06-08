@@ -235,7 +235,7 @@
 }
 
 .control-row button:hover:not(.disabled) {
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .control-row button.disabled {
