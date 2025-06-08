@@ -1,4 +1,4 @@
-// src/utils/BattleMessageParser.js
+// src/utils/BattleMessageParser.js - VERSIÓN CORREGIDA
 
 export class BattleMessageParser {
   constructor() {
@@ -437,7 +437,16 @@ export class BattleMessageParser {
     const teamName = this.getTeamName(side);
     const effectName = this.getEffectName(effect);
 
-    this.sideConditions[side] = this.sideConditions[side].filter((c) => c !== effectName);
+    // CORRECCIÓN: Extract the actual side (p1 or p2) from the full side identifier
+    const actualSide = side.startsWith("p1") ? "p1" : "p2";
+
+    // CORRECCIÓN: Asegurar que el array existe antes de filtrar
+    if (!this.sideConditions[actualSide]) {
+      this.sideConditions[actualSide] = [];
+    }
+
+    // CORRECCIÓN: Usar actualSide en lugar de side
+    this.sideConditions[actualSide] = this.sideConditions[actualSide].filter((c) => c !== effectName);
 
     return `🛡️ **${effectName}** faded from **${teamName}**'s side`;
   }
@@ -802,6 +811,10 @@ export class BattleMessageParser {
       goodasgold: "Good as Gold",
       clearbody: "Clear Body",
       regenerator: "Regenerator",
+      toxicspikes: "Toxic Spikes",
+      spikes: "Spikes",
+      stealthrock: "Stealth Rock",
+      stickyweb: "Sticky Web",
     };
 
     const lowercaseEffect = effect?.toLowerCase();
@@ -838,8 +851,9 @@ export class BattleMessageParser {
   }
 
   getTeamName(side) {
-    if (side === "p1") return this.p1Name;
-    if (side === "p2") return this.p2Name;
+    // CORRECCIÓN: Manejar tanto "p1" como "p1: PlayerName"
+    if (side.startsWith("p1")) return this.p1Name;
+    if (side.startsWith("p2")) return this.p2Name;
     return "Team";
   }
 
