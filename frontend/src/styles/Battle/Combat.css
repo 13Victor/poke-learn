@@ -449,6 +449,10 @@
   filter: grayscale(100%);
 }
 
+.player-pokemon:has(.fainted-overlay) .pokemon-sprite img {
+  animation: none;
+}
+
 .moveInput.disabled {
   opacity: 0.75;
   filter: grayscale(100%);

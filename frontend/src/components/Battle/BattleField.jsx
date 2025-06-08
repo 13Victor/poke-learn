@@ -1,9 +1,13 @@
-// src/components/Combat/BattleField.jsx - VERSIÓN CORREGIDA
-import React, { useState, useEffect } from "react";
+// src/components/Combat/BattleField.jsx - VERSIÓN CORREGIDA CON HP PERSISTENTE
+import React, { useState, useEffect, useRef } from "react";
 
 export function BattleField({ logs, requestData, isLoading }) {
   const [playerPokemon, setPlayerPokemon] = useState(null);
   const [cpuPokemon, setCpuPokemon] = useState(null);
+
+  // Referencias para almacenar HP máximo de cada Pokémon
+  const playerMaxHPRef = useRef(new Map()); // Map<pokemonName, maxHP>
+  const cpuMaxHPRef = useRef(new Map());
 
   // Parse player's Pokémon data from requestData
   useEffect(() => {
@@ -17,11 +21,25 @@ export function BattleField({ logs, requestData, isLoading }) {
         // Parsear HP actual y máximo
         let currentHP = 0;
         let maxHP = 100;
-        if (activePokemon.condition && !activePokemon.condition.includes("fnt")) {
-          const hpParts = activePokemon.condition.split("/");
-          if (hpParts.length === 2) {
-            currentHP = parseInt(hpParts[0], 10);
-            maxHP = parseInt(hpParts[1], 10);
+        let isFainted = false;
+
+        if (activePokemon.condition) {
+          if (activePokemon.condition.includes("fnt")) {
+            // Pokémon debilitado
+            isFainted = true;
+            currentHP = 0;
+            // Intentar recuperar el HP máximo almacenado
+            const storedMaxHP = playerMaxHPRef.current.get(pokemonName);
+            maxHP = storedMaxHP || 100; // Fallback a 100 si no tenemos datos
+          } else {
+            // Pokémon vivo, parsear HP normal
+            const hpParts = activePokemon.condition.split("/");
+            if (hpParts.length === 2) {
+              currentHP = parseInt(hpParts[0], 10);
+              maxHP = parseInt(hpParts[1], 10);
+              // Almacenar el HP máximo para uso futuro
+              playerMaxHPRef.current.set(pokemonName, maxHP);
+            }
           }
         }
 
@@ -30,7 +48,7 @@ export function BattleField({ logs, requestData, isLoading }) {
           currentHP,
           maxHP,
           hpPercentage: (currentHP / maxHP) * 100,
-          status: activePokemon.condition.includes("fnt") ? "fnt" : null,
+          status: isFainted ? "fnt" : null,
         });
       }
     }
@@ -101,12 +119,25 @@ export function BattleField({ logs, requestData, isLoading }) {
       if (cpuName) {
         let currentHP = 0;
         let maxHP = 100;
+        let isFainted = false;
 
-        if (cpuCondition && !cpuCondition.includes("fnt")) {
-          const hpParts = cpuCondition.split("/");
-          if (hpParts.length === 2) {
-            currentHP = parseInt(hpParts[0], 10);
-            maxHP = parseInt(hpParts[1], 10);
+        if (cpuCondition) {
+          if (cpuCondition.includes("fnt")) {
+            // Pokémon de la CPU debilitado
+            isFainted = true;
+            currentHP = 0;
+            // Intentar recuperar el HP máximo almacenado
+            const storedMaxHP = cpuMaxHPRef.current.get(cpuName);
+            maxHP = storedMaxHP || 100; // Fallback a 100 si no tenemos datos
+          } else {
+            // Pokémon de la CPU vivo, parsear HP normal
+            const hpParts = cpuCondition.split("/");
+            if (hpParts.length === 2) {
+              currentHP = parseInt(hpParts[0], 10);
+              maxHP = parseInt(hpParts[1], 10);
+              // Almacenar el HP máximo para uso futuro
+              cpuMaxHPRef.current.set(cpuName, maxHP);
+            }
           }
         }
 
@@ -115,11 +146,20 @@ export function BattleField({ logs, requestData, isLoading }) {
           currentHP,
           maxHP,
           hpPercentage: maxHP > 0 ? (currentHP / maxHP) * 100 : 0,
-          status: cpuCondition && cpuCondition.includes("fnt") ? "fnt" : null,
+          status: isFainted ? "fnt" : null,
         });
       }
     }
   }, [logs]);
+
+  // Función para limpiar datos almacenados cuando la batalla termine o cambie
+  useEffect(() => {
+    // Opcional: limpiar datos al desmontar el componente
+    return () => {
+      playerMaxHPRef.current.clear();
+      cpuMaxHPRef.current.clear();
+    };
+  }, []);
 
   // Determinar el color de la barra de HP basado en el porcentaje
   const getHPColor = (percentage) => {

@@ -138,7 +138,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
         <div className="control-buttons">
           <button onClick={handleConfirmTeam} disabled={isProcessingCommand} className="confirm-button">
             {isProcessingCommand
-              ? "Confirmando..."
+              ? "Confirming..."
               : `Go ${playerTeam[selectedLeader - 1]?.details?.split(",")[0] || "Pokémon"}!`}
           </button>
         </div>
