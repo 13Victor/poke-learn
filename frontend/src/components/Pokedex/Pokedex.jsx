@@ -7,6 +7,7 @@ import SearchInput from "../common/SearchInput";
 import { createInitialFilters, toggleShowAll, toggleType, filterPokemons } from "../../utils/filterUtils";
 import "../../styles/Pokedex.css";
 
+import { FaChevronLeft } from "react-icons/fa6";
 const Pokedex = () => {
   const { getAllPokemons, allPokemonsLoaded } = usePokemonData();
   const [pokemons, setPokemons] = useState([]);
@@ -227,7 +228,15 @@ const Pokedex = () => {
       {/* Header with search */}
       <div className="pokedex-header">
         <div className="header-content">
-          <h1 className="pokedex-title">Pokédex</h1>
+          <div
+            style={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "5px" }}
+            onClick={() => window.history.back()}
+          >
+            <button className="nav-arrow">
+              <FaChevronLeft style={{ fontSize: "22px" }} />
+            </button>
+            <h1 className="pokedex-title">Pokédex</h1>
+          </div>
         </div>
       </div>
 

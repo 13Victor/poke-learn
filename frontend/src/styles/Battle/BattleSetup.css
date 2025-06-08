@@ -4,23 +4,30 @@
   height: 100vh;
   padding: var(--spacing-xl);
   row-gap: var(--spacing-lg);
-  column-gap: var(--spacing-sm);
+  column-gap: var(--spacing-lg);
   position: relative;
 }
 
 /* Añade esto a tu BattleSetup.css */
 .trainer-difficulty-selector {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   width: 100%;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   align-items: center;
   justify-content: center;
+}
+
+.setup-section h1,
+.battle-setup-header h1 {
+  margin-bottom: var(--spacing-sm);
 }
 
 .trainer-option {
   display: flex;
   flex-direction: column;
+  width: 100%;
   border: 2px solid var(--silver);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -28,24 +35,30 @@
   text-align: center;
 }
 
+.trainer-option.hard {
+  grid-area: 2 / 1 / 3 / 3;
+}
+
 .trainer-option:hover img {
-  transform: scale(1.2);
+  transform: scale(1.1);
   transition: var(--transition-normal);
 }
 
 .trainer-option.easy {
-  border-color: #afa54c;
+  border-color: #b4ad44;
   background-color: #fffbe3;
+  background: linear-gradient(135deg, #d1c237, #fffbe3);
 }
 
 .trainer-option.medium {
   border-color: #af814c;
-  background-color: #fff3e3;
+  background: linear-gradient(135deg, #c0823a, #fff3e3);
 }
 
 .trainer-option.hard {
   border-color: #af4c4c;
   background-color: #ffe3e3;
+  background: linear-gradient(135deg, #bd3737, #ffe3e3);
 }
 
 /* .trainer-option.easy .trainer-info {
@@ -67,7 +80,7 @@
 
 .trainer-option img {
   width: 100%;
-  height: 120px;
+  height: 200px;
   padding-top: var(--spacing-md);
   object-fit: contain;
   z-index: 99;
@@ -85,12 +98,65 @@
 
 .difficulty-check {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  padding: var(--spacing-md);
+  left: 0;
+}
+.selected-team-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.selected-team-info p {
+  font-size: 1.5rem;
+}
+
+.start-battle-btn:disabled {
+  background-color: var(--gray);
+  color: #000;
+  font-weight: 400;
+  text-decoration: none !important;
+}
+
+.combat-details-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+}
+
+.start-battle-btn {
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: 500;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #4bc03c;
+  border-radius: var(--radius-sm);
+  color: #000;
+  margin: var(--spacing-lg) auto;
 }
 
 .trainer-option .difficulty-check {
-  color: rgba(0, 0, 0, 0.2); /* Verde para fácil */
-  font-size: 12rem;
+  color: rgba(0, 0, 0, 0.5); /* Verde para fácil */
+  font-size: 5rem;
+}
+
+.manage-teams-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #afafaf;
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.manage-teams-btn:hover {
+  background-color: var(--battleship-gray);
+  transition: var(--transition-normal);
 }

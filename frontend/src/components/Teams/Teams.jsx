@@ -6,6 +6,7 @@ import { useTeam } from "../../contexts/TeamContext";
 import apiService from "../../services/apiService";
 import TeamsGrid from "./TeamsGrid";
 import { FaPlus } from "react-icons/fa6";
+import { FaChevronLeft } from "react-icons/fa";
 import TeamAdditionalInfo from "./TeamAdditionalInfo";
 
 const Teams = () => {
@@ -135,7 +136,15 @@ const Teams = () => {
     <div className="teams-page">
       <div className="teams-container">
         <div className="teams-header">
-          <h1>My Teams</h1>
+          <div
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}
+            onClick={() => navigate("/user")}
+          >
+            <button className="nav-arrow">
+              <FaChevronLeft style={{ fontSize: "22px" }} />
+            </button>
+            <h1>My Teams</h1>
+          </div>
           <button className="create-team-button" onClick={handleCreateTeam} disabled={loadingAction}>
             <FaPlus className="icon" />
             New Team

@@ -255,7 +255,6 @@ const TeamAnalysis = () => {
           coverage. Red tally marks indicate weakness.
         </p>
         <p>Hover over a tally mark to highlight the Pokémon it corresponds to.</p>
-        <p>Type icons with red drop shadows indicate types where your team has more weaknesses than resistances.</p>
       </div>
       <div className="type-analysis__grid">
         {TYPE_ORDER.map((type) => (

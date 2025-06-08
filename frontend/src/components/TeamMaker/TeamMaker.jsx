@@ -12,6 +12,8 @@ import apiService from "../../services/apiService";
 import { useTeam } from "../../contexts/TeamContext";
 import { calculatePokemonStats } from "../../utils/pokemonStatsCalculator";
 
+import { FaChevronLeft } from "react-icons/fa";
+
 const TeamMaker = memo(() => {
   const { isAllDataLoaded, isLoading, pokemons, moves, items, abilities } = usePokemonData();
   const { teamId } = useParams();
@@ -250,8 +252,15 @@ const TeamMaker = memo(() => {
   return (
     <div className="teammaker-page">
       <div className="teammaker-header">
-        <h1>{teamId ? "Edit Team" : "Team Maker"}</h1>
-        <p>{teamId ? "Update your team" : "Build your perfect team!"}</p>
+        <div
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}
+          onClick={() => navigate("/teams")}
+        >
+          <button className="nav-arrow">
+            <FaChevronLeft style={{ fontSize: "22px" }} />
+          </button>
+          <h1>{teamId ? "Edit Team" : "Team Maker"}</h1>
+        </div>
         <SaveTeamButton teamId={teamId} initialTeamName={teamName} />
       </div>
       <HighlightProvider>

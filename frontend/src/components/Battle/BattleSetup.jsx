@@ -353,7 +353,7 @@ IVs: 0 Atk
       <div className="battle-setup-container">
         {/* Selector de equipo usando la misma estructura que Teams */}
         <div className="setup-section">
-          <h3>Selecciona tu Equipo</h3>
+          <h1>Select your team</h1>
 
           {teams.length === 0 ? (
             <div className="no-teams-message">
@@ -368,8 +368,8 @@ IVs: 0 Atk
             <div className="teams-grid-container">
               {/* Sección de Favoritos */}
               {favoriteTeams.length > 0 && (
-                <div className="teams-section">
-                  <h4 className="section-title">⭐ Favoritos ({favoriteTeams.length})</h4>
+                <div className="teams-section favorites">
+                  <h3 className="section-title">Favorites ({favoriteTeams.length})</h3>
                   <div className="teams-grid">
                     {favoriteTeams.map((team) => (
                       <TeamCard
@@ -391,7 +391,7 @@ IVs: 0 Atk
               {/* Sección de todos los equipos */}
               {regularTeams.length > 0 && (
                 <div className="teams-section">
-                  <h4 className="section-title">📂 Equipos Completos ({regularTeams.length})</h4>
+                  <h3 className="section-title">All Teams ({regularTeams.length})</h3>
                   <div className="teams-grid">
                     {regularTeams.map((team) => (
                       <TeamCard
@@ -415,7 +415,7 @@ IVs: 0 Atk
           {teams.length > 0 && (
             <div className="teams-actions">
               <button className="manage-teams-btn" onClick={() => navigate("/teams")}>
-                Gestionar Equipos
+                Manage teams
               </button>
             </div>
           )}
@@ -425,12 +425,8 @@ IVs: 0 Atk
       <div className="separator-line"></div>
       <div className="combat-details-container">
         <div className="battle-setup-header">
-          <h1>Configuración de Batalla</h1>
-          <p className="setup-description">
-            Configura tu batalla seleccionando un equipo y la dificultad del oponente.
-            <br />
-            <strong>Formato: Gen 9 OU</strong> - Batalla competitiva con vista previa de equipos.
-          </p>
+          <h1>Choose a difficulty</h1>
+          <p className="setup-description"></p>
         </div>
 
         {error && (
@@ -441,7 +437,6 @@ IVs: 0 Atk
         )}
 
         <div className="setup-section">
-          <h3>Dificultad del Oponente</h3>
           <div className="trainer-difficulty-selector">
             <div
               className={`trainer-option easy ${difficulty === "easy" ? "selected" : ""}`}
@@ -474,7 +469,7 @@ IVs: 0 Atk
               onClick={() => setDifficulty("hard")}
             >
               <div className="image-difficult-container">
-                <img src={hardTrainer} alt="Entrenador difícil" />
+                <img src={hardTrainer} alt="Hard Trainer" />
                 {difficulty === "hard" && <FaCheck className="difficulty-check" />}
               </div>
               <div className="trainer-info">
@@ -486,8 +481,8 @@ IVs: 0 Atk
 
         {selectedTeam && (
           <div className="selected-team-info">
-            <h4>Equipo seleccionado: {selectedTeam.name}</h4>
-            {selectedTeam.is_favorite && <span className="favorite-badge">⭐ Favorito</span>}
+            <h3>Selected Team: </h3>
+            <p>{selectedTeam.name}</p>
           </div>
         )}
 
@@ -498,7 +493,7 @@ IVs: 0 Atk
             onClick={handleStartBattle}
             disabled={!selectedTeam || teams.length === 0}
           >
-            {!selectedTeam || teams.length === 0 ? "Selecciona un equipo para continuar" : "Comenzar Batalla Gen 9 OU"}
+            {!selectedTeam || teams.length === 0 ? "Select a team to continue" : "Start Battle"}
           </button>
         </div>
       </div>

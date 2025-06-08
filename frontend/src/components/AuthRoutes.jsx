@@ -12,6 +12,7 @@ import Combat from "./Battle/Combat"; // Cambiado de Battle a Combat
 import Pokedex from "./Pokedex/Pokedex";
 import { useAuth } from "../contexts/AuthContext";
 import BattleSetup from "./Battle/BattleSetup";
+import Landing from "./Landing";
 
 function AuthRoutes() {
   const { isAuthenticated, loading } = useAuth();
@@ -51,7 +52,7 @@ function AuthRoutes() {
 
       {/* Rutas protegidas - solo accesibles si está autenticado */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/user" element={<User />} />
+        <Route path="/user" element={<Landing />} />
         <Route path="/pokedex" element={<Pokedex />} />
         <Route path="/teammaker" element={<TeamMaker />} />
         <Route path="/teammaker/:teamId" element={<TeamMaker />} />

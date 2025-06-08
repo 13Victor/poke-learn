@@ -9,6 +9,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--spacing-sm);
 }
 
 .teammaker-container {
@@ -510,4 +511,16 @@ button {
   100% {
     transform: rotate(495deg);
   }
+}
+.teammaker-page .search-input-container {
+  width: 100%;
+  margin-bottom: var(--spacing-xs);
+}
+
+.teammaker-page .search-input-wrapper {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
 }
