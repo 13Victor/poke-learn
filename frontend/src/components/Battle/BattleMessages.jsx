@@ -1,4 +1,4 @@
-// src/components/Battle/BattleMessages.jsx
+// src/components/Battle/BattleMessages.jsx - CORRECCIÓN
 import React, { useEffect, useRef, useState } from "react";
 import { BattleMessageParser } from "../../utils/BattleMessageParser";
 import { TiPinOutline } from "react-icons/ti";
@@ -168,14 +168,15 @@ export function BattleMessages({ logs, isTeamPreview }) {
               🌍 {condition}
             </span>
           ))}
+          {/* CORRECCIÓN: Mostrar nombres de usuarios en lugar de P1/P2 */}
           {parser.current.sideConditions.p1.map((condition) => (
             <span key={`p1-${condition}`} className="condition side-p1">
-              🛡️ P1: {condition}
+              🛡️ {parser.current.p1Name}: {condition}
             </span>
           ))}
           {parser.current.sideConditions.p2.map((condition) => (
             <span key={`p2-${condition}`} className="condition side-p2">
-              🛡️ P2: {condition}
+              🛡️ {parser.current.p2Name}: {condition}
             </span>
           ))}
         </div>

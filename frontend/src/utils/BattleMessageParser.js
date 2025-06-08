@@ -345,13 +345,16 @@ export class BattleMessageParser {
     let damageText = `💥 **${pokemonName}** takes damage`;
 
     if (kwArgs.from) {
-      const effect = this.getEffectName(kwArgs.from);
+      // CORRECCIÓN: Primero intentar como estado de status, luego como efecto general
+      const statusName = this.getStatusName(kwArgs.from);
+      const effectName = statusName !== kwArgs.from ? statusName : this.getEffectName(kwArgs.from);
+
       const source = kwArgs.of ? this.getPokemonName(kwArgs.of) : null;
 
       if (source && source !== pokemonName) {
-        damageText = `💥 **${pokemonName}** takes damage from **${source}**'s **${effect}**`;
+        damageText = `💥 **${pokemonName}** takes damage from **${source}**'s **${effectName}**`;
       } else {
-        damageText = `💥 **${pokemonName}** takes damage from **${effect}**`;
+        damageText = `💥 **${pokemonName}** takes damage from **${effectName}**`;
       }
     }
 
@@ -520,8 +523,11 @@ export class BattleMessageParser {
     const pokemonName = this.getPokemonName(pokemon);
 
     if (kwArgs.from) {
-      const effect = this.getEffectName(kwArgs.from);
-      return `💚 **${pokemonName}** recovered HP from **${effect}**`;
+      // CORRECCIÓN: Primero intentar como estado de status, luego como efecto general
+      const statusName = this.getStatusName(kwArgs.from);
+      const effectName = statusName !== kwArgs.from ? statusName : this.getEffectName(kwArgs.from);
+
+      return `💚 **${pokemonName}** recovered HP from **${effectName}**`;
     }
 
     return `💚 **${pokemonName}** recovered HP`;
@@ -593,7 +599,9 @@ export class BattleMessageParser {
   parseCant(args, kwArgs) {
     const [, pokemon, reason, move] = args;
     const pokemonName = this.getPokemonName(pokemon);
-    const reasonName = this.getEffectName(reason);
+
+    // CORRECCIÓN: Parsear correctamente estados de status
+    const reasonName = this.getStatusName(reason) || this.getEffectName(reason);
 
     if (move) {
       return `🚫 **${pokemonName}** can't use **${move}** due to **${reasonName}**`;
@@ -764,26 +772,16 @@ export class BattleMessageParser {
       effect = effect.split(":")[1];
     }
 
+    // CORRECCIÓN: Removido effectMap de movimientos ya que vienen parseados
+    // Solo mantenemos efectos especiales, habilidades, objetos, etc.
     const effectMap = {
-      tackle: "Tackle",
-      thunderbolt: "Thunderbolt",
-      flamethrower: "Flamethrower",
-      surf: "Surf",
-      earthquake: "Earthquake",
-      psychic: "Psychic",
-      icebeam: "Ice Beam",
-      shadowball: "Shadow Ball",
-      energyball: "Energy Ball",
-      airslash: "Air Slash",
-      toxic: "Toxic",
-      thunderwave: "Thunder Wave",
-      willowisp: "Will-O-Wisp",
-      spore: "Spore",
-      sleeppowder: "Sleep Powder",
+      // Estados y condiciones especiales
       substitute: "Substitute",
       protect: "Protect",
       recover: "Recover",
       roost: "Roost",
+
+      // Terrenos y clima
       electricterrain: "Electric Terrain",
       grassyterrain: "Grassy Terrain",
       mistyterrain: "Misty Terrain",
@@ -793,24 +791,30 @@ export class BattleMessageParser {
       sandstorm: "Sandstorm",
       hail: "Hail",
       snowscape: "Snowscape",
+
+      // Habilidades
       pressure: "Pressure",
       intimidate: "Intimidate",
       levitate: "Levitate",
       flashfire: "Flash Fire",
       waterabsorb: "Water Absorb",
       voltabsorb: "Volt Absorb",
-      leftovers: "Leftovers",
-      lifeorb: "Life Orb",
-      choiceband: "Choice Band",
-      choicescarf: "Choice Scarf",
-      choicespecs: "Choice Specs",
-      focussash: "Focus Sash",
       moxie: "Moxie",
       protosynthesis: "Protosynthesis",
       supremeoverlord: "Supreme Overlord",
       goodasgold: "Good as Gold",
       clearbody: "Clear Body",
       regenerator: "Regenerator",
+
+      // Objetos
+      leftovers: "Leftovers",
+      lifeorb: "Life Orb",
+      choiceband: "Choice Band",
+      choicescarf: "Choice Scarf",
+      choicespecs: "Choice Specs",
+      focussash: "Focus Sash",
+
+      // Entry hazards
       toxicspikes: "Toxic Spikes",
       spikes: "Spikes",
       stealthrock: "Stealth Rock",
@@ -866,6 +870,14 @@ export class BattleMessageParser {
       psn: "Poison",
       tox: "Badly Poisoned",
       confusion: "Confusion",
+      // Agregar más estados si es necesario
+      flinch: "Flinch",
+      attract: "Attract",
+      disable: "Disable",
+      encore: "Encore",
+      healblock: "Heal Block",
+      taunt: "Taunt",
+      torment: "Torment",
     };
     return statusMap[status] || status;
   }
