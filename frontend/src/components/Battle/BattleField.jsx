@@ -1,4 +1,4 @@
-// src/components/Combat/BattleField.jsx
+// src/components/Combat/BattleField.jsx - VERSIÓN CORREGIDA
 import React, { useState, useEffect } from "react";
 
 export function BattleField({ logs, requestData, isLoading }) {
@@ -43,42 +43,56 @@ export function BattleField({ logs, requestData, isLoading }) {
       let cpuName = null;
       let cpuCondition = null;
 
+      // Función auxiliar para extraer nombres de Pokémon correctamente
+      const extractPokemonName = (identifier) => {
+        if (!identifier) return null;
+
+        // Si tiene formato "p2a: Great Tusk", extraer solo el nombre
+        if (identifier.includes(":")) {
+          return identifier.split(":")[1].trim();
+        }
+
+        // Si es solo el nombre, devolverlo tal como está
+        return identifier.trim();
+      };
+
       // Recorrer los logs en orden inverso para encontrar información más reciente
       for (let i = logs.length - 1; i >= 0; i--) {
         const log = logs[i];
 
         // Intentar encontrar información sobre el cambio o daño del Pokémon de la CPU
         if (typeof log === "string") {
-          // Buscar línea de switch para CPU (p2a)
+          // Buscar línea de switch para CPU (p2a) - CORREGIDA
           const switchMatch = log.match(/\|switch\|p2a: ([^|]+)\|([^|]+)\|([^|]+)/);
           if (switchMatch) {
-            cpuName = switchMatch[2].split(",")[0].trim();
+            // switchMatch[1] contiene "Great Tusk" completo
+            cpuName = extractPokemonName(switchMatch[1]);
             cpuCondition = switchMatch[3];
             break;
           }
 
-          // Buscar línea de heal para CPU
+          // Buscar línea de heal para CPU - CORREGIDA
           const healMatch = log.match(/\|-heal\|p2a: ([^|]+)\|([^|]+)/);
           if (healMatch) {
-            if (!cpuName) cpuName = healMatch[1];
+            if (!cpuName) cpuName = extractPokemonName(healMatch[1]);
             cpuCondition = healMatch[2];
             // Continue searching for the name if we don't have it yet
             if (cpuName && cpuCondition) break;
           }
 
-          // Buscar línea de daño para CPU
+          // Buscar línea de daño para CPU - CORREGIDA
           const damageMatch = log.match(/\|-damage\|p2a: ([^|]+)\|([^|]+)/);
           if (damageMatch) {
-            if (!cpuName) cpuName = damageMatch[1];
+            if (!cpuName) cpuName = extractPokemonName(damageMatch[1]);
             cpuCondition = damageMatch[2];
             // Continue searching for the name if we don't have it yet
             if (cpuName && cpuCondition) break;
           }
 
-          // Buscar cualquier línea que mencione p2a para obtener el nombre del Pokémon
-          const p2aMatch = log.match(/p2a: ([^|,\s]+)/);
+          // Buscar cualquier línea que mencione p2a para obtener el nombre del Pokémon - CORREGIDA
+          const p2aMatch = log.match(/p2a: ([^|,]+)/); // REMOVIDO \s para permitir espacios
           if (p2aMatch && !cpuName) {
-            cpuName = p2aMatch[1];
+            cpuName = extractPokemonName(p2aMatch[1]);
           }
         }
       }
