@@ -55,14 +55,14 @@ export function SwitchButton({ pokemon, index, disabled, isProcessing, onExecute
       }`}
       title={
         isProcessing
-          ? "Procesando comando anterior..."
+          ? "Waiting CPU..."
           : disabled
-          ? "Debes esperar a que la CPU cambie de Pokémon"
+          ? "Waiting CPU..."
           : isActive
-          ? "Pokémon activo"
+          ? "Active Pokémon"
           : isFainted
-          ? "Pokémon debilitado"
-          : `Cambiar a ${pokemonName}`
+          ? "Fainted Pokémon"
+          : `Change to ${pokemonName}`
       }
     >
       {isFainted && <div className="fainted-overlay">Fainted</div>}

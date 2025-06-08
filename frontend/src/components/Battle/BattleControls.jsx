@@ -41,7 +41,7 @@ export function BattleControls({
       )}
 
       {/* Botones de cambio siempre visibles, pero inhabilitados según el estado */}
-      <h4>Cambiar Pokémon</h4>
+      <h4 className="switch-title">Switch Pokémon</h4>
       <div className="control-row switch-setup-row">
         {requestData?.side?.pokemon?.map((pokemon, index) => (
           <SwitchButton

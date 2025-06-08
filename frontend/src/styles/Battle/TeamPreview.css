@@ -3,7 +3,7 @@
   padding: 0;
 }
 
-.player-section h4 {
+.player-section h4.switch-title {
   margin-top: var(--spacing-md);
 }
 

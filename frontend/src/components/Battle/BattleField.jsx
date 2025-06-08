@@ -156,7 +156,7 @@ export function BattleField({ logs, requestData, isLoading }) {
                 </div>
                 <div className="hp-text">
                   {cpuPokemon.currentHP}/{cpuPokemon.maxHP}
-                  {cpuPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+                  {cpuPokemon.status === "fnt" && <div className="fainted-overlay">Fainted</div>}
                 </div>
               </div>
             </div>
@@ -200,7 +200,7 @@ export function BattleField({ logs, requestData, isLoading }) {
                 </div>
                 <div className="hp-text">
                   {playerPokemon.currentHP}/{playerPokemon.maxHP}
-                  {playerPokemon.status === "fnt" && <span className="status"> DEBILITADO</span>}
+                  {playerPokemon.status === "fnt" && <div className="fainted-overlay">Fainted</div>}
                 </div>
               </div>
             </div>
