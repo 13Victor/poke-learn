@@ -5,7 +5,8 @@ import apiService from "../../services/apiService";
 import TeamCard from "../Teams/TeamCard";
 import { usePokemonData } from "../../contexts/PokemonDataContext";
 import "../../styles/Battle/BattleSetup.css";
-import { FaCheck } from "react-icons/fa6";
+import { FaCheck, FaChevronLeft } from "react-icons/fa6";
+import { FiArrowUpRight } from "react-icons/fi";
 
 // Importar imágenes de entrenadores (asegúrate de tener estas imágenes en tu proyecto)
 import easyTrainer from "../../../public/assets/trainers/easy.png";
@@ -353,7 +354,16 @@ IVs: 0 Atk
       <div className="battle-setup-container">
         {/* Selector de equipo usando la misma estructura que Teams */}
         <div className="setup-section">
-          <h1>Select your team</h1>
+          <div
+            className="title-with-arrow"
+            style={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "5px" }}
+          >
+            <button className="nav-arrow" onClick={() => window.history.back()}>
+              <FaChevronLeft style={{ fontSize: "22px" }} />
+            </button>
+
+            <h1>Select your team</h1>
+          </div>
 
           {teams.length === 0 ? (
             <div className="no-teams-message">
@@ -415,7 +425,7 @@ IVs: 0 Atk
           {teams.length > 0 && (
             <div className="teams-actions">
               <button className="manage-teams-btn" onClick={() => navigate("/teams")}>
-                Manage teams
+                Manage teams <FiArrowUpRight />
               </button>
             </div>
           )}

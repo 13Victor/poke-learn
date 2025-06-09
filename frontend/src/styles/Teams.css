@@ -90,11 +90,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--picton-blue);
+  background-color: var(--gray);
   font-size: var(--font-size-md);
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
+}
+
+.create-team-button:hover {
+  background-color: var(--silver);
 }
 
 .create-team-button .icon {

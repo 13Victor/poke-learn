@@ -7,7 +7,7 @@
   justify-content: center;
 }
 
-.combat-container h1 {
+.title-with-arrow {
   margin-bottom: var(--spacing-md);
 }
 .battle-split-view {

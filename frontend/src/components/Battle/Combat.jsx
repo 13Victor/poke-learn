@@ -3,15 +3,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBattle } from "../../hooks/useBattle";
 import { BattleField } from "./BattleField";
-import { StatusMessages } from "../Battle/StatusMessages";
 import { BattleControls } from "../Battle/BattleControls";
 import { BattleMessages } from "../Battle/BattleMessages";
-import { CustomCommandInput } from "../Battle/CustomCommandInput";
 import { DebugPanel } from "../Battle/DebugPanel";
 import { BattleLogViewer } from "../Battle/LogViewer";
 import { TeamPreview } from "../Battle/TeamPreview";
 import "../../styles/Battle/Combat.css";
 import "../../styles/Battle/BattleField.css";
+import { FaChevronLeft } from "react-icons/fa";
 import "../../styles/Battle/BattleMessages.css";
 
 const Combat = () => {
@@ -102,7 +101,7 @@ const Combat = () => {
           <img src="/assets/logo.png" alt="Pokémon Battle App" className="pokemon-logo" />
           <p>Building battle...</p>
           <button onClick={goBackToSetup} className="back-button">
-            Volver a Configuración
+            Return to Setup
           </button>
         </div>
       </div>
@@ -133,7 +132,16 @@ const Combat = () => {
   if (battleState === "active" && isTeamPreview) {
     return (
       <div className="combat-container">
-        <h1>Battle Simulator</h1>
+        <div
+          className="title-with-arrow"
+          style={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "5px" }}
+          onClick={() => window.history.back()}
+        >
+          <button className="nav-arrow">
+            <FaChevronLeft style={{ fontSize: "22px" }} />
+          </button>
+          <h1>Battle Simulator</h1>
+        </div>
 
         <div className="battle-status">
           <div className="battle-info">
@@ -166,7 +174,15 @@ const Combat = () => {
   // Resto del componente para cuando la batalla está activa o completada
   return (
     <div className="combat-container">
-      <h1>Battle Simulator</h1>
+      <div
+        className="title-with-arrow"
+        style={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "5px" }}
+      >
+        <button className="nav-arrow" onClick={() => window.history.back()}>
+          <FaChevronLeft style={{ fontSize: "22px" }} />
+        </button>
+        <h1>Battle Simulator</h1>
+      </div>
 
       <div className="battle-status">
         <div className="battle-info">

@@ -248,15 +248,6 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
         </table>
       </div>
 
-      {/* Debug info */}
-      <div
-        className="debug-info"
-        style={{ fontSize: "10px", color: "#666", margin: "10px 0", display: "flex", flexDirection: "column" }}
-      >
-        <div>IVs originales: {JSON.stringify(selectedPokemon.ivs)}</div>
-        <div>IVs actuales: {JSON.stringify(ivs)}</div>
-      </div>
-
       <div className="statsInfo">
         <p>Cada 4 EVs = +1 en la estadística final al nivel 100</p>
         <p>Cada IV = +1 en la estadística final al nivel 100</p>

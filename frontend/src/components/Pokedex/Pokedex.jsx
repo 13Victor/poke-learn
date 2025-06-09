@@ -229,10 +229,10 @@ const Pokedex = () => {
       <div className="pokedex-header">
         <div className="header-content">
           <div
+            className="title-with-arrow"
             style={{ display: "flex", alignItems: "center", justifyContent: "start", gap: "5px" }}
-            onClick={() => window.history.back()}
           >
-            <button className="nav-arrow">
+            <button className="nav-arrow" onClick={() => window.history.back()}>
               <FaChevronLeft style={{ fontSize: "22px" }} />
             </button>
             <h1 className="pokedex-title">Pokédex</h1>

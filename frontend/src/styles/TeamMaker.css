@@ -196,8 +196,9 @@ button {
 }
 
 .item-button:hover,
-.ability-button:hover {
-  background-color: var(--picton-blue-light);
+.ability-button:hover,
+.moveInput:hover {
+  background-color: var(--gray) !important;
 }
 
 /* Separator Line */
@@ -290,14 +291,14 @@ button {
 }
 
 .pokemonStatsContainer:hover .statValue {
-  background-color: var(--picton-blue-light);
+  background-color: var(--gray);
 }
 
 .selected-move,
 .selected-item,
 .selected-ability,
 .stats-selected .statValue {
-  background-color: var(--picton-blue-normal);
+  background-color: var(--gray);
 }
 
 .selected-move:hover,

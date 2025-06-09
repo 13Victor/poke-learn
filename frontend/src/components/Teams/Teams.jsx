@@ -136,11 +136,8 @@ const Teams = () => {
     <div className="teams-page">
       <div className="teams-container">
         <div className="teams-header">
-          <div
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}
-            onClick={() => navigate("/user")}
-          >
-            <button className="nav-arrow">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+            <button className="nav-arrow" onClick={() => navigate("/user")}>
               <FaChevronLeft style={{ fontSize: "22px" }} />
             </button>
             <h1>My Teams</h1>
