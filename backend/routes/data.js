@@ -358,6 +358,34 @@ router.get("/moves-desc", async (req, res) => {
   }
 });
 
+/**
+ * @route GET /data/moves-with-power
+ * @desc Obtener movimientos con datos de poder base para IA
+ */
+router.get("/moves-with-power", async (req, res) => {
+  try {
+    const moves = data.moves.Moves;
+    const movesWithPower = {};
+
+    for (const moveId in moves) {
+      const moveData = moves[moveId];
+      movesWithPower[moveId] = {
+        name: moveData.name,
+        basePower: moveData.basePower || 0,
+        accuracy: moveData.accuracy || 100,
+        category: moveData.category || "Status",
+        type: moveData.type || "Normal",
+        priority: moveData.priority || 0,
+      };
+    }
+
+    res.json(formatResponse(true, "Movimientos con datos de poder", movesWithPower));
+  } catch (error) {
+    console.error("Error al procesar movimientos con poder:", error);
+    res.status(500).json(formatResponse(false, "Error al procesar movimientos con poder"));
+  }
+});
+
 // Rutas originales mantenidas por compatibilidad, pero con formato consistente
 router.get("/pokedex", async (req, res) => {
   try {

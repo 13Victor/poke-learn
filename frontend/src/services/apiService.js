@@ -373,6 +373,15 @@ class ApiService {
       requiresAuth: true,
     });
   }
+
+  // Obtener movimientos con datos de poder base
+  async getMovesWithPower() {
+    return this.fetchData("/data/moves-with-power", {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
 }
 
 // Exportar una única instancia para usar en toda la aplicación

@@ -44,6 +44,11 @@ export function useBattle() {
         requestBody.useCustomTeams = true;
       }
 
+      // Add difficulty
+      if (config.difficulty) {
+        requestBody.difficulty = config.difficulty;
+      }
+
       console.log("🚀 Starting battle with config:", requestBody);
 
       // Step 1: Create battle

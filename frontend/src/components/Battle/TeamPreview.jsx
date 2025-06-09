@@ -98,7 +98,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
           <h3>
             {teamPreviewPokemon?.difficulty
               ? `${teamPreviewPokemon.difficulty.charAt(0).toUpperCase() + teamPreviewPokemon.difficulty.slice(1)} CPU`
-              : "Equipo Rival"}
+              : "Rival Team"}
           </h3>
 
           <div className="pokemon-grid">

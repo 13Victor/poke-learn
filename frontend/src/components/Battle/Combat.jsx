@@ -191,7 +191,7 @@ const Combat = () => {
               <span className={`battle-format difficulty-${battleConfig.difficulty?.toLowerCase() || "unknown"}`}>
                 {battleConfig.difficulty
                   ? battleConfig.difficulty.charAt(0).toUpperCase() + battleConfig.difficulty.slice(1)
-                  : "Desconocida"}{" "}
+                  : "Unknown"}{" "}
                 mode
               </span>
             </>

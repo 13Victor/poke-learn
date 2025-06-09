@@ -339,12 +339,8 @@ function getAIMove(battle, availableMoves = []) {
       return selectedMove;
 
     case "medium":
-      // For medium mode, prefer earlier moves but still random among enabled
-      const mediumSlots = enabledSlots.slice(0, Math.min(enabledSlots.length, 3)); // Prefer first 3 enabled moves
-      const mediumIndex = Math.floor(Math.random() * mediumSlots.length);
-      const mediumMove = mediumSlots[mediumIndex];
-      console.log(`⚡ Modo medio: seleccionando movimiento habilitado slot ${mediumMove} de los primeros disponibles`);
-      return mediumMove;
+      // For medium mode, select move with highest base power
+      return getMostPowerfulMove(enabledMoves, enabledSlots);
 
     case "hard":
     default:
@@ -357,6 +353,64 @@ function getAIMove(battle, availableMoves = []) {
       );
       return hardMove;
   }
+}
+
+/**
+ * Helper function to select the move with highest base power for medium difficulty
+ */
+function getMostPowerfulMove(enabledMoves, enabledSlots) {
+  const data = require("../data/dataLoader");
+  const moves = data.moves.Moves;
+
+  let mostPowerfulSlot = enabledSlots[0];
+  let highestPower = -1;
+  let mostPowerfulMoveName = "Unknown";
+
+  console.log(`⚡ Modo medio: analizando poder base de movimientos...`);
+
+  enabledMoves.forEach((moveData, index) => {
+    const moveName = moveData.move;
+    const slot = enabledSlots[index];
+
+    // Find move in data by name
+    let basePower = 0;
+    let moveId = null;
+
+    // Search for move by name in the moves data
+    for (const id in moves) {
+      if (moves[id].name === moveName) {
+        basePower = moves[id].basePower || 0;
+        moveId = id;
+        break;
+      }
+    }
+
+    console.log(`🔍 Movimiento: ${moveName} (slot ${slot}) - Poder base: ${basePower}`);
+
+    // Prioritize moves with higher base power
+    // For status moves (basePower 0), we'll treat them as lowest priority
+    if (basePower > highestPower) {
+      highestPower = basePower;
+      mostPowerfulSlot = slot;
+      mostPowerfulMoveName = moveName;
+    }
+  });
+
+  // If all moves have 0 base power (all status moves), select randomly
+  if (highestPower === 0) {
+    const randomIndex = Math.floor(Math.random() * enabledSlots.length);
+    mostPowerfulSlot = enabledSlots[randomIndex];
+    mostPowerfulMoveName = enabledMoves[randomIndex]?.move || "Unknown";
+    console.log(
+      `🎲 Todos los movimientos son de estado, seleccionando aleatoriamente: ${mostPowerfulMoveName} (slot ${mostPowerfulSlot})`
+    );
+  } else {
+    console.log(
+      `💥 Seleccionando movimiento más potente: ${mostPowerfulMoveName} (slot ${mostPowerfulSlot}) - Poder: ${highestPower}`
+    );
+  }
+
+  return mostPowerfulSlot;
 }
 
 /**
