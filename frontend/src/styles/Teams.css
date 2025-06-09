@@ -8,6 +8,55 @@
   position: relative;
 }
 
+.save-team-button {
+  height: 100%;
+  background-color: var(--gray);
+  padding-inline: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  color: #000;
+}
+
+.team-name-display {
+  display: flex;;
+}
+
+.team-name-display:hover .edit-button {
+  visibility: visible;
+}
+
+.team-name-display .edit-button {
+  cursor: pointer;
+  visibility: hidden;
+  margin-left: var(--spacing-sm);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.cancel-button-main {
+    background-color: var(--gray);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.save-team-button:disabled {
+  cursor: not-allowed !important;
+  opacity: .75;
+}
+
+.modal-team-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.save-team-button:hover {
+  background-color: var(--silver);
+}
+
 .teams-container {
   display: flex;
   flex-direction: column;

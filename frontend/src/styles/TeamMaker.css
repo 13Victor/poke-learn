@@ -301,13 +301,6 @@ button {
   background-color: var(--gray);
 }
 
-.selected-move:hover,
-.selected-item:hover,
-.selected-ability:hover,
-.stats-selected:hover .statValue {
-  background-color: var(--picton-blue-light);
-}
-
 /* Stats Container */
 .pokemonStatsContainer {
   display: flex;

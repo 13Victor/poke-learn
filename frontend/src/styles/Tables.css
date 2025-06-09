@@ -75,7 +75,6 @@ tr.odd-row:hover {
 /* Contenedor de tabla con scroll */
 .table-wrapper {
   overflow-y: auto;
-  flex-grow: 1;
   min-height: 0;
   border-radius: var(--radius-md);
   will-change: transform;
@@ -322,7 +321,8 @@ tr.odd-row:hover {
 }
 
 .input-group input[type="range"] {
-  flex: 3;
+  flex: 4;
+  accent-color: var(--prussian-blue);
 }
 
 .input-group input[type="number"] {
@@ -333,10 +333,33 @@ tr.odd-row:hover {
 .statsControls {
   display: flex;
   justify-content: space-between;
+  width: 100%;
   align-items: center;
   margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
+}
+
+.statsControls .actionButtons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.statsControls .actionButtons button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  background-color: var(--prussian-blue);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+}
+
+.statsControls .actionButtons button:hover {
+  filter: brightness(1.2);
+}
+
+.natureSelector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .statsInfo {

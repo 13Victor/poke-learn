@@ -249,9 +249,9 @@ const StatsTable = ({ selectedPokemon, selectedSlot }) => {
       </div>
 
       <div className="statsInfo">
-        <p>Cada 4 EVs = +1 en la estadística final al nivel 100</p>
-        <p>Cada IV = +1 en la estadística final al nivel 100</p>
-        <p>La naturaleza aumenta una estadística un 10% y reduce otra un 10% (excepto las neutrales)</p>
+        <p>Every 4 EVs = +1 in the final stat at level 100</p>
+        <p>Each IV = +1 in the final stat at level 100</p>
+        <p>The nature increases one stat by 10% and decreases another by 10% (except for neutral natures)</p>
       </div>
     </div>
   );

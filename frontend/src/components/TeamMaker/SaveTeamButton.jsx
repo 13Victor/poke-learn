@@ -2,13 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useTeam } from "../../contexts/TeamContext";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/apiService";
+import { FaCheck } from "react-icons/fa6";
+import { RiEditLine } from "react-icons/ri";
+import { IoClose } from "react-icons/io5";
 import "../../styles/Teams.css";
 
 const SaveTeamButton = ({ teamId, initialTeamName = "" }) => {
   const { pokemons } = useTeam();
   const navigate = useNavigate();
   const [teamName, setTeamName] = useState(initialTeamName);
+  const [newTeamName, setNewTeamName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -19,7 +24,64 @@ const SaveTeamButton = ({ teamId, initialTeamName = "" }) => {
     }
   }, [initialTeamName]);
 
+  const openModal = () => {
+    setIsModalOpen(true);
+    setError(null);
+    // Si no hay nombre inicial, empezar en modo edición
+    if (!teamName.trim()) {
+      setIsEditingName(true);
+      setNewTeamName("");
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setIsEditingName(false);
+    setNewTeamName("");
+    setError(null);
+  };
+
+  // Cerrar modal al hacer click fuera
+  const handleModalClick = (e) => {
+    if (e.target.classList.contains("modal-overlay")) {
+      closeModal();
+    }
+  };
+
+  const startEditingName = () => {
+    setIsEditingName(true);
+    setNewTeamName(teamName);
+    setError(null);
+  };
+
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setNewTeamName("");
+    setError(null);
+  };
+
+  const saveTeamName = () => {
+    if (!newTeamName.trim()) {
+      setError("Please enter a team name");
+      return;
+    }
+
+    setTeamName(newTeamName.trim());
+    setIsEditingName(false);
+    setNewTeamName("");
+    setError(null);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      saveTeamName();
+    } else if (e.key === "Escape") {
+      cancelEditingName();
+    }
+  };
+
   const handleSave = async () => {
+    // Validar que tenemos un nombre de equipo
     if (!teamName.trim()) {
       setError("Please enter a team name");
       return;
@@ -130,32 +192,62 @@ const SaveTeamButton = ({ teamId, initialTeamName = "" }) => {
 
   return (
     <>
-      <button
-        className="save-team-button"
-        onClick={() => setIsModalOpen(true)}
-        disabled={pokemons.every((p) => !p.name)}
-      >
+      <button className="save-team-button" onClick={openModal} disabled={pokemons.every((p) => !p.name)}>
         {teamId ? "Update Team" : "Save Team"}
       </button>
 
       {isModalOpen && (
-        <div className="modal">
+        <div className="modal-overlay" onClick={handleModalClick}>
           <div className="modal-content">
-            <h2>{teamId ? "Update Team" : "Save Team"}</h2>
-            <input
-              type="text"
-              placeholder="Enter team name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-            />
-            {error && <p className="error">{error}</p>}
-            <div className="modal-actions">
-              <button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : teamId ? "Update" : "Save"}
-              </button>
-              <button onClick={() => setIsModalOpen(false)} disabled={saving}>
-                Cancel
-              </button>
+            <button className="modal-close" onClick={closeModal}>
+              <IoClose />
+            </button>
+
+            <div className="modal-team-info">
+              <h2>{teamId ? "Update Team" : "Save Team"}</h2>
+
+              <div className="team-name-section">
+                {isEditingName ? (
+                  <div className="username-edit">
+                    <input
+                      type="text"
+                      value={newTeamName}
+                      onChange={(e) => setNewTeamName(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      className="username-input"
+                      placeholder="Enter team name"
+                      disabled={saving}
+                      autoFocus
+                    />
+                    <div className="username-actions">
+                      <button onClick={saveTeamName} disabled={saving} className="save-button" title="Save">
+                        <FaCheck />
+                      </button>
+                      <button onClick={cancelEditingName} disabled={saving} className="cancel-button" title="Cancel">
+                        <IoClose />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="team-name-display">
+                    <h4>{teamName || "Unnamed Team"}</h4>
+                    <button onClick={startEditingName} className="edit-button" title="Edit team name">
+                      <RiEditLine />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {error && <p className="error-message">{error}</p>}
+
+              <div className="modal-actions">
+                <button onClick={handleSave} disabled={saving || !teamName.trim()} className="confirm-button">
+                  {saving ? "Saving..." : teamId ? "Update" : "Save"}
+                </button>
+                <button onClick={closeModal} disabled={saving} className="cancel-button-main">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -60,10 +60,6 @@ const Teams = () => {
   };
 
   const handleDeleteTeam = async (teamId) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este equipo?")) {
-      return;
-    }
-
     try {
       setLoadingAction(true);
       console.log(`🗑️ Deleting team with ID: ${teamId}`);
