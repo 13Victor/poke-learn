@@ -382,6 +382,15 @@ class ApiService {
       requiresAuth: true,
     });
   }
+
+  // Obtener datos de un Pokémon específico por nombre
+  async getPokemonByName(pokemonName) {
+    return this.fetchData(`/data/pokemon/${encodeURIComponent(pokemonName)}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+      requiresAuth: true,
+    });
+  }
 }
 
 // Exportar una única instancia para usar en toda la aplicación

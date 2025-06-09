@@ -516,4 +516,48 @@ router.get("/move/:moveName", async (req, res) => {
   }
 });
 
+/**
+ * @route GET /data/pokemon/:pokemonName
+ * @desc Obtener datos de un Pokémon específico por nombre
+ */
+router.get("/pokemon/:pokemonName", async (req, res) => {
+  try {
+    const { pokemonName } = req.params;
+    const pokedex = data.pokedex.Pokedex;
+
+    // Normalize the pokemon name for searching
+    const normalizedSearchName = pokemonName.toLowerCase().replace(/[\s'-]/g, "");
+
+    // Find the pokemon by name (case insensitive and handle special characters)
+    let foundPokemonId = null;
+    let foundPokemonData = null;
+
+    for (const pokemonId in pokedex) {
+      const pokemon = pokedex[pokemonId];
+      const normalizedPokemonName = pokemon.name.toLowerCase().replace(/[\s'-]/g, "");
+
+      if (normalizedPokemonName === normalizedSearchName || pokemonId === normalizedSearchName) {
+        foundPokemonId = pokemonId;
+        foundPokemonData = pokemon;
+        break;
+      }
+    }
+
+    if (!foundPokemonData) {
+      return res.status(404).json(formatResponse(false, "Pokémon no encontrado"));
+    }
+
+    // Add pokemon ID for reference
+    const pokemonWithId = {
+      ...foundPokemonData,
+      id: foundPokemonId,
+    };
+
+    res.json(formatResponse(true, "Datos del Pokémon", pokemonWithId));
+  } catch (error) {
+    console.error("Error al obtener datos del Pokémon:", error);
+    res.status(500).json(formatResponse(false, "Error al obtener datos del Pokémon"));
+  }
+});
+
 module.exports = router;
