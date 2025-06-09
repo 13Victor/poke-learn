@@ -97,7 +97,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: rotateY(180deg);
 }
 
 .player-pokemon .pokemon-sprite img {

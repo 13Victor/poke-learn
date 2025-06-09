@@ -175,7 +175,7 @@ export function BattleField({ logs, requestData, isLoading }) {
     // Formatear el nombre para la URL de Pokémon Showdown
     const formattedName = pokemonName
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, "") // Remove special characters
+      .replace(/[^a-z0-9-]/g, "") // Remove special characters
       .replace(/\s+/g, ""); // Remove spaces
 
     return `https://play.pokemonshowdown.com/sprites/home/${formattedName}.png`;

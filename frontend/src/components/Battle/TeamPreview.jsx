@@ -17,7 +17,7 @@ export function TeamPreview({ requestData, teamPreviewPokemon, onSendCommand, is
     // Format the name for the URL (lowercase, remove spaces and special characters)
     const formattedName = pokemonName
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
+      .replace(/[^a-z0-9-]/g, "")
       .replace(/\s+/g, "");
 
     return `https://play.pokemonshowdown.com/sprites/home/${formattedName}.png`;

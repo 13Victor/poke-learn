@@ -55,7 +55,11 @@ const ItemAbility = memo(
       <div className="item-abilityContainer">
         <div className="itemContainer">
           {item ? (
-            <img src={`/assets/items/${itemKey}.webp`} alt={item} className="item-sprite small-icon" />
+            <img
+              src={`/assets/items/${itemKey.replace(/-/g, "")}.webp`}
+              alt={item}
+              className="item-sprite small-icon"
+            />
           ) : (
             <i className="fa-solid fa-cube item-sprite small-icon"></i>
           )}

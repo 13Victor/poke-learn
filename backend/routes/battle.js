@@ -200,7 +200,7 @@ router.post("/initialize/:battleId", verifyToken, async (req, res) => {
 /**
  * Helper function to get a random AI move based on difficulty
  */
-function getAIMove(battle, availableMoves = []) {
+function getAIMove(battle, availableMoves = [], cpuRequestData = null) {
   const difficulty = battle.difficulty || "easy";
 
   console.log(`🤖 ============= SELECCIÓN DE MOVIMIENTO IA - DIFICULTAD: ${difficulty.toUpperCase()} =============`);
@@ -247,19 +247,264 @@ function getAIMove(battle, availableMoves = []) {
 
     case "hard":
     default:
-      // For hard mode, use advanced strategy but still select most powerful move for attacking
-      console.log(`🔥 Modo difícil: usando estrategia avanzada...`);
-      const hardMove = getMostPowerfulMove(enabledMoves, enabledSlots);
+      // For hard mode, select most effective move against opponent
+      console.log(`🔥 Modo difícil: analizando efectividad de movimientos...`);
+      const hardMove = getMostEffectiveMove(battle, enabledMoves, enabledSlots, cpuRequestData);
       console.log(`🤖 ============= FIN SELECCIÓN MODO DIFÍCIL =============`);
       return hardMove;
   }
 }
 
 /**
+ * Helper function to select the move with highest base power for medium difficulty
+ */
+function getMostPowerfulMove(enabledMoves, enabledSlots) {
+  const data = require("../data/dataLoader");
+  const moves = data.moves.Moves;
+
+  let mostPowerfulSlot = enabledSlots[0];
+  let highestPower = -1;
+  let mostPowerfulMoveName = "Unknown";
+
+  console.log(`⚡ Modo medio: analizando poder base de movimientos...`);
+
+  enabledMoves.forEach((moveData, index) => {
+    const moveName = moveData.move;
+    const slot = enabledSlots[index];
+
+    // Find move in data by name
+    let basePower = 0;
+    let moveId = null;
+
+    // Search for move by name in the moves data
+    for (const id in moves) {
+      if (moves[id].name === moveName) {
+        basePower = moves[id].basePower || 0;
+        moveId = id;
+        break;
+      }
+    }
+
+    console.log(`🔍 Movimiento: ${moveName} (slot ${slot}) - Poder base: ${basePower}`);
+
+    // Prioritize moves with higher base power
+    // For status moves (basePower 0), we'll treat them as lowest priority
+    if (basePower > highestPower) {
+      highestPower = basePower;
+      mostPowerfulSlot = slot;
+      mostPowerfulMoveName = moveName;
+    }
+  });
+
+  // If all moves have 0 base power (all status moves), select randomly
+  if (highestPower === 0) {
+    const randomIndex = Math.floor(Math.random() * enabledSlots.length);
+    mostPowerfulSlot = enabledSlots[randomIndex];
+    mostPowerfulMoveName = enabledMoves[randomIndex]?.move || "Unknown";
+    console.log(
+      `🎲 Todos los movimientos son de estado, seleccionando aleatoriamente: ${mostPowerfulMoveName} (slot ${mostPowerfulSlot})`
+    );
+  } else {
+    console.log(
+      `💥 Seleccionando movimiento más potente: ${mostPowerfulMoveName} (slot ${mostPowerfulSlot}) - Poder: ${highestPower}`
+    );
+  }
+
+  return mostPowerfulSlot;
+}
+
+/**
+ * Helper function to select the most effective move for hard difficulty
+ */
+function getMostEffectiveMove(battle, enabledMoves, enabledSlots, cpuRequestData) {
+  console.log(`🔥 ============= ANÁLISIS DE EFECTIVIDAD DE MOVIMIENTOS - MODO DIFÍCIL =============`);
+
+  try {
+    const data = require("../data/dataLoader");
+    const moves = data.moves.Moves;
+    const typeChart = getTypeChart();
+
+    // Get opponent's active Pokemon
+    const playerSide = parseLatestRequestData(battle.logs, "p1");
+    if (!playerSide?.side?.pokemon) {
+      console.log("⚠️ No se pueden obtener datos del oponente, usando movimiento más potente");
+      return getMostPowerfulMove(enabledMoves, enabledSlots);
+    }
+
+    const playerActivePokemon = playerSide.side.pokemon.find((p) => p.active);
+    if (!playerActivePokemon) {
+      console.log("⚠️ No se puede identificar Pokémon activo del oponente, usando movimiento más potente");
+      return getMostPowerfulMove(enabledMoves, enabledSlots);
+    }
+
+    const opponentPokemonName = playerActivePokemon.details.split(",")[0].trim();
+    const opponentTypes = getPokemonTypes(opponentPokemonName);
+
+    if (!opponentTypes) {
+      console.log("⚠️ No se pudieron obtener tipos del oponente, usando movimiento más potente");
+      return getMostPowerfulMove(enabledMoves, enabledSlots);
+    }
+
+    console.log(`🎯 Oponente: ${opponentPokemonName} [${opponentTypes.join(", ")}]`);
+
+    let bestMoveSlot = enabledSlots[0];
+    let bestEffectiveness = -1;
+    let bestMoveName = "Unknown";
+
+    enabledMoves.forEach((moveData, index) => {
+      const moveName = moveData.move;
+      const slot = enabledSlots[index];
+
+      // Find move data by name
+      let moveType = null;
+      let basePower = 0;
+
+      for (const id in moves) {
+        if (moves[id].name === moveName) {
+          moveType = moves[id].type?.toLowerCase();
+          basePower = moves[id].basePower || 0;
+          break;
+        }
+      }
+
+      if (!moveType) {
+        console.log(`⚠️ No se pudo obtener tipo para ${moveName}, asumiendo Normal`);
+        moveType = "normal";
+      }
+
+      console.log(`🔍 Movimiento: ${moveName} (slot ${slot}) - Tipo: ${moveType}, Poder: ${basePower}`);
+
+      // Calculate type effectiveness
+      let effectiveness = 1;
+      for (const opponentType of opponentTypes) {
+        const typeEffectiveness = typeChart[moveType]?.[opponentType] || 1;
+        effectiveness *= typeEffectiveness;
+        console.log(`  ${moveType} -> ${opponentType}: ${typeEffectiveness}x`);
+      }
+
+      console.log(`  Efectividad total de ${moveName}: ${effectiveness}x`);
+
+      // Calculate total score (effectiveness * base power)
+      // For status moves (basePower 0), use effectiveness alone but with lower priority
+      const score = basePower > 0 ? effectiveness * basePower : effectiveness * 10;
+
+      console.log(`  Puntuación total de ${moveName}: ${score} (efectividad: ${effectiveness}x, poder: ${basePower})`);
+
+      if (score > bestEffectiveness) {
+        bestEffectiveness = score;
+        bestMoveSlot = slot;
+        bestMoveName = moveName;
+      }
+    });
+
+    // Log final decision
+    const finalEffectiveness =
+      bestEffectiveness /
+      (enabledMoves.find((m) => m.move === bestMoveName)
+        ? moves[Object.keys(moves).find((id) => moves[id].name === bestMoveName)]?.basePower || 10
+        : 10);
+
+    console.log(`🎯 Mejor movimiento seleccionado: ${bestMoveName} (slot ${bestMoveSlot})`);
+    console.log(`   Efectividad: ${finalEffectiveness}x, Puntuación total: ${bestEffectiveness}`);
+
+    if (finalEffectiveness >= 2.0) {
+      console.log(`💥 ¡SÚPER EFECTIVO! CPU usando ${bestMoveName}`);
+    } else if (finalEffectiveness <= 0.5) {
+      console.log(`😤 Poco efectivo, pero es la mejor opción disponible: ${bestMoveName}`);
+    } else {
+      console.log(`⚖️ Efectividad neutra: ${bestMoveName}`);
+    }
+
+    return bestMoveSlot;
+  } catch (error) {
+    console.error("❌ Error analizando efectividad de movimientos:", error);
+    console.log("🔄 Fallback: usando movimiento más potente");
+    return getMostPowerfulMove(enabledMoves, enabledSlots);
+  }
+}
+
+/**
+ * Helper function to check if CPU has any super effective moves against opponent
+ */
+function hasEffectiveMoves(battle, cpuRequestData) {
+  console.log(`🔍 ============= VERIFICANDO MOVIMIENTOS EFECTIVOS =============`);
+
+  try {
+    const data = require("../data/dataLoader");
+    const moves = data.moves.Moves;
+    const typeChart = getTypeChart();
+
+    // Get opponent's active Pokemon
+    const playerSide = parseLatestRequestData(battle.logs, "p1");
+    if (!playerSide?.side?.pokemon) {
+      console.log("⚠️ No se pueden obtener datos del oponente");
+      return false;
+    }
+
+    const playerActivePokemon = playerSide.side.pokemon.find((p) => p.active);
+    if (!playerActivePokemon) {
+      console.log("⚠️ No se puede identificar Pokémon activo del oponente");
+      return false;
+    }
+
+    const opponentPokemonName = playerActivePokemon.details.split(",")[0].trim();
+    const opponentTypes = getPokemonTypes(opponentPokemonName);
+
+    if (!opponentTypes) {
+      console.log("⚠️ No se pudieron obtener tipos del oponente");
+      return false;
+    }
+
+    const availableMoves = cpuRequestData.active?.[0]?.moves || [];
+    const enabledMoves = availableMoves.filter((move) => !move.disabled);
+
+    console.log(`🎯 Verificando efectividad contra: ${opponentPokemonName} [${opponentTypes.join(", ")}]`);
+    console.log(`⚔️ Movimientos habilitados: ${enabledMoves.length}`);
+
+    for (const moveData of enabledMoves) {
+      const moveName = moveData.move;
+
+      // Find move type
+      let moveType = null;
+      for (const id in moves) {
+        if (moves[id].name === moveName) {
+          moveType = moves[id].type?.toLowerCase();
+          break;
+        }
+      }
+
+      if (!moveType) continue;
+
+      // Calculate effectiveness
+      let effectiveness = 1;
+      for (const opponentType of opponentTypes) {
+        const typeEffectiveness = typeChart[moveType]?.[opponentType] || 1;
+        effectiveness *= typeEffectiveness;
+      }
+
+      console.log(`🔍 ${moveName} (${moveType}) vs [${opponentTypes.join(", ")}]: ${effectiveness}x`);
+
+      // If we have a super effective move, return true
+      if (effectiveness >= 2.0) {
+        console.log(`💥 ¡MOVIMIENTO SÚPER EFECTIVO ENCONTRADO: ${moveName}!`);
+        return true;
+      }
+    }
+
+    console.log(`⚠️ No hay movimientos súper efectivos disponibles`);
+    return false;
+  } catch (error) {
+    console.error("❌ Error verificando movimientos efectivos:", error);
+    return false;
+  }
+}
+
+/**
  * Helper function to check if AI should switch based on type effectiveness (Hard mode)
+ * Updated with new strategic flow
  */
 async function shouldAISwitchPokemon(battle, cpuRequestData) {
-  console.log(`🔥 ============= ANÁLISIS DE CAMBIO DE POKÉMON - MODO DIFÍCIL =============`);
+  console.log(`🔥 ============= ANÁLISIS ESTRATÉGICO COMPLETO - MODO DIFÍCIL =============`);
 
   if (battle.difficulty !== "hard") {
     console.log("⚠️ No es modo difícil, no analizando cambio estratégico");
@@ -267,203 +512,155 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
   }
 
   try {
-    // Get current active pokemon data for both sides
-    const cpuPokemon = cpuRequestData.active?.[0];
+    // STEP 1: Check if current Pokemon has effective moves against opponent
+    console.log(`🎯 PASO 1: ¿Tiene movimientos efectivos el Pokémon actual?`);
+    const hasEffectiveMovesResult = hasEffectiveMoves(battle, cpuRequestData);
+
+    if (hasEffectiveMovesResult) {
+      console.log(`✅ El Pokémon actual TIENE movimientos súper efectivos. ¡ATACAR!`);
+      console.log(`🔥 ============= DECISIÓN: MANTENER Y ATACAR =============`);
+      return null; // Don't switch, use effective move
+    }
+
+    console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos`);
+
+    // STEP 2: Look for a better Pokemon to switch to
+    console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar...`);
+
     const playerSide = parseLatestRequestData(battle.logs, "p1");
-    const playerPokemon = playerSide?.active?.[0];
-
-    if (!cpuPokemon || !playerPokemon) {
-      console.log("⚠️ No se pueden obtener datos de Pokémon activos");
+    if (!playerSide?.side?.pokemon) {
+      console.log("⚠️ No se pueden obtener datos del oponente");
       return null;
     }
 
-    console.log(`🤖 CPU Pokémon activo: ${cpuPokemon.moves?.[0]?.move || "Unknown"}`);
-    console.log(`👤 Player Pokémon activo: ${playerPokemon.moves?.[0]?.move || "Unknown"}`);
+    const playerActivePokemon = playerSide.side.pokemon.find((p) => p.active);
+    if (!playerActivePokemon) {
+      console.log("⚠️ No se puede identificar Pokémon activo del oponente");
+      return null;
+    }
 
-    // For now, we'll use a simplified approach - get pokemon data from the details in the side
+    const opponentPokemonName = playerActivePokemon.details.split(",")[0].trim();
+    const opponentTypes = getPokemonTypes(opponentPokemonName);
+
+    if (!opponentTypes) {
+      console.log("⚠️ No se pudieron obtener tipos del oponente");
+      return null;
+    }
+
     const cpuSidePokemon = cpuRequestData.side?.pokemon || [];
-    const playerSidePokemon = playerSide?.side?.pokemon || [];
+    const availableForSwitch = cpuSidePokemon.filter((p) => !p.active && !p.condition.includes("fnt"));
 
-    console.log(`🎯 CPU tiene ${cpuSidePokemon.length} Pokémon en el equipo`);
-    console.log(`🎯 Player tiene ${playerSidePokemon.length} Pokémon en el equipo`);
+    console.log(`🔄 Pokémon disponibles para cambio: ${availableForSwitch.length}`);
 
-    // Find current active pokemon in the team data
-    const currentCpuActive = cpuSidePokemon.find((p) => p.active);
-    const currentPlayerActive = playerSidePokemon.find((p) => p.active);
-
-    if (!currentCpuActive || !currentPlayerActive) {
-      console.log("⚠️ No se pueden identificar Pokémon activos en los datos del side");
+    if (availableForSwitch.length === 0) {
+      console.log("❌ No hay Pokémon disponibles para cambiar");
+      console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO =============`);
       return null;
     }
 
-    console.log(`🤖 CPU Pokémon activo identificado: ${currentCpuActive.details}`);
-    console.log(`👤 Player Pokémon activo identificado: ${currentPlayerActive.details}`);
-
-    // Extract pokemon names and types from details
-    const cpuPokemonName = currentCpuActive.details.split(",")[0].trim();
-    const playerPokemonName = currentPlayerActive.details.split(",")[0].trim();
-
-    console.log(`🔍 Analizando tipos: CPU=${cpuPokemonName} vs Player=${playerPokemonName}`);
-
-    // Get type data (this would need to be loaded from the data files)
+    // Check each available Pokemon to see if it has effective moves
+    const data = require("../data/dataLoader");
+    const moves = data.moves.Moves;
     const typeChart = getTypeChart();
-    const cpuTypes = getPokemonTypes(cpuPokemonName);
-    const playerTypes = getPokemonTypes(playerPokemonName);
 
-    if (!cpuTypes || !playerTypes) {
-      console.log("⚠️ No se pudieron obtener los tipos de los Pokémon");
-      return null;
-    }
+    let bestSwitchOption = null;
+    let bestScore = -1;
 
-    console.log(`🤖 CPU tipos: [${cpuTypes.join(", ")}]`);
-    console.log(`👤 Player tipos: [${playerTypes.join(", ")}]`);
+    for (let i = 0; i < availableForSwitch.length; i++) {
+      const pokemon = availableForSwitch[i];
+      const pokemonName = pokemon.details.split(",")[0].trim();
+      const pokemonTypes = getPokemonTypes(pokemonName);
 
-    // Calculate type effectiveness: How effective is CPU against Player
-    const cpuEffectivenessAgainstPlayer = calculateTypeEffectiveness(cpuTypes, playerTypes, typeChart);
-    console.log(`⚔️ Efectividad de CPU contra Player: ${cpuEffectivenessAgainstPlayer}x`);
+      if (!pokemonTypes) continue;
 
-    // Calculate type effectiveness: How effective is Player against CPU
-    const playerEffectivenessAgainstCpu = calculateTypeEffectiveness(playerTypes, cpuTypes, typeChart);
-    console.log(`🛡️ Efectividad de Player contra CPU: ${playerEffectivenessAgainstCpu}x`);
+      console.log(`🔍 Analizando: ${pokemonName} [${pokemonTypes.join(", ")}]`);
 
-    // If CPU is at a significant disadvantage (taking super effective damage), consider switching
-    if (playerEffectivenessAgainstCpu >= 2.0) {
-      console.log(
-        `🚨 CPU está en DESVENTAJA (recibe ${playerEffectivenessAgainstCpu}x daño)! Buscando mejor opción...`
-      );
+      // Check if this Pokemon would have effective moves
+      const pokemonMoves = pokemon.moves || [];
+      let hasEffectiveMove = false;
+      let maxEffectiveness = 0;
 
-      // Look for a better pokemon to switch to
-      const availableForSwitch = cpuSidePokemon.filter((p) => !p.active && !p.condition.includes("fnt"));
-      console.log(`🔄 Pokémon disponibles para cambio: ${availableForSwitch.length}`);
+      for (const moveName of pokemonMoves) {
+        // Find move type
+        let moveType = null;
+        let basePower = 0;
 
-      if (availableForSwitch.length === 0) {
-        console.log("❌ No hay Pokémon disponibles para cambiar");
-        return null;
-      }
-
-      // Find the best counter
-      let bestCounter = null;
-      let bestEffectiveness = -1;
-      let bestSlot = -1;
-
-      availableForSwitch.forEach((pokemon, index) => {
-        const pokemonName = pokemon.details.split(",")[0].trim();
-        const pokemonTypes = getPokemonTypes(pokemonName);
-
-        if (pokemonTypes) {
-          const effectiveness = calculateTypeEffectiveness(pokemonTypes, playerTypes, typeChart);
-          const resistance = calculateTypeEffectiveness(playerTypes, pokemonTypes, typeChart);
-
-          console.log(
-            `🔍 ${pokemonName} [${pokemonTypes.join(", ")}]: ${effectiveness}x vs Player, recibe ${resistance}x`
-          );
-
-          // Prioritize pokemon that resist player's attacks or are super effective
-          const score = effectiveness + 1 / Math.max(resistance, 0.5); // Higher score is better
-
-          if (score > bestEffectiveness) {
-            bestEffectiveness = score;
-            bestCounter = pokemon;
-            bestSlot = cpuSidePokemon.findIndex((p) => p.details === pokemon.details) + 1;
+        for (const id in moves) {
+          if (moves[id].name === moveName) {
+            moveType = moves[id].type?.toLowerCase();
+            basePower = moves[id].basePower || 0;
+            break;
           }
         }
-      });
 
-      if (bestCounter && bestSlot > 0) {
-        const counterName = bestCounter.details.split(",")[0].trim();
-        console.log(`🎯 Mejor counter encontrado: ${counterName} (slot ${bestSlot})`);
-        console.log(`🔥 ============= CAMBIO ESTRATÉGICO RECOMENDADO =============`);
-        return bestSlot;
+        if (!moveType || basePower === 0) continue; // Skip status moves
+
+        // Calculate effectiveness
+        let effectiveness = 1;
+        for (const opponentType of opponentTypes) {
+          const typeEffectiveness = typeChart[moveType]?.[opponentType] || 1;
+          effectiveness *= typeEffectiveness;
+        }
+
+        console.log(`  📋 ${moveName} (${moveType}): ${effectiveness}x efectividad`);
+
+        if (effectiveness >= 2.0) {
+          hasEffectiveMove = true;
+        }
+
+        maxEffectiveness = Math.max(maxEffectiveness, effectiveness);
       }
-    } else if (cpuEffectivenessAgainstPlayer < 1.0) {
-      console.log(`⚠️ CPU no es muy efectivo (${cpuEffectivenessAgainstPlayer}x), pero no en peligro inmediato`);
-    } else {
+
+      // Calculate defensive advantage (how well this Pokemon resists opponent's attacks)
+      let defensiveScore = 1;
+      for (const opponentType of opponentTypes) {
+        let typeResistance = 1;
+        for (const pokemonType of pokemonTypes) {
+          const resistance = typeChart[opponentType]?.[pokemonType] || 1;
+          typeResistance *= resistance;
+        }
+        defensiveScore = Math.min(defensiveScore, typeResistance); // Take worst case
+      }
+
+      // Total score: offensive potential + defensive advantage
+      const totalScore = maxEffectiveness + 1 / Math.max(defensiveScore, 0.25);
+
       console.log(
-        `✅ CPU está en buena posición (${cpuEffectivenessAgainstPlayer}x vs ${playerEffectivenessAgainstCpu}x)`
+        `  🏆 ${pokemonName} - Ofensiva: ${maxEffectiveness}x, Defensiva: ${defensiveScore}x, Score: ${totalScore}`
       );
-    }
 
-    console.log(`🔥 ============= NO SE REQUIERE CAMBIO =============`);
-    return null;
-  } catch (error) {
-    console.error("❌ Error analizando cambio estratégico:", error);
-    return null;
-  }
-}
+      if (hasEffectiveMove) {
+        console.log(`  💥 ¡${pokemonName} TIENE movimientos súper efectivos!`);
+      }
 
-/**
- * Helper function to get type chart data
- */
-function getTypeChart() {
-  try {
-    const data = require("../data/dataLoader");
-    return data.types || {};
-  } catch (error) {
-    console.error("Error loading type chart:", error);
-    return {};
-  }
-}
-
-/**
- * Helper function to get pokemon types by name
- */
-function getPokemonTypes(pokemonName) {
-  try {
-    const data = require("../data/dataLoader");
-    const pokedex = data.pokedex.Pokedex;
-
-    // Normalize pokemon name
-    const normalizedName = pokemonName.toLowerCase().replace(/[\s'-]/g, "");
-
-    // Search for pokemon
-    for (const pokemonId in pokedex) {
-      const pokemon = pokedex[pokemonId];
-      const normalizedPokemonName = pokemon.name.toLowerCase().replace(/[\s'-]/g, "");
-
-      if (normalizedPokemonName === normalizedName) {
-        console.log(`🔍 Tipos encontrados para ${pokemonName}: [${pokemon.types.join(", ")}]`);
-        return pokemon.types.map((type) => type.toLowerCase());
+      if (hasEffectiveMove && totalScore > bestScore) {
+        bestScore = totalScore;
+        bestSwitchOption = {
+          pokemon,
+          slot: cpuSidePokemon.findIndex((p) => p.details === pokemon.details) + 1,
+          maxEffectiveness,
+          defensiveScore,
+        };
       }
     }
 
-    console.log(`⚠️ No se encontraron tipos para: ${pokemonName}`);
-    return null;
-  } catch (error) {
-    console.error(`Error getting types for ${pokemonName}:`, error);
-    return null;
-  }
-}
-
-/**
- * Helper function to calculate type effectiveness
- */
-function calculateTypeEffectiveness(attackingTypes, defendingTypes, typeChart) {
-  console.log(`🧮 Calculando efectividad: [${attackingTypes.join(", ")}] -> [${defendingTypes.join(", ")}]`);
-
-  if (!attackingTypes || !defendingTypes || !typeChart) {
-    console.log("⚠️ Datos insuficientes para calcular efectividad");
-    return 1;
-  }
-
-  let totalEffectiveness = 1;
-
-  // For dual-type pokemon, we need to calculate effectiveness against both types
-  for (const attackingType of attackingTypes) {
-    let moveEffectiveness = 1;
-
-    for (const defendingType of defendingTypes) {
-      const effectiveness = typeChart[attackingType]?.[defendingType] || 1;
-      moveEffectiveness *= effectiveness;
-      console.log(`  ${attackingType} -> ${defendingType}: ${effectiveness}x`);
+    // STEP 3: Make decision
+    if (bestSwitchOption) {
+      const switchName = bestSwitchOption.pokemon.details.split(",")[0].trim();
+      console.log(`🎯 ¡MEJOR OPCIÓN ENCONTRADA: ${switchName} (slot ${bestSwitchOption.slot})!`);
+      console.log(`   Efectividad ofensiva: ${bestSwitchOption.maxEffectiveness}x`);
+      console.log(`   Resistencia defensiva: ${bestSwitchOption.defensiveScore}x`);
+      console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
+      return bestSwitchOption.slot;
+    } else {
+      console.log(`❌ No se encontró un Pokémon mejor con movimientos efectivos`);
+      console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO =============`);
+      return null;
     }
-
-    // For multiple attacking types, we typically want the best effectiveness
-    totalEffectiveness = Math.max(totalEffectiveness, moveEffectiveness);
-    console.log(`  Efectividad de ${attackingType}: ${moveEffectiveness}x`);
+  } catch (error) {
+    console.error("❌ Error en análisis estratégico:", error);
+    return null;
   }
-
-  console.log(`🎯 Efectividad total: ${totalEffectiveness}x`);
-  return totalEffectiveness;
 }
 
 /**
@@ -513,15 +710,39 @@ async function handleAutomaticCPUAction(battle) {
       );
 
       if (viablePokemon.length > 0) {
-        // Seleccionar aleatoriamente uno de los Pokémon viables
-        const randomIndex = Math.floor(Math.random() * viablePokemon.length);
-        const selectedPokemon = viablePokemon[randomIndex];
+        // For hard mode, even when forced to switch, try to pick strategically
+        if (battle.difficulty === "hard") {
+          console.log("🔥 Modo difícil: selección estratégica para cambio forzado");
+          const strategicChoice = await shouldAISwitchPokemon(battle, cpuRequestData);
 
-        // Encontrar el índice original del Pokémon seleccionado (1-based)
-        const originalIndex = availablePokemon.findIndex((pokemon) => pokemon.details === selectedPokemon.details) + 1;
-
-        cpuCommand = `>p2 switch ${originalIndex}`;
-        console.log(`🎲 CPU cambiando a slot ${originalIndex}: ${selectedPokemon.details.split(",")[0]}`);
+          if (strategicChoice) {
+            cpuCommand = `>p2 switch ${strategicChoice}`;
+            const strategicPokemon = availablePokemon[strategicChoice - 1];
+            console.log(
+              `🎯 CPU cambio estratégico forzado a slot ${strategicChoice}: ${strategicPokemon.details.split(",")[0]}`
+            );
+          } else {
+            // Random selection as fallback
+            const randomIndex = Math.floor(Math.random() * viablePokemon.length);
+            const selectedPokemon = viablePokemon[randomIndex];
+            const originalIndex =
+              availablePokemon.findIndex((pokemon) => pokemon.details === selectedPokemon.details) + 1;
+            cpuCommand = `>p2 switch ${originalIndex}`;
+            console.log(
+              `🎲 CPU cambio aleatorio (estrategia falló) a slot ${originalIndex}: ${
+                selectedPokemon.details.split(",")[0]
+              }`
+            );
+          }
+        } else {
+          // Random selection for easy/medium modes
+          const randomIndex = Math.floor(Math.random() * viablePokemon.length);
+          const selectedPokemon = viablePokemon[randomIndex];
+          const originalIndex =
+            availablePokemon.findIndex((pokemon) => pokemon.details === selectedPokemon.details) + 1;
+          cpuCommand = `>p2 switch ${originalIndex}`;
+          console.log(`🎲 CPU cambiando a slot ${originalIndex}: ${selectedPokemon.details.split(",")[0]}`);
+        }
       } else {
         console.log("❌ No hay Pokémon viables para cambiar, usando slot 2 por defecto");
         cpuCommand = ">p2 switch 2";
@@ -533,7 +754,7 @@ async function handleAutomaticCPUAction(battle) {
 
       // For hard mode, check if strategic switching is needed
       if (battle.difficulty === "hard") {
-        console.log("🔥 Modo difícil detectado - verificando si debe cambiar por estrategia...");
+        console.log("🔥 Modo difícil detectado - aplicando estrategia completa...");
         const strategicSwitchSlot = await shouldAISwitchPokemon(battle, cpuRequestData);
 
         if (strategicSwitchSlot) {
@@ -548,7 +769,7 @@ async function handleAutomaticCPUAction(battle) {
         const enabledMoves = allMoves.filter((move) => !move.disabled);
 
         if (enabledMoves.length > 0) {
-          const moveSlot = getAIMove(battle, allMoves);
+          const moveSlot = getAIMove(battle, allMoves, cpuRequestData);
           cpuCommand = `>p2 move ${moveSlot}`;
           console.log(`🎯 CPU atacando con movimiento slot ${moveSlot}`);
         } else {
