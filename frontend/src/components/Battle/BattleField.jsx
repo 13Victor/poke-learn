@@ -54,100 +54,186 @@ export function BattleField({ logs, requestData, isLoading }) {
     }
   }, [requestData]);
 
-  // Parse CPU's Pokémon data from battle logs
+  // Parse CPU's Pokémon data from requestData instead of battle logs
   useEffect(() => {
     if (logs && logs.length > 0) {
-      // Buscar en los logs el último Pokémon activo de la CPU
+      // Buscar el requestData más reciente para la CPU (p2) en los logs
+      let cpuRequestData = null;
+
+      // Recorrer los logs en orden inverso para encontrar el requestData más reciente de la CPU
+      for (let i = logs.length - 1; i >= 0; i--) {
+        const log = logs[i];
+        if (typeof log === "string" && log.includes("sideupdate\np2") && log.includes("|request|")) {
+          try {
+            const lines = log.split("\n");
+            for (const line of lines) {
+              if (line.includes("|request|")) {
+                const requestMatch = line.match(/\|request\|(.+)/);
+                if (requestMatch) {
+                  cpuRequestData = JSON.parse(requestMatch[1]);
+                  console.log(`🎯 CPU RequestData encontrado:`, cpuRequestData);
+                  break;
+                }
+              }
+            }
+            if (cpuRequestData) break;
+          } catch (error) {
+            console.error("Error parsing CPU request data:", error);
+          }
+        }
+      }
+
+      // Si encontramos requestData de la CPU, usarlo para obtener el HP actualizado
+      if (cpuRequestData?.side?.pokemon) {
+        const activeCpuPokemon = cpuRequestData.side.pokemon.find((p) => p.active);
+
+        if (activeCpuPokemon) {
+          const cpuName = activeCpuPokemon.details.split(",")[0].trim();
+
+          let currentHP = 0;
+          let maxHP = 100;
+          let isFainted = false;
+
+          console.log(
+            `🎯 Procesando CPU Pokémon desde RequestData: ${cpuName}, Condición: ${activeCpuPokemon.condition}`
+          );
+
+          if (activeCpuPokemon.condition) {
+            if (activeCpuPokemon.condition.includes("fnt")) {
+              // Pokémon debilitado
+              isFainted = true;
+              currentHP = 0;
+              const storedMaxHP = cpuMaxHPRef.current.get(cpuName);
+              maxHP = storedMaxHP || 100;
+              console.log(`💀 CPU Pokémon debilitado: ${cpuName}`);
+            } else {
+              // Pokémon vivo, parsear HP del requestData (ESTA ES LA FUENTE MÁS CONFIABLE)
+              const hpParts = activeCpuPokemon.condition.split("/");
+              if (hpParts.length === 2) {
+                currentHP = parseInt(hpParts[0], 10);
+                maxHP = parseInt(hpParts[1], 10);
+                // Almacenar el HP máximo para uso futuro
+                cpuMaxHPRef.current.set(cpuName, maxHP);
+                console.log(
+                  `❤️ CPU Pokémon (desde RequestData): ${cpuName}, HP FINAL DEL TURNO: ${currentHP}/${maxHP}`
+                );
+              }
+            }
+          }
+
+          const hpPercentage = maxHP > 0 ? (currentHP / maxHP) * 100 : 0;
+
+          setCpuPokemon({
+            name: cpuName,
+            currentHP,
+            maxHP,
+            hpPercentage,
+            status: isFainted ? "fnt" : null,
+          });
+
+          console.log(
+            `✅ Estado CPU actualizado desde RequestData: ${cpuName}, HP: ${currentHP}/${maxHP} (${hpPercentage.toFixed(
+              1
+            )}%)`
+          );
+          return; // Salir temprano si encontramos requestData
+        }
+      }
+
+      // FALLBACK: Si no encontramos requestData, usar el método anterior de parsing de logs
+      console.log(`⚠️ No se encontró RequestData para CPU, usando fallback de logs...`);
+
       let cpuName = null;
       let cpuCondition = null;
 
       // Función auxiliar para extraer nombres de Pokémon correctamente
       const extractPokemonName = (identifier) => {
         if (!identifier) return null;
-
-        // Si tiene formato "p2a: Great Tusk", extraer solo el nombre
         if (identifier.includes(":")) {
           return identifier.split(":")[1].trim();
         }
-
-        // Si es solo el nombre, devolverlo tal como está
         return identifier.trim();
       };
 
-      // Recorrer los logs en orden inverso para encontrar información más reciente
-      for (let i = logs.length - 1; i >= 0; i--) {
+      // Recorrer los logs para encontrar información del Pokémon activo
+      for (let i = 0; i < logs.length; i++) {
         const log = logs[i];
 
-        // Intentar encontrar información sobre el cambio o daño del Pokémon de la CPU
         if (typeof log === "string") {
-          // Buscar línea de switch para CPU (p2a) - CORREGIDA
+          // Buscar línea de switch para CPU
           const switchMatch = log.match(/\|switch\|p2a: ([^|]+)\|([^|]+)\|([^|]+)/);
           if (switchMatch) {
-            // switchMatch[1] contiene "Great Tusk" completo
-            cpuName = extractPokemonName(switchMatch[1]);
-            cpuCondition = switchMatch[3];
-            break;
+            const newPokemonName = extractPokemonName(switchMatch[1]);
+            const initialCondition = switchMatch[3];
+
+            if (!cpuName || newPokemonName !== cpuName) {
+              cpuName = newPokemonName;
+              cpuCondition = initialCondition;
+              console.log(`🔄 Switch detectado (fallback): ${cpuName}, HP inicial: ${cpuCondition}`);
+            }
           }
 
-          // Buscar línea de heal para CPU - CORREGIDA
-          const healMatch = log.match(/\|-heal\|p2a: ([^|]+)\|([^|]+)/);
-          if (healMatch) {
-            if (!cpuName) cpuName = extractPokemonName(healMatch[1]);
-            cpuCondition = healMatch[2];
-            // Continue searching for the name if we don't have it yet
-            if (cpuName && cpuCondition) break;
-          }
+          // Actualizar HP con eventos posteriores
+          if (cpuName) {
+            const healMatch = log.match(/\|-heal\|p2a: ([^|]+)\|([^|]+)/);
+            if (healMatch) {
+              const healedPokemon = extractPokemonName(healMatch[1]);
+              if (healedPokemon === cpuName) {
+                cpuCondition = healMatch[2];
+                console.log(`🩹 Heal actualizado (fallback): ${cpuName}, HP: ${cpuCondition}`);
+              }
+            }
 
-          // Buscar línea de daño para CPU - CORREGIDA
-          const damageMatch = log.match(/\|-damage\|p2a: ([^|]+)\|([^|]+)/);
-          if (damageMatch) {
-            if (!cpuName) cpuName = extractPokemonName(damageMatch[1]);
-            cpuCondition = damageMatch[2];
-            // Continue searching for the name if we don't have it yet
-            if (cpuName && cpuCondition) break;
-          }
-
-          // Buscar cualquier línea que mencione p2a para obtener el nombre del Pokémon - CORREGIDA
-          const p2aMatch = log.match(/p2a: ([^|,]+)/); // REMOVIDO \s para permitir espacios
-          if (p2aMatch && !cpuName) {
-            cpuName = extractPokemonName(p2aMatch[1]);
+            const damageMatch = log.match(/\|-damage\|p2a: ([^|]+)\|([^|]+)/);
+            if (damageMatch) {
+              const damagedPokemon = extractPokemonName(damageMatch[1]);
+              if (damagedPokemon === cpuName) {
+                cpuCondition = damageMatch[2];
+                console.log(`💥 Damage actualizado (fallback): ${cpuName}, HP: ${cpuCondition}`);
+              }
+            }
           }
         }
       }
 
-      // Si encontramos información de la CPU, actualizamos el estado
+      // Procesar datos del fallback
       if (cpuName) {
         let currentHP = 0;
         let maxHP = 100;
         let isFainted = false;
 
+        console.log(`🎯 Procesando CPU Pokémon (fallback): ${cpuName}, Condición FINAL: ${cpuCondition}`);
+
         if (cpuCondition) {
           if (cpuCondition.includes("fnt")) {
-            // Pokémon de la CPU debilitado
             isFainted = true;
             currentHP = 0;
-            // Intentar recuperar el HP máximo almacenado
             const storedMaxHP = cpuMaxHPRef.current.get(cpuName);
-            maxHP = storedMaxHP || 100; // Fallback a 100 si no tenemos datos
+            maxHP = storedMaxHP || 100;
           } else {
-            // Pokémon de la CPU vivo, parsear HP normal
             const hpParts = cpuCondition.split("/");
             if (hpParts.length === 2) {
               currentHP = parseInt(hpParts[0], 10);
               maxHP = parseInt(hpParts[1], 10);
-              // Almacenar el HP máximo para uso futuro
               cpuMaxHPRef.current.set(cpuName, maxHP);
+              console.log(`❤️ CPU Pokémon (fallback): ${cpuName}, HP FINAL: ${currentHP}/${maxHP}`);
             }
           }
         }
+
+        const hpPercentage = maxHP > 0 ? (currentHP / maxHP) * 100 : 0;
 
         setCpuPokemon({
           name: cpuName,
           currentHP,
           maxHP,
-          hpPercentage: maxHP > 0 ? (currentHP / maxHP) * 100 : 0,
+          hpPercentage,
           status: isFainted ? "fnt" : null,
         });
+
+        console.log(
+          `✅ Estado CPU actualizado (fallback): ${cpuName}, HP: ${currentHP}/${maxHP} (${hpPercentage.toFixed(1)}%)`
+        );
       }
     }
   }, [logs]);

@@ -419,6 +419,7 @@
 .switch-button.active {
   filter: grayscale(0%);
   opacity: 1;
+  color: #000;
   animation: pulse-outline 1s ease-in-out infinite;
 }
 
