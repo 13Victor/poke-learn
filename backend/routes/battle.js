@@ -501,7 +501,7 @@ function hasEffectiveMoves(battle, cpuRequestData) {
 
 /**
  * Helper function to check if AI should switch based on type effectiveness (Hard mode)
- * Updated with new strategic flow
+ * Updated with corrected strategic flow and fixed effectiveness calculation
  */
 async function shouldAISwitchPokemon(battle, cpuRequestData) {
   console.log(`🔥 ============= ANÁLISIS ESTRATÉGICO COMPLETO - MODO DIFÍCIL =============`);
@@ -512,21 +512,7 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
   }
 
   try {
-    // STEP 1: Check if current Pokemon has effective moves against opponent
-    console.log(`🎯 PASO 1: ¿Tiene movimientos efectivos el Pokémon actual?`);
-    const hasEffectiveMovesResult = hasEffectiveMoves(battle, cpuRequestData);
-
-    if (hasEffectiveMovesResult) {
-      console.log(`✅ El Pokémon actual TIENE movimientos súper efectivos. ¡ATACAR!`);
-      console.log(`🔥 ============= DECISIÓN: MANTENER Y ATACAR =============`);
-      return null; // Don't switch, use effective move
-    }
-
-    console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos`);
-
-    // STEP 2: Look for a better Pokemon to switch to
-    console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar...`);
-
+    // Get opponent's active Pokemon first
     const playerSide = parseLatestRequestData(battle.logs, "p1");
     if (!playerSide?.side?.pokemon) {
       console.log("⚠️ No se pueden obtener datos del oponente");
@@ -547,6 +533,23 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       return null;
     }
 
+    console.log(`🎯 Analizando contra oponente: ${opponentPokemonName} [${opponentTypes.join(", ")}]`);
+
+    // STEP 1: Check if current Pokemon has super effective moves
+    console.log(`🎯 PASO 1: ¿Tiene movimientos súper efectivos el Pokémon actual?`);
+    const hasEffectiveMovesResult = hasEffectiveMoves(battle, cpuRequestData);
+
+    if (hasEffectiveMovesResult) {
+      console.log(`✅ El Pokémon actual TIENE movimientos súper efectivos. ¡ATACAR!`);
+      console.log(`🔥 ============= DECISIÓN: MANTENER Y ATACAR =============`);
+      return null; // Don't switch, use effective move
+    }
+
+    console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos`);
+
+    // STEP 2: Always look for a better Pokemon when current one has no super effective moves
+    console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar...`);
+
     const cpuSidePokemon = cpuRequestData.side?.pokemon || [];
     const availableForSwitch = cpuSidePokemon.filter((p) => !p.active && !p.condition.includes("fnt"));
 
@@ -558,7 +561,7 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       return null;
     }
 
-    // Check each available Pokemon to see if it has effective moves
+    // Check each available Pokemon to see if it has effective moves or better matchup
     const data = require("../data/dataLoader");
     const moves = data.moves.Moves;
     const typeChart = getTypeChart();
@@ -579,37 +582,57 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       const pokemonMoves = pokemon.moves || [];
       let hasEffectiveMove = false;
       let maxEffectiveness = 0;
+      let bestMoveEffectiveness = 0;
+
+      console.log(`  📋 Movimientos de ${pokemonName}: [${pokemonMoves.join(", ")}]`);
 
       for (const moveName of pokemonMoves) {
-        // Find move type
+        // Find move type and power
         let moveType = null;
         let basePower = 0;
 
+        // Search for move by name (normalize both move name and search term)
+        const normalizedMoveName = moveName.toLowerCase().replace(/[\s'-]/g, "");
+
         for (const id in moves) {
-          if (moves[id].name === moveName) {
+          const normalizedDataMoveName = moves[id].name.toLowerCase().replace(/[\s'-]/g, "");
+          if (normalizedDataMoveName === normalizedMoveName) {
             moveType = moves[id].type?.toLowerCase();
             basePower = moves[id].basePower || 0;
             break;
           }
         }
 
-        if (!moveType || basePower === 0) continue; // Skip status moves
+        if (!moveType) {
+          console.log(`  ⚠️ No se encontró tipo para movimiento: ${moveName}`);
+          continue;
+        }
 
-        // Calculate effectiveness
+        // Calculate effectiveness against each opponent type
         let effectiveness = 1;
         for (const opponentType of opponentTypes) {
           const typeEffectiveness = typeChart[moveType]?.[opponentType] || 1;
           effectiveness *= typeEffectiveness;
         }
 
-        console.log(`  📋 ${moveName} (${moveType}): ${effectiveness}x efectividad`);
+        console.log(
+          `  📋 ${moveName} (${moveType}, ${basePower} BP): ${effectiveness}x efectividad contra [${opponentTypes.join(
+            ", "
+          )}]`
+        );
 
         if (effectiveness >= 2.0) {
           hasEffectiveMove = true;
+          console.log(`    💥 ¡SÚPER EFECTIVO!`);
         }
 
+        // Consider both effectiveness and base power for overall offensive potential
+        const moveScore = effectiveness * (basePower || 60); // Give status moves base value
+        bestMoveEffectiveness = Math.max(bestMoveEffectiveness, moveScore);
         maxEffectiveness = Math.max(maxEffectiveness, effectiveness);
       }
+
+      console.log(`  🎯 ${pokemonName} - Máxima efectividad encontrada: ${maxEffectiveness}x`);
 
       // Calculate defensive advantage (how well this Pokemon resists opponent's attacks)
       let defensiveScore = 1;
@@ -622,41 +645,74 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
         defensiveScore = Math.min(defensiveScore, typeResistance); // Take worst case
       }
 
-      // Total score: offensive potential + defensive advantage
-      const totalScore = maxEffectiveness + 1 / Math.max(defensiveScore, 0.25);
+      // Enhanced scoring system
+      let totalScore = 0;
 
-      console.log(
-        `  🏆 ${pokemonName} - Ofensiva: ${maxEffectiveness}x, Defensiva: ${defensiveScore}x, Score: ${totalScore}`
-      );
-
+      // Prioritize Pokemon with super effective moves
       if (hasEffectiveMove) {
-        console.log(`  💥 ¡${pokemonName} TIENE movimientos súper efectivos!`);
+        totalScore += 1000; // High bonus for super effective moves
+        console.log(`  💥 ¡${pokemonName} TIENE movimientos súper efectivos! +1000 puntos`);
       }
 
-      if (hasEffectiveMove && totalScore > bestScore) {
+      // Add offensive potential (use raw effectiveness score)
+      totalScore += maxEffectiveness * 100; // Scale up the effectiveness
+
+      // Add defensive advantage (resistance gives points, weakness reduces points)
+      if (defensiveScore <= 0.5) {
+        totalScore += 200; // Bonus for resisting opponent's attacks
+        console.log(`  🛡️ ${pokemonName} resiste ataques del oponente (${defensiveScore}x) +200 puntos`);
+      } else if (defensiveScore >= 2.0) {
+        totalScore -= 100; // Penalty for being weak to opponent
+        console.log(`  💔 ${pokemonName} es débil a ataques del oponente (${defensiveScore}x) -100 puntos`);
+      }
+
+      console.log(
+        `  🏆 ${pokemonName} - Mejor efectividad: ${maxEffectiveness}x, Defensiva: ${defensiveScore}x, Score total: ${totalScore}`
+      );
+
+      if (totalScore > bestScore) {
         bestScore = totalScore;
         bestSwitchOption = {
           pokemon,
           slot: cpuSidePokemon.findIndex((p) => p.details === pokemon.details) + 1,
           maxEffectiveness,
           defensiveScore,
+          hasEffectiveMove,
+          totalScore,
         };
       }
     }
 
-    // STEP 3: Make decision
+    // STEP 3: Make decision - be more aggressive about switching
     if (bestSwitchOption) {
       const switchName = bestSwitchOption.pokemon.details.split(",")[0].trim();
-      console.log(`🎯 ¡MEJOR OPCIÓN ENCONTRADA: ${switchName} (slot ${bestSwitchOption.slot})!`);
-      console.log(`   Efectividad ofensiva: ${bestSwitchOption.maxEffectiveness}x`);
-      console.log(`   Resistencia defensiva: ${bestSwitchOption.defensiveScore}x`);
-      console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
-      return bestSwitchOption.slot;
+
+      // Switch if the alternative is significantly better
+      const shouldSwitch =
+        bestSwitchOption.hasEffectiveMove || // Has super effective moves
+        bestSwitchOption.defensiveScore <= 0.5 || // Good defensive matchup
+        bestSwitchOption.maxEffectiveness >= 1.5; // At least some effectiveness advantage
+
+      if (shouldSwitch) {
+        console.log(`🎯 ¡MEJOR OPCIÓN ENCONTRADA: ${switchName} (slot ${bestSwitchOption.slot})!`);
+        console.log(`   Movimientos súper efectivos: ${bestSwitchOption.hasEffectiveMove ? "SÍ" : "NO"}`);
+        console.log(`   Efectividad máxima: ${bestSwitchOption.maxEffectiveness}x`);
+        console.log(`   Resistencia defensiva: ${bestSwitchOption.defensiveScore}x`);
+        console.log(`   Puntuación total: ${bestSwitchOption.totalScore}`);
+        console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
+        return bestSwitchOption.slot;
+      } else {
+        console.log(`❌ Mejor alternativa encontrada pero no es suficientemente superior`);
+        console.log(
+          `   ${switchName}: score ${bestSwitchOption.totalScore}, efectividad ${bestSwitchOption.maxEffectiveness}x`
+        );
+      }
     } else {
-      console.log(`❌ No se encontró un Pokémon mejor con movimientos efectivos`);
-      console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO =============`);
-      return null;
+      console.log(`❌ No se encontraron alternativas viables`);
     }
+
+    console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO =============`);
+    return null;
   } catch (error) {
     console.error("❌ Error en análisis estratégico:", error);
     return null;
@@ -1128,5 +1184,137 @@ router.get("/formats", async (req, res) => {
     res.status(500).json(formatResponse(false, errorMessages.SERVER_ERROR));
   }
 });
+
+/**
+ * Helper function to get type chart data
+ */
+function getTypeChart() {
+  try {
+    // Load the type chart from the JSON file
+    const typeChart = require("../data/types.json");
+    console.log("🔍 Type chart cargado exitosamente");
+    return typeChart;
+  } catch (error) {
+    console.error("❌ Error loading type chart:", error);
+    // Return a basic type chart as fallback
+    return {
+      normal: { rock: 0.5, ghost: 0, steel: 0.5 },
+      fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
+      water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+      electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+      grass: {
+        fire: 0.5,
+        water: 2,
+        electric: 1,
+        grass: 0.5,
+        poison: 0.5,
+        ground: 2,
+        flying: 0.5,
+        bug: 0.5,
+        rock: 2,
+        dragon: 0.5,
+        steel: 0.5,
+      },
+      ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
+      fighting: {
+        normal: 2,
+        ice: 2,
+        poison: 0.5,
+        flying: 0.5,
+        psychic: 0.5,
+        bug: 0.5,
+        rock: 2,
+        ghost: 0,
+        dark: 2,
+        steel: 2,
+        fairy: 0.5,
+      },
+      poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
+      ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
+      flying: { electric: 0.5, grass: 2, ice: 1, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
+      psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+      bug: {
+        fire: 0.5,
+        grass: 2,
+        fighting: 0.5,
+        poison: 0.5,
+        flying: 0.5,
+        psychic: 2,
+        ghost: 0.5,
+        dark: 2,
+        steel: 0.5,
+        fairy: 0.5,
+      },
+      rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
+      ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+      dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+      dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+      steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
+      fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 },
+    };
+  }
+}
+
+/**
+ * Helper function to get pokemon types by name
+ */
+function getPokemonTypes(pokemonName) {
+  try {
+    const data = require("../data/dataLoader");
+    const pokedex = data.pokedex.Pokedex;
+
+    // Normalize pokemon name
+    const normalizedName = pokemonName.toLowerCase().replace(/[\s'-]/g, "");
+
+    // Search for pokemon
+    for (const pokemonId in pokedex) {
+      const pokemon = pokedex[pokemonId];
+      const normalizedPokemonName = pokemon.name.toLowerCase().replace(/[\s'-]/g, "");
+
+      if (normalizedPokemonName === normalizedName) {
+        console.log(`🔍 Tipos encontrados para ${pokemonName}: [${pokemon.types.join(", ")}]`);
+        return pokemon.types.map((type) => type.toLowerCase());
+      }
+    }
+
+    console.log(`⚠️ No se encontraron tipos para: ${pokemonName}`);
+    return null;
+  } catch (error) {
+    console.error(`Error getting types for ${pokemonName}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Helper function to calculate type effectiveness
+ */
+function calculateTypeEffectiveness(attackingTypes, defendingTypes, typeChart) {
+  console.log(`🧮 Calculando efectividad: [${attackingTypes.join(", ")}] -> [${defendingTypes.join(", ")}]`);
+
+  if (!attackingTypes || !defendingTypes || !typeChart) {
+    console.log("⚠️ Datos insuficientes para calcular efectividad");
+    return 1;
+  }
+
+  let totalEffectiveness = 1;
+
+  // For dual-type pokemon, we need to calculate effectiveness against both types
+  for (const attackingType of attackingTypes) {
+    let moveEffectiveness = 1;
+
+    for (const defendingType of defendingTypes) {
+      const effectiveness = typeChart[attackingType]?.[defendingType] || 1;
+      moveEffectiveness *= effectiveness;
+      console.log(`  ${attackingType} -> ${defendingType}: ${effectiveness}x`);
+    }
+
+    // For multiple attacking types, we typically want the best effectiveness
+    totalEffectiveness = Math.max(totalEffectiveness, moveEffectiveness);
+    console.log(`  Efectividad de ${attackingType}: ${moveEffectiveness}x`);
+  }
+
+  console.log(`🎯 Efectividad total: ${totalEffectiveness}x`);
+  return totalEffectiveness;
+}
 
 module.exports = router;
