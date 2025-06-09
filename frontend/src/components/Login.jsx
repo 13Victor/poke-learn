@@ -22,16 +22,6 @@ function Login() {
   const [loginState, setLoginState] = useState("idle");
   const redirectTimer = useRef(null);
 
-  // Estados para la animación de imágenes
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const animationInterval = useRef(null);
-
-  // Generar array de rutas de las imágenes de la animación (000 a 155)
-  const animationFrames = Array.from({ length: 156 }, (_, i) => {
-    const frameNumber = i.toString().padStart(3, "0"); // Convierte 0 -> "000", 1 -> "001", etc.
-    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
-  });
-
   const { setError, error, clearError, isAuthenticated, setManualLoginInProgress, forceAuthCheck, debugState } =
     useAuth();
   const navigate = useNavigate();
@@ -39,21 +29,6 @@ function Login() {
 
   // Obtener la ubicación anterior si existe
   const from = location.state?.from?.pathname || "/user";
-
-  // Efecto para la animación de imágenes
-  useEffect(() => {
-    if (animationFrames.length > 1) {
-      animationInterval.current = setInterval(() => {
-        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
-      }, 60); // 60ms entre frames = ~16.6 FPS, ajusta según prefieras
-
-      return () => {
-        if (animationInterval.current) {
-          clearInterval(animationInterval.current);
-        }
-      };
-    }
-  }, [animationFrames.length]);
 
   // Efecto para mostrar el estado de depuración
   useEffect(() => {
@@ -143,16 +118,12 @@ function Login() {
       if (redirectTimer.current) {
         clearTimeout(redirectTimer.current);
       }
-      if (animationInterval.current) {
-        clearInterval(animationInterval.current);
-      }
       // Asegurarse de que el login manual se marca como finalizado si se desmonta el componente
       setManualLoginInProgress(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // [Resto de las funciones permanecen igual...]
   // Función para reenviar el correo de verificación
   const handleResendVerification = async () => {
     if (!unverifiedUser) return;
@@ -488,18 +459,18 @@ function Login() {
       </div>
 
       <div className="background-container">
-        {/* Overlay con animación de imágenes */}
+        {/* Static background image */}
         <div className="overlay">
           <div className="animated-overlay">
             <img
-              src={animationFrames[currentFrame]}
-              alt="Pokémon Animation"
+              src="/assets/anim/Mega Rayquaza_000.jpg"
+              alt="Pokémon Background"
               className="animation-frame"
               style={{
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                opacity: 1, // Ajusta la opacidad según necesites
+                opacity: 1,
               }}
             />
           </div>

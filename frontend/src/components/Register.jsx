@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -29,44 +29,12 @@ function Register() {
     symbol: false,
   });
 
-  // Estados para la animación de imágenes
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const animationInterval = useRef(null);
-
-  // Generar array de rutas de las imágenes de la animación (000 a 155)
-  const animationFrames = Array.from({ length: 156 }, (_, i) => {
-    const frameNumber = i.toString().padStart(3, "0");
-    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
-  });
-
   const { setError, clearError, isAuthenticated, setManualLoginInProgress } = useAuth();
   const navigate = useNavigate();
-
-  // Efecto para la animación de imágenes
-  useEffect(() => {
-    if (animationFrames.length > 1) {
-      animationInterval.current = setInterval(() => {
-        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
-      }, 60); // 60ms entre frames = ~16.6 FPS
-
-      return () => {
-        if (animationInterval.current) {
-          clearInterval(animationInterval.current);
-        }
-      };
-    }
-  }, [animationFrames.length]);
 
   // Limpiar errores al montar el componente
   useEffect(() => {
     clearError();
-
-    // Limpieza al desmontar
-    return () => {
-      if (animationInterval.current) {
-        clearInterval(animationInterval.current);
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -415,12 +383,12 @@ function Register() {
       </div>
 
       <div className="background-container">
-        {/* Overlay con animación de imágenes */}
+        {/* Static background image */}
         <div className="overlay">
           <div className="animated-overlay">
             <img
-              src={animationFrames[currentFrame]}
-              alt="Pokémon Animation"
+              src="/assets/anim/Mega Rayquaza_000.jpg"
+              alt="Pokémon Background"
               className="animation-frame"
               style={{
                 width: "100%",

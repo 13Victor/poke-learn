@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { auth } from "../firebase.config";
@@ -12,43 +12,12 @@ function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  // Animation states
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const animationInterval = useRef(null);
-
-  // Generate animation frames array (000 to 155)
-  const animationFrames = Array.from({ length: 156 }, (_, i) => {
-    const frameNumber = i.toString().padStart(3, "0");
-    return `/assets/anim/Mega Rayquaza_${frameNumber}.jpg`;
-  });
-
   const { clearError } = useAuth();
   const navigate = useNavigate();
-
-  // Animation effect
-  useEffect(() => {
-    if (animationFrames.length > 1) {
-      animationInterval.current = setInterval(() => {
-        setCurrentFrame((prev) => (prev + 1) % animationFrames.length);
-      }, 60);
-
-      return () => {
-        if (animationInterval.current) {
-          clearInterval(animationInterval.current);
-        }
-      };
-    }
-  }, [animationFrames.length]);
 
   // Clear errors on mount
   useEffect(() => {
     clearError();
-
-    return () => {
-      if (animationInterval.current) {
-        clearInterval(animationInterval.current);
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -234,12 +203,12 @@ function VerifyEmail() {
       </div>
 
       <div className="background-container">
-        {/* Overlay with image animation */}
+        {/* Static background image */}
         <div className="overlay">
           <div className="animated-overlay">
             <img
-              src={animationFrames[currentFrame]}
-              alt="Pokémon Animation"
+              src="/assets/anim/Mega Rayquaza_000.jpg"
+              alt="Pokémon Background"
               className="animation-frame"
               style={{
                 width: "100%",
