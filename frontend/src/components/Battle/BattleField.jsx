@@ -1,13 +1,22 @@
-// src/components/Combat/BattleField.jsx - VERSIÓN CORREGIDA CON HP PERSISTENTE
+// src/components/Combat/BattleField.jsx - VERSIÓN CON FONDO ALEATORIO
 import React, { useState, useEffect, useRef } from "react";
 
 export function BattleField({ logs, requestData, isLoading }) {
   const [playerPokemon, setPlayerPokemon] = useState(null);
   const [cpuPokemon, setCpuPokemon] = useState(null);
+  const [randomBackground, setRandomBackground] = useState(null);
 
   // Referencias para almacenar HP máximo de cada Pokémon
   const playerMaxHPRef = useRef(new Map()); // Map<pokemonName, maxHP>
   const cpuMaxHPRef = useRef(new Map());
+
+  // Generar fondo aleatorio al montar el componente
+  useEffect(() => {
+    const randomBgNumber = Math.floor(Math.random() * 5) + 1; // Genera número entre 1 y 5
+    const backgroundUrl = `url('/assets/backgrounds/cave${randomBgNumber}.png')`;
+    setRandomBackground(backgroundUrl);
+    console.log(`🎨 Fondo aleatorio seleccionado: cave${randomBgNumber}.png`);
+  }, []);
 
   // Parse player's Pokémon data from requestData
   useEffect(() => {
@@ -277,8 +286,8 @@ export function BattleField({ logs, requestData, isLoading }) {
 
   return (
     <div className="battle-field">
-      {/* Campo de batalla (imagen de fondo) */}
-      <div className="battle-background">
+      {/* Campo de batalla (imagen de fondo aleatoria) */}
+      <div className="battle-background" style={{ backgroundImage: randomBackground }}>
         {/* Pokémon de la CPU (arriba) */}
         {cpuPokemon && (
           <div className="cpu-pokemon">

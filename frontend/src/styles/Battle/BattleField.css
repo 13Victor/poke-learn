@@ -12,7 +12,6 @@
 
 .battle-background {
   display: flex;
-  background: url("/assets/backgrounds/cave5.png");
   width: 100%;
   background-size: cover;
   border-radius: var(--radius-lg);
