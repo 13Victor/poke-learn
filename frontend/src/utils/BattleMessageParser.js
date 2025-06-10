@@ -295,17 +295,8 @@ export class BattleMessageParser {
     this.pendingEffectivenessMessages = [];
     this.ignoreSplitDamage = false;
 
-    // Add weather/field condition reminders every few turns
-    let conditions = [];
-    if (this.activeWeather) {
-      conditions.push(`☁️ ${this.activeWeather}`);
-    }
-    if (this.fieldConditions.length > 0) {
-      conditions.push(`🌍 ${this.fieldConditions.join(", ")}`);
-    }
-
-    const conditionText = conditions.length > 0 ? `\n${conditions.join(" | ")}` : "";
-    return `\n🎯 **TURN ${turnNum}${conditionText}**\n`;
+    // Remove weather/field condition reminders from turn display
+    return `\n🎯 **TURN ${turnNum}**\n`;
   }
 
   parseMove(args, kwArgs) {

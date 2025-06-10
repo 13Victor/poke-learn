@@ -351,9 +351,44 @@ function getMostEffectiveMove(battle, enabledMoves, enabledSlots, cpuRequestData
     let bestEffectiveness = -1;
     let bestMoveName = "Unknown";
 
+    // NUEVO: Filter out 0 BP moves in hard mode
+    const filteredMoves = [];
+    const filteredSlots = [];
+
     enabledMoves.forEach((moveData, index) => {
       const moveName = moveData.move;
       const slot = enabledSlots[index];
+
+      // Find move data by name
+      let basePower = 0;
+      for (const id in moves) {
+        if (moves[id].name === moveName) {
+          basePower = moves[id].basePower || 0;
+          break;
+        }
+      }
+
+      // In hard mode, filter out 0 BP (status) moves
+      if (battle.difficulty === "hard" && basePower === 0) {
+        console.log(`❌ MODO DIFÍCIL: Bloqueando movimiento de estado ${moveName} (0 BP)`);
+        return; // Skip this move
+      }
+
+      filteredMoves.push(moveData);
+      filteredSlots.push(slot);
+    });
+
+    // If all moves were filtered out (all status moves), use original moves as fallback
+    const movesToAnalyze = filteredMoves.length > 0 ? filteredMoves : enabledMoves;
+    const slotsToAnalyze = filteredSlots.length > 0 ? filteredSlots : enabledSlots;
+
+    if (filteredMoves.length === 0 && battle.difficulty === "hard") {
+      console.log("⚠️ MODO DIFÍCIL: Todos los movimientos son de estado, usando como último recurso");
+    }
+
+    movesToAnalyze.forEach((moveData, index) => {
+      const moveName = moveData.move;
+      const slot = slotsToAnalyze[index];
 
       // Find move data by name
       let moveType = null;
@@ -400,7 +435,7 @@ function getMostEffectiveMove(battle, enabledMoves, enabledSlots, cpuRequestData
     // Log final decision
     const finalEffectiveness =
       bestEffectiveness /
-      (enabledMoves.find((m) => m.move === bestMoveName)
+      (movesToAnalyze.find((m) => m.move === bestMoveName)
         ? moves[Object.keys(moves).find((id) => moves[id].name === bestMoveName)]?.basePower || 10
         : 10);
 
@@ -464,16 +499,24 @@ function hasEffectiveMoves(battle, cpuRequestData) {
     for (const moveData of enabledMoves) {
       const moveName = moveData.move;
 
-      // Find move type
+      // Find move type and base power
       let moveType = null;
+      let basePower = 0;
       for (const id in moves) {
         if (moves[id].name === moveName) {
           moveType = moves[id].type?.toLowerCase();
+          basePower = moves[id].basePower || 0;
           break;
         }
       }
 
       if (!moveType) continue;
+
+      // NUEVO: In hard mode, ignore 0 BP moves for effectiveness check
+      if (battle.difficulty === "hard" && basePower === 0) {
+        console.log(`🔍 ${moveName} (${moveType}) - IGNORADO en modo difícil (0 BP)`);
+        continue;
+      }
 
       // Calculate effectiveness
       let effectiveness = 1;
@@ -482,7 +525,7 @@ function hasEffectiveMoves(battle, cpuRequestData) {
         effectiveness *= typeEffectiveness;
       }
 
-      console.log(`🔍 ${moveName} (${moveType}) vs [${opponentTypes.join(", ")}]: ${effectiveness}x`);
+      console.log(`🔍 ${moveName} (${moveType}, ${basePower} BP) vs [${opponentTypes.join(", ")}]: ${effectiveness}x`);
 
       // If we have a super effective move, return true
       if (effectiveness >= 2.0) {
@@ -501,10 +544,10 @@ function hasEffectiveMoves(battle, cpuRequestData) {
 
 /**
  * Helper function to check if AI should switch based on type effectiveness (Hard mode)
- * Updated with corrected strategic flow and fixed effectiveness calculation
+ * ACTUALIZADO: Now runs every turn in hard mode and considers 0 BP move filtering
  */
 async function shouldAISwitchPokemon(battle, cpuRequestData) {
-  console.log(`🔥 ============= ANÁLISIS ESTRATÉGICO COMPLETO - MODO DIFÍCIL =============`);
+  console.log(`🔥 ============= ANÁLISIS ESTRATÉGICO CADA TURNO - MODO DIFÍCIL =============`);
 
   if (battle.difficulty !== "hard") {
     console.log("⚠️ No es modo difícil, no analizando cambio estratégico");
@@ -533,22 +576,26 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       return null;
     }
 
-    console.log(`🎯 Analizando contra oponente: ${opponentPokemonName} [${opponentTypes.join(", ")}]`);
+    console.log(
+      `🎯 TURNO ${battle.turnCount || 0}: Analizando contra oponente: ${opponentPokemonName} [${opponentTypes.join(
+        ", "
+      )}]`
+    );
 
-    // STEP 1: Check if current Pokemon has super effective moves
-    console.log(`🎯 PASO 1: ¿Tiene movimientos súper efectivos el Pokémon actual?`);
+    // STEP 1: Check if current Pokemon has super effective NON-STATUS moves
+    console.log(`🎯 PASO 1: ¿Tiene movimientos súper efectivos NO de estado el Pokémon actual?`);
     const hasEffectiveMovesResult = hasEffectiveMoves(battle, cpuRequestData);
 
     if (hasEffectiveMovesResult) {
-      console.log(`✅ El Pokémon actual TIENE movimientos súper efectivos. ¡ATACAR!`);
+      console.log(`✅ El Pokémon actual TIENE movimientos súper efectivos no de estado. ¡ATACAR!`);
       console.log(`🔥 ============= DECISIÓN: MANTENER Y ATACAR =============`);
       return null; // Don't switch, use effective move
     }
 
-    console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos`);
+    console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos disponibles`);
 
-    // STEP 2: Always look for a better Pokemon when current one has no super effective moves
-    console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar...`);
+    // STEP 2: ALWAYS look for a better Pokemon (this runs EVERY TURN in hard mode)
+    console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar (ANÁLISIS CADA TURNO)...`);
 
     const cpuSidePokemon = cpuRequestData.side?.pokemon || [];
     const availableForSwitch = cpuSidePokemon.filter((p) => !p.active && !p.condition.includes("fnt"));
@@ -578,7 +625,7 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
 
       console.log(`🔍 Analizando: ${pokemonName} [${pokemonTypes.join(", ")}]`);
 
-      // Check if this Pokemon would have effective moves
+      // Check if this Pokemon would have effective NON-STATUS moves
       const pokemonMoves = pokemon.moves || [];
       let hasEffectiveMove = false;
       let maxEffectiveness = 0;
@@ -608,6 +655,12 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
           continue;
         }
 
+        // NUEVO: In hard mode, ignore status moves (0 BP) for switching analysis
+        if (basePower === 0) {
+          console.log(`  ❌ Ignorando movimiento de estado: ${moveName} (0 BP)`);
+          continue;
+        }
+
         // Calculate effectiveness against each opponent type
         let effectiveness = 1;
         for (const opponentType of opponentTypes) {
@@ -627,7 +680,7 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
         }
 
         // Consider both effectiveness and base power for overall offensive potential
-        const moveScore = effectiveness * (basePower || 60); // Give status moves base value
+        const moveScore = effectiveness * basePower;
         bestMoveEffectiveness = Math.max(bestMoveEffectiveness, moveScore);
         maxEffectiveness = Math.max(maxEffectiveness, effectiveness);
       }
@@ -645,25 +698,25 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
         defensiveScore = Math.min(defensiveScore, typeResistance); // Take worst case
       }
 
-      // Enhanced scoring system
+      // Enhanced scoring system for every-turn analysis
       let totalScore = 0;
 
-      // Prioritize Pokemon with super effective moves
+      // HIGHEST priority: Pokemon with super effective NON-STATUS moves
       if (hasEffectiveMove) {
-        totalScore += 1000; // High bonus for super effective moves
-        console.log(`  💥 ¡${pokemonName} TIENE movimientos súper efectivos! +1000 puntos`);
+        totalScore += 2000; // Even higher bonus for super effective attacking moves
+        console.log(`  💥 ¡${pokemonName} TIENE movimientos súper efectivos NO de estado! +2000 puntos`);
       }
 
       // Add offensive potential (use raw effectiveness score)
-      totalScore += maxEffectiveness * 100; // Scale up the effectiveness
+      totalScore += maxEffectiveness * 150; // Increased weight for offensive potential
 
       // Add defensive advantage (resistance gives points, weakness reduces points)
       if (defensiveScore <= 0.5) {
-        totalScore += 200; // Bonus for resisting opponent's attacks
-        console.log(`  🛡️ ${pokemonName} resiste ataques del oponente (${defensiveScore}x) +200 puntos`);
+        totalScore += 300; // Higher bonus for resisting opponent's attacks
+        console.log(`  🛡️ ${pokemonName} resiste ataques del oponente (${defensiveScore}x) +300 puntos`);
       } else if (defensiveScore >= 2.0) {
-        totalScore -= 100; // Penalty for being weak to opponent
-        console.log(`  💔 ${pokemonName} es débil a ataques del oponente (${defensiveScore}x) -100 puntos`);
+        totalScore -= 200; // Higher penalty for being weak to opponent
+        console.log(`  💔 ${pokemonName} es débil a ataques del oponente (${defensiveScore}x) -200 puntos`);
       }
 
       console.log(
@@ -683,38 +736,38 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       }
     }
 
-    // STEP 3: Make decision - be more aggressive about switching
+    // STEP 3: Make decision - be more aggressive about switching in hard mode every-turn analysis
     if (bestSwitchOption) {
       const switchName = bestSwitchOption.pokemon.details.split(",")[0].trim();
 
-      // Switch if the alternative is significantly better
+      // More aggressive switching criteria for hard mode every-turn analysis
       const shouldSwitch =
-        bestSwitchOption.hasEffectiveMove || // Has super effective moves
+        bestSwitchOption.hasEffectiveMove || // Has super effective non-status moves
         bestSwitchOption.defensiveScore <= 0.5 || // Good defensive matchup
-        bestSwitchOption.maxEffectiveness >= 1.5; // At least some effectiveness advantage
+        (bestSwitchOption.maxEffectiveness >= 1.5 && bestSwitchOption.totalScore >= 300); // Decent advantage
 
       if (shouldSwitch) {
-        console.log(`🎯 ¡MEJOR OPCIÓN ENCONTRADA: ${switchName} (slot ${bestSwitchOption.slot})!`);
-        console.log(`   Movimientos súper efectivos: ${bestSwitchOption.hasEffectiveMove ? "SÍ" : "NO"}`);
+        console.log(`🎯 ¡CAMBIO ESTRATÉGICO CADA TURNO: ${switchName} (slot ${bestSwitchOption.slot})!`);
+        console.log(`   Movimientos súper efectivos no de estado: ${bestSwitchOption.hasEffectiveMove ? "SÍ" : "NO"}`);
         console.log(`   Efectividad máxima: ${bestSwitchOption.maxEffectiveness}x`);
         console.log(`   Resistencia defensiva: ${bestSwitchOption.defensiveScore}x`);
         console.log(`   Puntuación total: ${bestSwitchOption.totalScore}`);
         console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
         return bestSwitchOption.slot;
       } else {
-        console.log(`❌ Mejor alternativa encontrada pero no es suficientemente superior`);
+        console.log(`❌ Mejor alternativa encontrada pero no es suficientemente superior para cambio`);
         console.log(
           `   ${switchName}: score ${bestSwitchOption.totalScore}, efectividad ${bestSwitchOption.maxEffectiveness}x`
         );
       }
     } else {
-      console.log(`❌ No se encontraron alternativas viables`);
+      console.log(`❌ No se encontraron alternativas viables para cambio`);
     }
 
-    console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO =============`);
+    console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO DISPONIBLE =============`);
     return null;
   } catch (error) {
-    console.error("❌ Error en análisis estratégico:", error);
+    console.error("❌ Error en análisis estratégico cada turno:", error);
     return null;
   }
 }
@@ -808,14 +861,14 @@ async function handleAutomaticCPUAction(battle) {
     else if (cpuRequestData.active && cpuRequestData.active[0] && cpuRequestData.active[0].moves) {
       console.log("⚔️ CPU puede atacar - analizando estrategia...");
 
-      // For hard mode, check if strategic switching is needed
+      // For hard mode, ALWAYS check if strategic switching is needed (every turn)
       if (battle.difficulty === "hard") {
-        console.log("🔥 Modo difícil detectado - aplicando estrategia completa...");
+        console.log("🔥 Modo difícil detectado - aplicando estrategia CADA TURNO...");
         const strategicSwitchSlot = await shouldAISwitchPokemon(battle, cpuRequestData);
 
         if (strategicSwitchSlot) {
           cpuCommand = `>p2 switch ${strategicSwitchSlot}`;
-          console.log(`🎯 CPU realizando cambio estratégico a slot ${strategicSwitchSlot}`);
+          console.log(`🎯 CPU realizando cambio estratégico CADA TURNO a slot ${strategicSwitchSlot}`);
         }
       }
 
