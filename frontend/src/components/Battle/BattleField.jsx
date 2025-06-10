@@ -398,7 +398,7 @@ export function BattleField({ logs, requestData, isLoading }) {
   if (isLoading) {
     return (
       <div className="battle-area">
-        <p>Cargando batalla...</p>
+        <p>Loading Battle...</p>
       </div>
     );
   }

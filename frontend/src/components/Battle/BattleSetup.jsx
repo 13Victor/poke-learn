@@ -340,7 +340,7 @@ IVs: 0 Atk
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
-        <p>Cargando equipos...</p>
+        <p>Loading teams...</p>
       </div>
     );
   }
