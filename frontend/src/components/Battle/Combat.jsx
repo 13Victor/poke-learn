@@ -246,7 +246,7 @@ const Combat = () => {
 
       {battleState === "completed" && (
         <div className="battle-complete">
-          <h2>¡La batalla ha finalizado!</h2>
+          <h2>¡The Battle has ended!</h2>
 
           {/* Mostrar mensajes finales incluso cuando la batalla haya terminado */}
           <div className="battle-split-view">

@@ -544,7 +544,7 @@ function hasEffectiveMoves(battle, cpuRequestData) {
 
 /**
  * Helper function to check if AI should switch based on type effectiveness (Hard mode)
- * ACTUALIZADO: Now runs every turn in hard mode and considers 0 BP move filtering
+ * ACTUALIZADO: Now requires significant score advantage to prevent switching loops
  */
 async function shouldAISwitchPokemon(battle, cpuRequestData) {
   console.log(`🔥 ============= ANÁLISIS ESTRATÉGICO CADA TURNO - MODO DIFÍCIL =============`);
@@ -593,6 +593,81 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
     }
 
     console.log(`❌ El Pokémon actual NO tiene movimientos súper efectivos disponibles`);
+
+    // STEP 1.5: Calculate current Pokemon's score for comparison
+    const currentPokemon = cpuRequestData.side?.pokemon?.find((p) => p.active);
+    let currentPokemonScore = 0;
+
+    if (currentPokemon) {
+      const currentPokemonName = currentPokemon.details.split(",")[0].trim();
+      const currentPokemonTypes = getPokemonTypes(currentPokemonName);
+
+      console.log(
+        `🔍 Analizando Pokémon actual: ${currentPokemonName} [${currentPokemonTypes?.join(", ") || "Unknown"}]`
+      );
+
+      if (currentPokemonTypes) {
+        // Calculate current Pokemon's defensive score
+        let currentDefensiveScore = 1;
+        for (const opponentType of opponentTypes) {
+          let typeResistance = 1;
+          for (const pokemonType of currentPokemonTypes) {
+            const data = require("../data/dataLoader");
+            const typeChart = getTypeChart();
+            const resistance = typeChart[opponentType]?.[pokemonType] || 1;
+            typeResistance *= resistance;
+          }
+          currentDefensiveScore = Math.min(currentDefensiveScore, typeResistance);
+        }
+
+        // Calculate current Pokemon's offensive potential
+        const currentPokemonMoves = currentPokemon.moves || [];
+        let currentMaxEffectiveness = 0;
+
+        for (const moveName of currentPokemonMoves) {
+          const data = require("../data/dataLoader");
+          const moves = data.moves.Moves;
+          const typeChart = getTypeChart();
+
+          let moveType = null;
+          let basePower = 0;
+
+          const normalizedMoveName = moveName.toLowerCase().replace(/[\s'-]/g, "");
+          for (const id in moves) {
+            const normalizedDataMoveName = moves[id].name.toLowerCase().replace(/[\s'-]/g, "");
+            if (normalizedDataMoveName === normalizedMoveName) {
+              moveType = moves[id].type?.toLowerCase();
+              basePower = moves[id].basePower || 0;
+              break;
+            }
+          }
+
+          if (moveType && basePower > 0) {
+            let effectiveness = 1;
+            for (const opponentType of opponentTypes) {
+              const typeEffectiveness = typeChart[moveType]?.[opponentType] || 1;
+              effectiveness *= typeEffectiveness;
+            }
+            currentMaxEffectiveness = Math.max(currentMaxEffectiveness, effectiveness);
+          }
+        }
+
+        // Calculate current Pokemon's score using same formula
+        if (currentMaxEffectiveness >= 2.0) {
+          currentPokemonScore += 2000;
+        }
+        currentPokemonScore += currentMaxEffectiveness * 150;
+        if (currentDefensiveScore <= 0.5) {
+          currentPokemonScore += 300;
+        } else if (currentDefensiveScore >= 2.0) {
+          currentPokemonScore -= 200;
+        }
+
+        console.log(
+          `📊 Pokémon actual ${currentPokemonName} - Score: ${currentPokemonScore}, Efectividad máx: ${currentMaxEffectiveness}x, Defensiva: ${currentDefensiveScore}x`
+        );
+      }
+    }
 
     // STEP 2: ALWAYS look for a better Pokemon (this runs EVERY TURN in hard mode)
     console.log(`🎯 PASO 2: Buscando un Pokémon mejor para cambiar (ANÁLISIS CADA TURNO)...`);
@@ -736,35 +811,53 @@ async function shouldAISwitchPokemon(battle, cpuRequestData) {
       }
     }
 
-    // STEP 3: Make decision - be more aggressive about switching in hard mode every-turn analysis
+    // STEP 3: Make decision - require SIGNIFICANT advantage to prevent switching loops
     if (bestSwitchOption) {
       const switchName = bestSwitchOption.pokemon.details.split(",")[0].trim();
 
-      // More aggressive switching criteria for hard mode every-turn analysis
+      // NUEVO: Calculate score difference to prevent switching loops
+      const scoreDifference = bestSwitchOption.totalScore - currentPokemonScore;
+      const minimumAdvantage = 500; // Require at least 500 point advantage to switch
+
+      console.log(`📊 COMPARACIÓN DE PUNTUACIONES:`);
+      console.log(`   Pokémon actual: ${currentPokemonScore} puntos`);
+      console.log(`   Mejor alternativa (${switchName}): ${bestSwitchOption.totalScore} puntos`);
+      console.log(`   Diferencia: ${scoreDifference} puntos (mínimo requerido: ${minimumAdvantage})`);
+
+      // Enhanced switching criteria with score difference requirement
       const shouldSwitch =
-        bestSwitchOption.hasEffectiveMove || // Has super effective non-status moves
-        bestSwitchOption.defensiveScore <= 0.5 || // Good defensive matchup
-        (bestSwitchOption.maxEffectiveness >= 1.5 && bestSwitchOption.totalScore >= 300); // Decent advantage
+        (bestSwitchOption.hasEffectiveMove && !hasEffectiveMovesResult) || // Has super effective moves when current doesn't
+        (bestSwitchOption.defensiveScore <= 0.25 && currentPokemonScore < 500) || // Excellent defensive matchup when current is weak
+        scoreDifference >= minimumAdvantage; // Significant score advantage
 
       if (shouldSwitch) {
-        console.log(`🎯 ¡CAMBIO ESTRATÉGICO CADA TURNO: ${switchName} (slot ${bestSwitchOption.slot})!`);
+        console.log(`🎯 ¡CAMBIO ESTRATÉGICO JUSTIFICADO: ${switchName} (slot ${bestSwitchOption.slot})!`);
         console.log(`   Movimientos súper efectivos no de estado: ${bestSwitchOption.hasEffectiveMove ? "SÍ" : "NO"}`);
         console.log(`   Efectividad máxima: ${bestSwitchOption.maxEffectiveness}x`);
         console.log(`   Resistencia defensiva: ${bestSwitchOption.defensiveScore}x`);
         console.log(`   Puntuación total: ${bestSwitchOption.totalScore}`);
+        console.log(`   Ventaja de puntuación: +${scoreDifference} puntos`);
         console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
         return bestSwitchOption.slot;
       } else {
-        console.log(`❌ Mejor alternativa encontrada pero no es suficientemente superior para cambio`);
+        console.log(`❌ CAMBIO NO JUSTIFICADO - No hay ventaja suficiente`);
         console.log(
           `   ${switchName}: score ${bestSwitchOption.totalScore}, efectividad ${bestSwitchOption.maxEffectiveness}x`
         );
+        console.log(`   Ventaja de puntuación: +${scoreDifference} (insuficiente, mínimo: ${minimumAdvantage})`);
+
+        // Additional check: only switch if there's a clear advantage
+        if (bestSwitchOption.hasEffectiveMove && bestSwitchOption.maxEffectiveness >= 2.0) {
+          console.log(`💥 EXCEPCIÓN: Cambio por movimiento súper efectivo disponible`);
+          console.log(`🔥 ============= DECISIÓN: CAMBIAR A ${switchName.toUpperCase()} =============`);
+          return bestSwitchOption.slot;
+        }
       }
     } else {
       console.log(`❌ No se encontraron alternativas viables para cambio`);
     }
 
-    console.log(`🔥 ============= DECISIÓN: MANTENER Y USAR MEJOR MOVIMIENTO DISPONIBLE =============`);
+    console.log(`🔥 ============= DECISIÓN: MANTENER POKÉMON ACTUAL Y USAR MEJOR MOVIMIENTO DISPONIBLE =============`);
     return null;
   } catch (error) {
     console.error("❌ Error en análisis estratégico cada turno:", error);
