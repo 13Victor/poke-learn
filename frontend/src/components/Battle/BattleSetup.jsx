@@ -367,12 +367,15 @@ IVs: 0 Atk
 
           {teams.length === 0 ? (
             <div className="no-teams-message">
-              <p>No tienes equipos completos listos para batalla.</p>
-              <p>Ve a la sección de equipos para completar tus equipos antes de comenzar una batalla.</p>
-              <p>
-                <small>Solo se muestran equipos con 6 Pokémon completos (movimientos, habilidad, objeto y EVs).</small>
-              </p>
-              <button onClick={() => navigate("/teams")}>Ir a Equipos</button>
+              <p>You don't have any fully prepared teams ready for battle.</p>
+              <p>Go to the Teams section to complete your teams before starting a battle.</p>
+              <p>Only teams with 6 fully configured Pokémon (moves, ability, item, and EVs) are shown.</p>
+
+              <div className="teams-actions">
+                <button className="manage-teams-btn" onClick={() => navigate("/teams")}>
+                  Manage teams <FiArrowUpRight />
+                </button>
+              </div>
             </div>
           ) : (
             <div className="teams-grid-container">

@@ -1,5 +1,6 @@
 // components/teams/TeamsGrid.jsx
 import TeamCard from "./TeamCard";
+import { FiArrowUpRight } from "react-icons/fi";
 
 const TeamsGrid = ({
   teams,
@@ -19,7 +20,11 @@ const TeamsGrid = ({
     return (
       <div className="no-teams-message">
         <p>You don't have any teams yet. Create your first team!</p>
-        <button onClick={onCreateTeam}>Create Team</button>
+        <div className="teams-actions">
+          <button className="manage-teams-btn" onClick={onCreateTeam}>
+            Manage teams <FiArrowUpRight />
+          </button>
+        </div>
       </div>
     );
   }
