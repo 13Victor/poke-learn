@@ -4,7 +4,7 @@ body {
   font-size: var(--font-size-xs);
   color: var(--text);
   background-color: var(--background);
-  background-image: url("./background-pattern.png");
+  background-image: url("/assets/background-pattern.png");
   min-height: 100vh;
   display: flex;
   flex-direction: column;
