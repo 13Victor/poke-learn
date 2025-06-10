@@ -1,14 +1,39 @@
 // src/components/Combat/BattleField.jsx - VERSIÓN CON FONDO ALEATORIO
 import React, { useState, useEffect, useRef } from "react";
+import apiService from "../../services/apiService";
 
 export function BattleField({ logs, requestData, isLoading }) {
   const [playerPokemon, setPlayerPokemon] = useState(null);
   const [cpuPokemon, setCpuPokemon] = useState(null);
   const [randomBackground, setRandomBackground] = useState(null);
+  const [pokemonTypes, setPokemonTypes] = useState({}); // Cache for Pokémon types
 
   // Referencias para almacenar HP máximo de cada Pokémon
   const playerMaxHPRef = useRef(new Map()); // Map<pokemonName, maxHP>
   const cpuMaxHPRef = useRef(new Map());
+
+  // Función para obtener tipos de Pokémon
+  const fetchPokemonTypes = async (pokemonName) => {
+    if (!pokemonName || pokemonTypes[pokemonName]) {
+      return pokemonTypes[pokemonName] || [];
+    }
+
+    try {
+      const response = await apiService.getPokemonByName(pokemonName);
+      if (response.success && response.data.types) {
+        const types = response.data.types;
+        setPokemonTypes((prev) => ({
+          ...prev,
+          [pokemonName]: types,
+        }));
+        return types;
+      }
+    } catch (error) {
+      console.error(`Error fetching types for ${pokemonName}:`, error);
+    }
+
+    return [];
+  };
 
   // Generar fondo aleatorio al montar el componente
   useEffect(() => {
@@ -54,6 +79,9 @@ export function BattleField({ logs, requestData, isLoading }) {
           hpPercentage: (currentHP / maxHP) * 100,
           status: isFainted ? "fnt" : null,
         };
+
+        // Fetch types for this Pokémon
+        fetchPokemonTypes(pokemonName);
       }
     }
 
@@ -211,6 +239,9 @@ export function BattleField({ logs, requestData, isLoading }) {
             status: isFainted ? "fnt" : null,
           });
 
+          // Fetch types for CPU Pokémon
+          fetchPokemonTypes(cpuName);
+
           console.log(
             `✅ Estado CPU actualizado desde RequestData: ${cpuName}, HP: ${currentHP}/${maxHP} (${hpPercentage.toFixed(
               1
@@ -311,6 +342,9 @@ export function BattleField({ logs, requestData, isLoading }) {
           status: isFainted ? "fnt" : null,
         });
 
+        // Fetch types for CPU Pokémon (fallback)
+        fetchPokemonTypes(cpuName);
+
         console.log(
           `✅ Estado CPU actualizado (fallback): ${cpuName}, HP: ${currentHP}/${maxHP} (${hpPercentage.toFixed(1)}%)`
         );
@@ -347,6 +381,20 @@ export function BattleField({ logs, requestData, isLoading }) {
     return `https://play.pokemonshowdown.com/sprites/home/${formattedName}.png`;
   };
 
+  // Función para renderizar tipos de Pokémon
+  const renderPokemonTypes = (pokemonName) => {
+    const types = pokemonTypes[pokemonName] || [];
+    if (types.length === 0) return null;
+
+    return (
+      <div className="pokemon-types">
+        {types.map((type, index) => (
+          <img key={index} className="type-icon" src={`/assets/type-icons/${type}.png`} alt={type} />
+        ))}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="battle-area">
@@ -364,6 +412,7 @@ export function BattleField({ logs, requestData, isLoading }) {
           <div className="cpu-pokemon">
             <div className="pokemon-info">
               <div className="pokemon-name">{cpuPokemon.name}</div>
+              {renderPokemonTypes(cpuPokemon.name)}
               <div className="hp-info">
                 <div className="hp-bar">
                   <div
@@ -408,6 +457,7 @@ export function BattleField({ logs, requestData, isLoading }) {
             </div>
             <div className="pokemon-info">
               <div className="pokemon-name">{playerPokemon.name}</div>
+              {renderPokemonTypes(playerPokemon.name)}
               <div className="hp-info">
                 <div className="hp-bar">
                   <div
