@@ -18,50 +18,121 @@ export function BattleField({ logs, requestData, isLoading }) {
     console.log(`🎨 Fondo aleatorio seleccionado: cave${randomBgNumber}.png`);
   }, []);
 
-  // Parse player's Pokémon data from requestData
+  // Parse player's Pokémon data from requestData AND battle logs for faint events
   useEffect(() => {
+    let playerPokemonFromRequest = null;
+
+    // First, try to get data from requestData
     if (requestData?.side?.pokemon) {
-      // Encontrar el Pokémon activo del jugador
       const activePokemon = requestData.side.pokemon.find((pokemon) => pokemon.active);
       if (activePokemon) {
-        // Obtener el nombre del Pokémon (sin nivel ni otras info)
         const pokemonName = activePokemon.details.split(",")[0].trim();
-
-        // Parsear HP actual y máximo
         let currentHP = 0;
         let maxHP = 100;
         let isFainted = false;
 
         if (activePokemon.condition) {
           if (activePokemon.condition.includes("fnt")) {
-            // Pokémon debilitado
             isFainted = true;
             currentHP = 0;
-            // Intentar recuperar el HP máximo almacenado
             const storedMaxHP = playerMaxHPRef.current.get(pokemonName);
-            maxHP = storedMaxHP || 100; // Fallback a 100 si no tenemos datos
+            maxHP = storedMaxHP || 100;
           } else {
-            // Pokémon vivo, parsear HP normal
             const hpParts = activePokemon.condition.split("/");
             if (hpParts.length === 2) {
               currentHP = parseInt(hpParts[0], 10);
               maxHP = parseInt(hpParts[1], 10);
-              // Almacenar el HP máximo para uso futuro
               playerMaxHPRef.current.set(pokemonName, maxHP);
             }
           }
         }
 
-        setPlayerPokemon({
+        playerPokemonFromRequest = {
           name: pokemonName,
           currentHP,
           maxHP,
           hpPercentage: (currentHP / maxHP) * 100,
           status: isFainted ? "fnt" : null,
-        });
+        };
       }
     }
-  }, [requestData]);
+
+    // Also check battle logs for recent faint events that might not be in requestData yet
+    if (logs && logs.length > 0) {
+      // Look for recent faint events for player's Pokémon
+      for (let i = logs.length - 1; i >= Math.max(0, logs.length - 10); i--) {
+        const log = logs[i];
+        if (typeof log === "string") {
+          // Check for faint event
+          const faintMatch = log.match(/\|faint\|p1a: ([^|]+)/);
+          if (faintMatch) {
+            const faintedPokemonName = faintMatch[1].trim();
+            console.log(`💀 Player Pokémon fainted detected in logs: ${faintedPokemonName}`);
+
+            // If this matches our current Pokémon from request or if we don't have request data
+            if (!playerPokemonFromRequest || playerPokemonFromRequest.name === faintedPokemonName) {
+              const storedMaxHP = playerMaxHPRef.current.get(faintedPokemonName) || 100;
+
+              setPlayerPokemon({
+                name: faintedPokemonName,
+                currentHP: 0,
+                maxHP: storedMaxHP,
+                hpPercentage: 0,
+                status: "fnt",
+              });
+
+              console.log(`💀 Player Pokémon HP updated to 0 due to faint event: ${faintedPokemonName}`);
+              return; // Exit early since we found a faint event
+            }
+          }
+
+          // Also check for damage events to update HP if requestData is stale
+          const damageMatch = log.match(/\|-damage\|p1a: ([^|]+)\|([^|]+)/);
+          if (damageMatch && playerPokemonFromRequest) {
+            const damagedPokemon = damageMatch[1].trim();
+            const newCondition = damageMatch[2];
+
+            if (damagedPokemon === playerPokemonFromRequest.name) {
+              if (newCondition.includes("fnt")) {
+                console.log(`💀 Player Pokémon fainted from damage: ${damagedPokemon}`);
+                setPlayerPokemon({
+                  ...playerPokemonFromRequest,
+                  currentHP: 0,
+                  hpPercentage: 0,
+                  status: "fnt",
+                });
+                return;
+              } else {
+                // Update HP from damage event
+                const hpParts = newCondition.split("/");
+                if (hpParts.length === 2) {
+                  const currentHP = parseInt(hpParts[0], 10);
+                  const maxHP = parseInt(hpParts[1], 10);
+
+                  console.log(
+                    `💥 Player Pokémon HP updated from damage event: ${damagedPokemon}, ${currentHP}/${maxHP}`
+                  );
+                  setPlayerPokemon({
+                    ...playerPokemonFromRequest,
+                    currentHP,
+                    maxHP,
+                    hpPercentage: (currentHP / maxHP) * 100,
+                    status: null,
+                  });
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // If no faint event found, use requestData
+    if (playerPokemonFromRequest) {
+      setPlayerPokemon(playerPokemonFromRequest);
+    }
+  }, [requestData, logs]);
 
   // Parse CPU's Pokémon data from requestData instead of battle logs
   useEffect(() => {
